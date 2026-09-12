@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node --check src/app.js",
     "postinstall": "prisma skills sync || exit 0"
   },
   "keywords": [],
@@ -20,7 +20,7 @@
     "express": "^5.2.1",
     "helmet": "^8.3.0",
     "morgan": "^1.12.1",
-    "prisma": "^8.0.0-rc.13",
+    "prisma": "^7.10.0",
     "redis": "^6.2.1"
   },
   "devDependencies": {

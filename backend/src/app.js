@@ -20,7 +20,8 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-const PORT = process.env.PORT || 3000;
+// The root Vite application uses port 3000 in development.
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Backend server running on port ${PORT}`);
 });

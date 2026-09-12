@@ -1,0 +1,6 @@
+{
+  "name": "DisasterLink Crisis Response System",
+  "description": "Tactical emergency management platform featuring the Citizen SOS Portal and Operator Command Center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
