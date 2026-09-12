@@ -8,6 +8,7 @@ from app.schemas.domain import (
     RiskLevel
 )
 from app.agents.risk_agent import RiskAgent
+from app.errors import WarningCode
 
 @pytest.fixture
 def agent():
@@ -51,7 +52,7 @@ def test_medium_risk_incident(agent):
     assert result.priority == Priority.P3_MEDIUM
     assert result.risk_level == RiskLevel.MEDIUM
     assert result.score == 30.0
-    assert any("Multiple victims (6)" in r for r in result.reasons)
+    assert any("multiple victims (6)" in r.lower() for r in result.reasons)
 
 def test_critical_flood(agent):
     """Test a flood with high water levels and blocked roads."""
@@ -73,8 +74,8 @@ def test_critical_flood(agent):
     assert result.priority == Priority.P1_CRITICAL
     assert result.risk_level == RiskLevel.CRITICAL
     assert result.score == 100.0
-    assert any("Dangerously high water level" in r for r in result.reasons)
-    assert any("Extreme rainfall" in r for r in result.reasons)
+    assert any("dangerously high water level" in r.lower() for r in result.reasons)
+    assert any("extreme rainfall" in r.lower() for r in result.reasons)
 
 def test_vulnerable_victim(agent):
     """Test that vulnerable victims heavily skew the risk score."""
@@ -94,7 +95,7 @@ def test_vulnerable_victim(agent):
     # 10 + 20 = 30 points -> P3_MEDIUM
     assert result.priority == Priority.P3_MEDIUM
     assert result.score == 30.0
-    assert any("Vulnerable individuals present (2)" in r for r in result.reasons)
+    assert any("vulnerable individuals present (2)" in r.lower() for r in result.reasons)
 
 def test_missing_environmental_data(agent):
     """Test that missing environmental data reduces confidence in flood incidents."""

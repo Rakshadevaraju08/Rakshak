@@ -79,4 +79,4 @@ def test_missing_data_fallback(agent):
     assert result.escalation_detected is False
     # Missing completely -> drops confidence by 0.5
     assert result.confidence == 0.5
-    assert "No environmental data provided" in result.explanation[0]
+    assert "no environmental data provided" in result.explanation[0].lower()

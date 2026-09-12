@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Optional, Tuple, Dict, Any
 from pydantic import BaseModel, Field
+from app.errors import WarningCode
 
 # -----------------------------------------
 # ENUMS
@@ -171,6 +172,12 @@ class ResourceAgentResult(BaseModel):
     unfulfilled_requirements: List[str]
     reasons: List[str]
 
+class PipelineWarningResponse(BaseModel):
+    """Structured, machine-readable warning returned to API clients."""
+    code: WarningCode = Field(..., description="Machine-readable warning code")
+    source: str = Field(..., description="Agent or service that produced the warning")
+    message: str = Field(..., description="Human-readable summary")
+
 class FullResponsePlan(BaseModel):
     """The master output payload returned to the Node.js backend."""
     incident_id: str
@@ -180,5 +187,41 @@ class FullResponsePlan(BaseModel):
     assignments: List[ResourceAssignment] = Field(default_factory=list)
     recommended_action: RecommendedAction
     explanation: List[str] = Field(default_factory=list)
-    warnings: List[str] = Field(default_factory=list)
+    warnings: List[PipelineWarningResponse] = Field(default_factory=list)
+    degraded: bool = Field(default=False, description="True when any agent was skipped or failed")
     human_approval_required: bool = True
+
+# -----------------------------------------
+# RE-PLANNING SCHEMAS
+# -----------------------------------------
+
+class ChangeCategory(str, Enum):
+    PRIORITY_CHANGE = "PRIORITY_CHANGE"
+    RISK_LEVEL_CHANGE = "RISK_LEVEL_CHANGE"
+    ACTION_CHANGE = "ACTION_CHANGE"
+    RESOURCE_REASSIGNED = "RESOURCE_REASSIGNED"
+    RESOURCE_ADDED = "RESOURCE_ADDED"
+    RESOURCE_REMOVED = "RESOURCE_REMOVED"
+    ROUTE_CHANGED = "ROUTE_CHANGED"
+    ESCALATION_CHANGE = "ESCALATION_CHANGE"
+    SEVERITY_CHANGE = "SEVERITY_CHANGE"
+
+class PlanChange(BaseModel):
+    category: ChangeCategory
+    field: str
+    previous_value: Optional[str] = None
+    new_value: Optional[str] = None
+    description: str
+
+class ReplanRequest(BaseModel):
+    previous_plan: FullResponsePlan
+    updated_state: DisasterAnalysisRequest
+
+class ResponsePlanRevision(BaseModel):
+    revision_number: int = Field(default=1, description="Sequential revision number")
+    incident_id: str
+    previous_action: RecommendedAction
+    new_action: RecommendedAction
+    changes: List[PlanChange] = Field(default_factory=list)
+    new_plan: FullResponsePlan
+    is_significant_change: bool = False

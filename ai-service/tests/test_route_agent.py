@@ -3,6 +3,7 @@ from unittest.mock import patch, Mock
 import requests
 from app.agents.route_agent import RouteAgent
 from app.schemas.domain import RoadAccessStatus
+from app.errors import WarningCode
 
 @pytest.fixture
 def agent():
@@ -37,7 +38,7 @@ def test_successful_osrm_route(mock_get, agent):
     assert result.route_status == RoadAccessStatus.OPEN
     assert result.distance_km == 15.0
     assert result.estimated_time_mins == 20.0
-    assert "Successfully retrieved driving route" in result.explanation
+    assert "Route selected because" in result.explanation
 
 @patch('app.services.routing_service.requests.get')
 def test_osrm_fallback(mock_get, agent):
@@ -59,4 +60,7 @@ def test_osrm_fallback(mock_get, agent):
     assert result.distance_km == 11.1
     assert result.estimated_time_mins == 11.1 # 11.1km at 60km/h = 11.1 mins
     assert "WARNING: Route unavailable" in result.explanation
-    assert "demo purposes" in result.explanation
+
+    # Verify structured warning was created
+    route_warnings = getattr(result, '_pipeline_warnings', [])
+    assert any(w.code == WarningCode.OSRM_UNAVAILABLE for w in route_warnings)

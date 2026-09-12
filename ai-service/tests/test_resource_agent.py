@@ -10,6 +10,7 @@ from app.schemas.domain import (
 )
 from app.agents.resource_agent import ResourceAgent
 from app.services.optimization_service import OptimizationService
+from app.errors import WarningCode
 
 @pytest.fixture
 def agent():
@@ -63,6 +64,10 @@ def test_unavailable_resource(agent):
     assert len(result.assignments) == 0
     assert "INC_FIRE" in result.unfulfilled_requirements
 
+    # Verify structured warnings
+    warnings = getattr(result, '_pipeline_warnings', [])
+    assert any(w.code in (WarningCode.NO_AVAILABLE_RESOURCE, WarningCode.NO_SUITABLE_RESOURCE) for w in warnings)
+
 def test_incompatible_resource(agent):
     """Test that a medical team won't be dispatched to put out a fire."""
     request = DisasterAnalysisRequest(
@@ -81,6 +86,10 @@ def test_incompatible_resource(agent):
     result = agent.analyze(request, risk)
     assert len(result.assignments) == 0
     assert "INC_FIRE" in result.unfulfilled_requirements
+
+    # Verify structured warning for unfulfilled
+    warnings = getattr(result, '_pipeline_warnings', [])
+    assert any(w.code == WarningCode.NO_SUITABLE_RESOURCE for w in warnings)
 
 def test_multiple_incidents_multiple_resources(optimizer):
     """Test optimization logic directly for multiple incidents."""
@@ -118,3 +127,21 @@ def test_insufficient_resources(optimizer):
     # Should prioritize the P1_CRITICAL incident
     assert result["assignments"][0]["incident"].id == "INC_1"
     assert "INC_2" in [inc.id for inc in result["unfulfilled_incidents"]]
+
+def test_empty_resources(agent):
+    """Test that empty resources list produces structured warning."""
+    request = DisasterAnalysisRequest(
+        incident=Incident(
+            id="INC_EMPTY",
+            type=IncidentType.FIRE,
+            latitude=10.0,
+            longitude=20.0,
+        ),
+        resources=[]
+    )
+    risk = DummyRiskResult(Priority.P2_HIGH)
+    
+    result = agent.analyze(request, risk)
+    assert len(result.assignments) == 0
+    warnings = getattr(result, '_pipeline_warnings', [])
+    assert any(w.code == WarningCode.MISSING_RESOURCES for w in warnings)

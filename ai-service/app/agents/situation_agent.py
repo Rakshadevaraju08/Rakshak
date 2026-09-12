@@ -1,4 +1,11 @@
+import logging
+from typing import List
+
 from app.schemas.domain import DisasterAnalysisRequest, SituationResult, IncidentType
+from app.errors import PipelineWarning, WarningCode
+
+logger = logging.getLogger("disaster.situation")
+
 
 class SituationAgent:
     """
@@ -11,6 +18,7 @@ class SituationAgent:
         incident = request.incident
         explanations = []
         missing_info = []
+        pipeline_warnings: List[PipelineWarning] = []
         
         is_valid = True
         confidence = 1.0
@@ -29,6 +37,11 @@ class SituationAgent:
             # Attempt to normalize by fixing the total victim count
             incident.victim_count = total_vulnerable
             explanations.append(f"Auto-corrected total victim count to {incident.victim_count}.")
+            pipeline_warnings.append(PipelineWarning(
+                code=WarningCode.INCOMPLETE_INCIDENT,
+                source="SituationAgent",
+                message=f"Victim count inconsistency detected and auto-corrected (vulnerable={total_vulnerable} > reported total).",
+            ))
         elif incident.victim_count > 0:
             explanations.append(f"Verified {incident.victim_count} total victims.")
 
@@ -43,14 +56,41 @@ class SituationAgent:
                 missing_info.append("water_level")
                 confidence -= 0.2
                 explanations.append("Missing water level data for a FLOOD incident.")
+                pipeline_warnings.append(PipelineWarning(
+                    code=WarningCode.INCOMPLETE_INCIDENT,
+                    source="SituationAgent",
+                    message="Missing water level data for FLOOD incident. Risk assessment confidence reduced.",
+                ))
             if incident.rainfall is None:
                 missing_info.append("rainfall")
                 confidence -= 0.1
                 explanations.append("Missing rainfall data for a FLOOD incident.")
+                pipeline_warnings.append(PipelineWarning(
+                    code=WarningCode.INCOMPLETE_INCIDENT,
+                    source="SituationAgent",
+                    message="Missing rainfall data for FLOOD incident.",
+                ))
 
         if incident.road_access is None:
             missing_info.append("road_access")
             confidence -= 0.1
+
+        # 4. Environment data check
+        if request.environment is None:
+            pipeline_warnings.append(PipelineWarning(
+                code=WarningCode.MISSING_ENVIRONMENT_DATA,
+                source="SituationAgent",
+                message="No environmental data provided. Severity assessment may be less accurate.",
+            ))
+            logger.info("No environmental data provided for situation analysis.")
+
+        # 5. Hospital list check
+        if not request.hospitals:
+            pipeline_warnings.append(PipelineWarning(
+                code=WarningCode.EMPTY_HOSPITAL_LIST,
+                source="SituationAgent",
+                message="No hospitals provided. Medical evacuation routing will be unavailable.",
+            ))
 
         # Calculate severity baseline based purely on situation
         severity = "LOW"
@@ -72,7 +112,12 @@ class SituationAgent:
         # Ensure confidence boundaries
         confidence = max(0.0, min(1.0, confidence))
 
-        return SituationResult(
+        # Log warnings
+        for w in pipeline_warnings:
+            w.log()
+
+        # Store warnings on the result for coordinator to collect
+        result = SituationResult(
             is_valid=is_valid,
             summary=summary,
             severity_assessment=severity,
@@ -82,3 +127,6 @@ class SituationAgent:
             explanations=explanations,
             normalized_incident_type=normalized_type
         )
+        # Attach warnings as a transient attribute for coordinator pickup
+        result._pipeline_warnings = pipeline_warnings
+        return result

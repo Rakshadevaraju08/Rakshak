@@ -11,6 +11,7 @@ from app.schemas.domain import (
     RecommendedAction
 )
 from app.agents.master_coordinator import MasterCoordinator
+from app.errors import WarningCode
 
 @pytest.fixture
 def coordinator():
@@ -71,8 +72,11 @@ def test_optional_agent_failure(coordinator):
     assert plan.incident_id == "INC_002"
     assert plan.prediction is None
     
-    # Warning should be captured
-    assert any("Predictive Agent failed" in w for w in plan.warnings)
+    # Warning should be captured (now structured)
+    assert any(w.code == WarningCode.PREDICTION_FAILURE for w in plan.warnings)
+    
+    # Plan should be marked as degraded
+    assert plan.degraded is True
     
     # Since risk is low and no victims
     assert plan.recommended_action == RecommendedAction.MONITOR

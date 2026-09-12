@@ -1,4 +1,6 @@
-from typing import List, Tuple
+import logging
+from typing import List
+
 from app.schemas.domain import (
     DisasterAnalysisRequest,
     RiskResult,
@@ -7,6 +9,10 @@ from app.schemas.domain import (
     ForecastItem,
     IncidentType
 )
+from app.errors import PipelineWarning, WarningCode
+
+logger = logging.getLogger("disaster.predictive")
+
 
 class PredictiveAgent:
     """
@@ -20,11 +26,39 @@ class PredictiveAgent:
         self.horizons = [20, 45, 60]
 
     def analyze(self, request: DisasterAnalysisRequest, current_risk: RiskResult) -> PredictiveAgentResult:
-        if self.use_ml:
-            return self._run_ml_model(request, current_risk)
-        return self._run_baseline_prediction(request, current_risk)
+        pipeline_warnings: List[PipelineWarning] = []
 
-    def _run_baseline_prediction(self, request: DisasterAnalysisRequest, current_risk: RiskResult) -> PredictiveAgentResult:
+        if self.use_ml:
+            try:
+                result = self._run_ml_model(request, current_risk)
+                result._pipeline_warnings = pipeline_warnings
+                return result
+            except NotImplementedError:
+                logger.warning("ML model not implemented for predictions. Falling back to baseline.")
+                pipeline_warnings.append(PipelineWarning(
+                    code=WarningCode.PREDICTION_FAILURE,
+                    source="PredictiveAgent",
+                    message="ML prediction model not available. Using baseline deterministic forecast.",
+                ))
+            except Exception as exc:
+                logger.warning(f"ML prediction failed: {type(exc).__name__}. Falling back to baseline.")
+                pipeline_warnings.append(PipelineWarning(
+                    code=WarningCode.PREDICTION_FAILURE,
+                    source="PredictiveAgent",
+                    message=f"ML prediction failed ({type(exc).__name__}). Using baseline deterministic forecast.",
+                    detail=str(exc),
+                ))
+
+        result = self._run_baseline_prediction(request, current_risk, pipeline_warnings)
+        result._pipeline_warnings = pipeline_warnings
+        return result
+
+    def _run_baseline_prediction(
+        self,
+        request: DisasterAnalysisRequest,
+        current_risk: RiskResult,
+        pipeline_warnings: List[PipelineWarning],
+    ) -> PredictiveAgentResult:
         explanation: List[str] = []
         confidence = 1.0
         escalation_detected = False
@@ -77,6 +111,11 @@ class PredictiveAgent:
         else:
             confidence -= 0.5
             explanation.append("No environmental data provided. Prediction relies entirely on static incident data.")
+            pipeline_warnings.append(PipelineWarning(
+                code=WarningCode.MISSING_ENVIRONMENT_DATA,
+                source="PredictiveAgent",
+                message="No environmental data provided. Prediction confidence significantly reduced.",
+            ))
 
         # Generate forecast based on the trend score
         forecast = []
@@ -100,8 +139,15 @@ class PredictiveAgent:
                 risk_level=inv_risk_map[bounded_val]
             ))
 
-        if not explanation:
-            explanation.append("Conditions are projected to remain stable.")
+        if escalation_detected:
+            formatted_explanation = "Risk expected to increase because:\n" + "\n".join(f"- {c[0].lower() + c[1:]}" for c in explanation)
+            explanation = [formatted_explanation]
+        elif explanation:
+            # If there are explanations but no escalation, still format them under a stable header
+            formatted_explanation = "Risk expected to remain stable because:\n" + "\n".join(f"- {c[0].lower() + c[1:]}" for c in explanation)
+            explanation = [formatted_explanation]
+        else:
+            explanation = ["Risk expected to remain stable because:\n- no significant worsening trends detected"]
 
         confidence = max(0.0, min(1.0, confidence))
 

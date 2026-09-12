@@ -1,7 +1,20 @@
 import math
+import logging
 from typing import List, Dict, Any, Tuple
-from ortools.linear_solver import pywraplp
+
+from app.errors import PipelineWarning, WarningCode
+
+logger = logging.getLogger("disaster.optimization")
+
+try:
+    from ortools.linear_solver import pywraplp
+    _ORTOOLS_AVAILABLE = True
+except ImportError:
+    _ORTOOLS_AVAILABLE = False
+    logger.warning("OR-Tools is not installed. Optimization will be unavailable.")
+
 from app.schemas.domain import Incident, Resource, ResourceStatus, IncidentType, ResourceType, Priority
+
 
 class OptimizationService:
     def __init__(self):
@@ -20,17 +33,87 @@ class OptimizationService:
             return 999.0
         return math.sqrt((lat1 - lat2)**2 + (lon1 - lon2)**2) * 111.0  # Approx km
 
-    def optimize_dispatch(self, incidents: List[Tuple[Incident, int]], resources: List[Resource]) -> Dict[str, Any]:
+    def optimize_dispatch(
+        self,
+        incidents: List[Tuple[Incident, int]],
+        resources: List[Resource],
+    ) -> Dict[str, Any]:
         """
         Solves the assignment problem to dispatch resources to incidents.
+
         incidents: List of tuples (Incident, priority_value_1_to_5)
+
+        Returns dict with keys: assignments, unfulfilled_incidents, warnings
         """
-        solver = pywraplp.Solver.CreateSolver('SCIP')
-        if not solver:
-            raise RuntimeError("OR-Tools SCIP solver not available.")
+        warnings: List[PipelineWarning] = []
+
+        # --- Guard: OR-Tools not installed ---
+        if not _ORTOOLS_AVAILABLE:
+            w = PipelineWarning(
+                code=WarningCode.OPTIMIZATION_FAILURE,
+                source="OptimizationService",
+                message="OR-Tools library is not installed. Cannot optimize resource dispatch.",
+            )
+            w.log()
+            warnings.append(w)
+            return {
+                "assignments": [],
+                "unfulfilled_incidents": [inc for inc, _ in incidents],
+                "warnings": warnings,
+            }
+
+        # --- Guard: no incidents ---
+        if not incidents:
+            logger.info("No incidents to optimize for.")
+            return {"assignments": [], "unfulfilled_incidents": [], "warnings": warnings}
+
+        # --- Guard: no resources at all ---
+        if not resources:
+            w = PipelineWarning(
+                code=WarningCode.MISSING_RESOURCES,
+                source="OptimizationService",
+                message="No resources provided. Cannot dispatch any units.",
+            )
+            w.log()
+            warnings.append(w)
+            return {
+                "assignments": [],
+                "unfulfilled_incidents": [inc for inc, _ in incidents],
+                "warnings": warnings,
+            }
 
         # Filter available resources
         available_resources = [r for r in resources if r.status == ResourceStatus.AVAILABLE]
+
+        if not available_resources:
+            w = PipelineWarning(
+                code=WarningCode.NO_AVAILABLE_RESOURCE,
+                source="OptimizationService",
+                message="No resources are currently available (all dispatched or in maintenance).",
+            )
+            w.log()
+            warnings.append(w)
+            return {
+                "assignments": [],
+                "unfulfilled_incidents": [inc for inc, _ in incidents],
+                "warnings": warnings,
+            }
+
+        # --- Create solver ---
+        solver = pywraplp.Solver.CreateSolver('SCIP')
+        if not solver:
+            w = PipelineWarning(
+                code=WarningCode.OPTIMIZATION_FAILURE,
+                source="OptimizationService",
+                message="OR-Tools SCIP solver could not be created. Cannot optimize dispatch.",
+            )
+            w.log()
+            warnings.append(w)
+            return {
+                "assignments": [],
+                "unfulfilled_incidents": [inc for inc, _ in incidents],
+                "warnings": warnings,
+            }
 
         # x[i][j] = 1 if resource i is assigned to incident j
         x = {}
@@ -68,7 +151,23 @@ class OptimizationService:
 
         objective.SetMinimization()
         
-        status = solver.Solve()
+        try:
+            status = solver.Solve()
+        except Exception as exc:
+            logger.error(f"Solver raised an exception: {type(exc).__name__}")
+            w = PipelineWarning(
+                code=WarningCode.OPTIMIZATION_FAILURE,
+                source="OptimizationService",
+                message="Optimization solver encountered an error during execution.",
+                detail=str(exc),
+            )
+            w.log()
+            warnings.append(w)
+            return {
+                "assignments": [],
+                "unfulfilled_incidents": [inc for inc, _ in incidents],
+                "warnings": warnings,
+            }
 
         assignments = []
         assigned_incidents = set()
@@ -84,11 +183,20 @@ class OptimizationService:
                             "distance_km": distance
                         })
                         assigned_incidents.add(inc.id)
+        else:
+            w = PipelineWarning(
+                code=WarningCode.OPTIMIZATION_FAILURE,
+                source="OptimizationService",
+                message=f"Solver did not find an optimal or feasible solution (status={status}).",
+            )
+            w.log()
+            warnings.append(w)
 
         # Identify unfulfilled incidents
         unfulfilled = [inc for inc, _ in incidents if inc.id not in assigned_incidents]
 
         return {
             "assignments": assignments,
-            "unfulfilled_incidents": unfulfilled
+            "unfulfilled_incidents": unfulfilled,
+            "warnings": warnings,
         }
