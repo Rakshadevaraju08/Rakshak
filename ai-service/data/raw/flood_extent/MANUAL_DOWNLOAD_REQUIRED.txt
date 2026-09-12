@@ -1,0 +1,3 @@
+MANUAL DOWNLOAD REQUIRED for ISRO Bhuvan / Copernicus
+URL: https://bhuvan-app1.nrsc.gov.in/disaster/disaster.php
+Notes: Requires manual portal usage to download flood maps.

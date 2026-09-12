@@ -1,0 +1,54 @@
+# Disaster Data Acquisition Configuration
+# Study Area: Guwahati / Kamrup Metropolitan, Assam, India
+
+region:
+  name: "Guwahati"
+  state: "Assam"
+  country: "India"
+  bbox:
+    min_lat: 26.05
+    min_lng: 91.50
+    max_lat: 26.25
+    max_lng: 91.90
+  center:
+    lat: 26.1445
+    lng: 91.7362
+
+dates:
+  # Using last few years of data for historical patterns
+  start_date: "2021-01-01"
+  end_date: "2023-12-31"
+
+sources:
+  rainfall:
+    name: "Open-Meteo Historical API"
+    url: "https://archive-api.open-meteo.com/v1/archive"
+    type: "api"
+  
+  elevation:
+    name: "Open-Meteo Elevation API"
+    url: "https://api.open-meteo.com/v1/elevation"
+    type: "api"
+  
+  roads_and_hospitals:
+    name: "OpenStreetMap (Overpass API)"
+    url: "https://overpass-api.de/api/interpreter"
+    type: "api"
+  
+  water_levels:
+    name: "Central Water Commission (CWC)"
+    url: "https://ffs.india-water.gov.in/"
+    type: "manual"
+    notes: "Requires manual navigation and download due to captchas and dynamic rendering."
+  
+  flood_extent:
+    name: "ISRO Bhuvan / Copernicus"
+    url: "https://bhuvan-app1.nrsc.gov.in/disaster/disaster.php"
+    type: "manual"
+    notes: "Requires manual portal usage to download flood maps."
+
+  population:
+    name: "WorldPop / Census"
+    url: "https://www.worldpop.org/project/categories?id=3"
+    type: "manual"
+    notes: "Manual download required for high-res GeoTIFF, or fallback to bounding box population estimates."

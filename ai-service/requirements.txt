@@ -8,3 +8,8 @@ ortools
 requests
 joblib
 httpx
+pyyaml
+faker
+geopandas
+shapely
+rasterio

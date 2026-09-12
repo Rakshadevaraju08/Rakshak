@@ -1,0 +1,3 @@
+MANUAL DOWNLOAD REQUIRED for WorldPop / Census
+URL: https://www.worldpop.org/project/categories?id=3
+Notes: Manual download required for high-res GeoTIFF, or fallback to bounding box population estimates.

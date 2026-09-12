@@ -1,0 +1,3 @@
+MANUAL DOWNLOAD REQUIRED for Central Water Commission (CWC)
+URL: https://ffs.india-water.gov.in/
+Notes: Requires manual navigation and download due to captchas and dynamic rendering.

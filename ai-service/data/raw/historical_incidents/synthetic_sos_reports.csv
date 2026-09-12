@@ -1,0 +1,501 @@
+report_id,raw_text,incident_type,victim_count,vulnerable_victim,medical_emergency,location_description,severity_hint
+80b1e72d-6b23-4486-8d7a-3dd7a22c1fa7,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"76, Merchant Street, Bhalswa Jahangir Pur-156478",HIGH
+38662a53-faa0-410b-92d1-5f5b1a514dbf,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"89/104, Buch Nagar, Vijayanagaram 711367",HIGH
+fd1340b1-990a-45b1-bfad-a1ae8aa437d5,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"78/504, Dugal Zila, Patna-303635",HIGH
+3d25abc8-67df-40fd-8081-20f5df334684,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"916, Thaker Nagar, Shimla 540336",HIGH
+04795c25-8bbf-4c18-a67a-06783a6ee932,Family of two stranded on rooftop.,FLOOD,2,False,False,"23, Bhalla Road, Ozhukarai 085824",MEDIUM
+1ed605c7-603c-4414-affa-d3e7e0dbfd92,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"16, Dewan Path, Siwan-186418",MEDIUM
+64966f6b-b1d6-463f-8c29-aa0a41214b44,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"97/39, Borde Chowk, Chinsurah 052599",HIGH
+cf40748e-8195-4eea-9259-daafeec5d12b,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"901, Venkatesh Chowk, Medininagar 251568",MEDIUM
+3125b6e4-e9f2-4d12-b099-2de6f2b407dc,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"81, Mitter Path, Saharsa 855932",HIGH
+7944a41f-ba87-42a5-b1d6-7de546fcc65d,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"75/60, Karpe Marg, Raebareli-625850",MEDIUM
+14d9e970-e1bf-483e-bbeb-41bbfdc7f856,Family of three stranded on rooftop.,FLOOD,3,False,False,"60, Bala Nagar, Panipat 047117",HIGH
+a116635a-d51c-43b8-99cc-8f6aa8821fca,Family of five stranded on rooftop.,FLOOD,5,False,False,"87/11, Mangat Marg, Kharagpur-072253",HIGH
+fab1b0d5-daea-4501-b5d1-4ff1fd21259d,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"083, Deep Zila, Nizamabad-668078",MEDIUM
+7841914e-551e-4f0f-8d9f-a3e4b283bb01,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 38, Shenoy, Solapur-035817",MEDIUM
+39bb5ef7-519f-40ac-baae-9f87b61f212a,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 41, Pai Street, Patna 147326",HIGH
+e0d0f8bb-17d6-499e-90d0-544372ea4c97,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"37/868, Dyal Marg, Parbhani-707107",HIGH
+8d0aa92a-a5a3-438a-ba6f-31966c4da61a,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"36, Divan Path, Shimoga 667805",HIGH
+229b33e3-cdee-4123-887d-db5d0ee7effa,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"14/240, Madan Nagar, Salem-487521",HIGH
+3b4d4f4f-ad97-4e44-8dc9-44e175501540,Family of three stranded on rooftop.,FLOOD,3,False,False,"173, Goswami Marg, Gangtok-749211",HIGH
+2230acdf-0d89-4791-bd1d-53648c54416c,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"H.No. 163, Morar Circle, Asansol 000397",HIGH
+39e8eea4-3e98-466b-803b-3b525a33b73b,3 people trapped inside a flooded house. One person is disabled.,FLOOD,3,True,False,"H.No. 04, Ben Nagar, Thiruvananthapuram-524136",HIGH
+d693b67c-ff0e-48b5-9dbe-9f2c8a18d3bc,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 19, Khare, Sirsa-368411",HIGH
+5780ba82-5bd4-4622-87e1-892729ac2288,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"322, Pau Chowk, Kollam-819554",MEDIUM
+fddde50e-4854-4bf1-97a4-f2600dad7540,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 39, Bhavsar Street, Burhanpur-318591",MEDIUM
+8143c62b-0944-4806-9885-86cc43251b4c,Family of four stranded on rooftop.,FLOOD,4,False,False,"43/552, Dhar Circle, Imphal-908166",HIGH
+ee500cd0-f937-46a4-917b-031a39cf2fe8,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 58, Bora Path, Bharatpur-179529",HIGH
+a7e80081-0435-44bc-832c-516452aa5174,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"14/08, Kaur, Machilipatnam-255059",MEDIUM
+74f26056-1034-4032-9e19-2e75734dd9f7,Family of four stranded on rooftop.,FLOOD,4,False,False,"148, Chanda Zila, Thiruvananthapuram-110313",HIGH
+575ef06f-2fa1-4a0b-bedf-68adf102086b,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"26/90, Shere Chowk, Dharmavaram 143098",HIGH
+e07632ca-8856-42b3-a8ad-a91509588bcc,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 115, Rau Nagar, Bhilwara 509696",MEDIUM
+7f8e0e03-681c-4783-aeaa-ffcf43bd840d,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"17/322, Sundaram, Ludhiana 315178",HIGH
+1bd8974c-b592-418b-b3cb-6dea9bb97f88,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"20, Narayanan, Maheshtala-048376",HIGH
+cf682540-c8fb-4b28-8fc3-841224aef74f,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"91/41, Padmanabhan Circle, Saharsa 242453",MEDIUM
+bdf6c12a-7f90-4144-8d54-a5a9036d81a0,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 064, Ramanathan Path, Rourkela 598990",MEDIUM
+c8c02b78-19c1-41ab-a533-6b74c7a47a14,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"H.No. 894, Rastogi Chowk, Kharagpur-594204",HIGH
+dd592ebe-03ae-4d30-bc83-4c7cb3580f0b,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"82/12, Gole Path, Medininagar 335909",MEDIUM
+d9f00e0e-4f77-40ea-9b26-195cab149835,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"73, Dutta Nagar, Dharmavaram-107394",HIGH
+31907e1a-901e-404e-a7d9-6f7aaab80bbf,3 people trapped inside a flooded house. One person is infant.,FLOOD,3,True,False,"H.No. 84, Manda, Ajmer-872925",HIGH
+4b52b801-26b9-437e-a075-8497176d4020,4 people trapped inside a flooded house. One person is infant.,FLOOD,4,True,False,"83, Bahri Circle, Moradabad 734931",HIGH
+cd50c45d-4d02-4281-8bcd-f9a49219341a,Family of three stranded on rooftop.,FLOOD,3,False,False,"H.No. 05, Minhas Path, Ramagundam 460893",HIGH
+e5fc882d-1e56-4aa0-b2fe-58f402e3c891,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"55/080, Palla, Avadi-684201",MEDIUM
+b3bcccbd-560a-4a39-94bb-8cd05dad1c7f,Family of three stranded on rooftop.,FLOOD,3,False,False,"35, Krishnan Circle, Moradabad 151308",HIGH
+0e5406df-fcb7-485e-a81e-ce20f3a749b9,Family of two stranded on rooftop.,FLOOD,2,False,False,"36, Kakar, Morena 790400",MEDIUM
+da57d337-fa9e-46f8-aec9-6b398835954f,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"10, Ravi Chowk, Dewas-812316",HIGH
+3179ba4a-9b6c-47ff-b80c-4e1b204dd7da,Family of four stranded on rooftop.,FLOOD,4,False,False,"73/11, Samra, Vadodara 845527",HIGH
+8dd2ac9c-98d1-430d-a126-135674d8b1da,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"30/196, Krishna Street, Gulbarga-962218",HIGH
+b445b8d9-b2b0-4fda-8ff2-9776fcccf409,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"235, Salvi Ganj, Guwahati 164091",HIGH
+f6383d81-b299-4cdc-8ff7-20906bd2cc03,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"H.No. 25, Dua Circle, Mangalore 827159",HIGH
+bd62e5c2-6e11-4385-9312-6787d3dda683,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"H.No. 531, Kapadia Path, Bikaner-290806",HIGH
+5df9cfc7-9a88-4128-aced-f93148b04edd,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"189, Patla Zila, Surendranagar Dudhrej 699319",MEDIUM
+a09fd911-3ada-4b32-ba80-e8f306cdbc92,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"204, Biswas Circle, Allahabad 685077",HIGH
+afd0fae6-f104-4e1f-be8d-02bedf80651e,Family of five stranded on rooftop.,FLOOD,5,False,False,"71, Grover Marg, Hindupur 287108",HIGH
+95cb4c5b-2085-4d51-97f6-b1c3eea495c1,Family of one stranded on rooftop.,FLOOD,1,False,False,"H.No. 84, Toor Nagar, Kavali 360872",MEDIUM
+bde02f84-8cc2-4d65-ad68-1ca132789277,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"74/128, Mohan, Surat 586367",HIGH
+3ff4f175-8a53-4bdc-a8ac-04be26d62142,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 33, Keer Path, Munger-241652",HIGH
+90e98fe0-5d01-4172-9631-1eba0c804703,5 people trapped inside a flooded house. One person is infant.,FLOOD,5,True,False,"29/547, Ramaswamy Circle, Deoghar-169863",HIGH
+4c4ddddd-5102-4d06-8fa4-6f38665eba42,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 08, Rai, Jabalpur 644311",MEDIUM
+899e4d46-ab1e-48cd-9c54-28d1756a9886,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"33, Muni Zila, Ghaziabad 967153",HIGH
+69d817a1-cd45-4603-8d1a-959663a31f86,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"31/262, Dara Ganj, Chennai-434116",HIGH
+d65f8022-5ef0-4770-a5a9-58e51970d6aa,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"H.No. 390, Karpe Path, Bihar Sharif 431708",HIGH
+efea8ef6-41bb-441c-b581-6c222155c913,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 16, Dubey Zila, Bikaner-687872",MEDIUM
+bce92b7f-48b8-472f-844b-59c0f6ca7fb5,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"18/905, Padmanabhan Chowk, Erode-991588",MEDIUM
+d2e7919d-a859-4b57-bced-8b8a81fab798,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 93, Bath, Ghaziabad 019818",HIGH
+86c77d6d-aa0b-4cc9-9361-f69ef70a4944,4 people trapped inside a flooded house. One person is elderly.,FLOOD,4,True,False,"H.No. 58, Buch Street, Phusro 768258",HIGH
+651f40e0-3261-4a42-912d-3923df1f22b2,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"41, Shetty Street, Bidhannagar 407313",HIGH
+9236303e-99b7-4808-b67f-08d9100d6d45,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"44, Murthy, Pimpri-Chinchwad 342536",HIGH
+595eb3af-a37c-4fc0-bc6a-7ff87b17055a,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"71, Sunder Street, Bangalore-053966",MEDIUM
+3a1025d7-f789-4592-936a-cf2e7e61c619,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"34, Jaggi Marg, Karimnagar 933457",MEDIUM
+aef11118-3319-4592-8e89-fdc8dfb33f06,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"57/84, Bahl Street, Chandrapur-893404",HIGH
+982b6ce9-729a-4e40-ae4e-581f48d5472d,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 172, Lall Marg, Guna 975520",MEDIUM
+843e9905-9fca-457e-ba29-25de68647474,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"86/50, Kannan Road, Sirsa-323931",MEDIUM
+9cc0d982-6b9d-4d83-87ca-045ca0dcce76,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"77/89, Raghavan Nagar, Giridih-552206",HIGH
+dbba986e-ba07-4c41-a07b-8356a46b2519,1 people trapped inside a flooded house. One person is pregnant.,FLOOD,1,True,False,"77/355, Korpal, Guwahati-472766",HIGH
+e6b374f8-2aee-4328-b9b4-bda61c744c2f,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"817, Vala Circle, Bulandshahr-480116",MEDIUM
+13e37395-21d9-45fe-bccc-7e66e2e38f47,2 people trapped inside a flooded house. One person is infant.,FLOOD,2,True,False,"H.No. 72, Parikh, Vellore 972975",HIGH
+11b6757e-fce5-4cf5-8c6e-6c242b72d094,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"73, Gole Ganj, Mirzapur-573285",HIGH
+546d5484-06be-4357-a6d8-0e1658459294,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"06, Nazareth Zila, Raebareli-610529",MEDIUM
+d5bda345-44f3-4ffc-88c5-41950a469d59,Family of four stranded on rooftop.,FLOOD,4,False,False,"07, Kurian Road, Katihar 010853",HIGH
+410ff043-e979-4a60-a716-2b92f9ed994d,Family of five stranded on rooftop.,FLOOD,5,False,False,"76/56, Chahal Road, Varanasi 879174",HIGH
+ece478ba-849a-4131-939c-a641ad86f61f,4 people trapped inside a flooded house. One person is infant.,FLOOD,4,True,False,"614, Ben Path, Machilipatnam 588094",HIGH
+622210c8-bf77-4bb7-8c59-500f871ed64f,Family of one stranded on rooftop.,FLOOD,1,False,False,"54/040, Gola Street, Kota 687165",MEDIUM
+e3936ced-27bd-4d7e-a995-c030ca345332,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"73/462, Chowdhury Marg, Howrah 801067",MEDIUM
+58fd2dee-1556-4119-98ef-1d42f0bf2cc2,Family of five stranded on rooftop.,FLOOD,5,False,False,"H.No. 25, Jayaraman Zila, Bikaner-326978",HIGH
+9e7c3e1f-758d-421b-8e55-1ea2b7aa0645,4 people trapped inside a flooded house. One person is pregnant.,FLOOD,4,True,False,"27/47, Nayar Circle, Bilaspur 577091",HIGH
+c29002ef-c603-40ad-8147-c633790b4c09,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 724, Nanda Circle, Karimnagar 159612",HIGH
+b7bdb843-127f-495b-870e-f0c682f1a787,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"42/25, Nayak, Hubli–Dharwad 762491",HIGH
+07280a78-c23f-4c63-975b-a8d2c416c9b8,Family of two stranded on rooftop.,FLOOD,2,False,False,"08, Mukherjee, Panchkula 782696",MEDIUM
+6df7770e-5077-4a46-8609-9eb7ad16d028,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"H.No. 94, Manne Chowk, Sikar 535209",HIGH
+6a3dba43-ed0b-4015-95cc-d121c72ba7ee,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 80, Saraf Road, Raebareli-739592",MEDIUM
+be71cc04-e928-42b5-9102-dbc6a0773c62,1 people trapped inside a flooded house. One person is infant.,FLOOD,1,True,False,"70, Baral Road, Noida 891927",HIGH
+99d8cee2-50a1-4ee1-b563-ebfb00d8ab50,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"82, Dara Nagar, Lucknow-291312",MEDIUM
+50f0637f-50e6-4782-b485-6efd28aa83e6,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"12/152, Zacharia, New Delhi 006882",MEDIUM
+bdd6ddf7-9eb3-467e-a5a1-109bb9bb894a,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 36, Ghosh Nagar, Rewa-515837",MEDIUM
+41910818-5025-44f0-8b6c-ddfb35b7657d,Family of three stranded on rooftop.,FLOOD,3,False,False,"63, Gour Chowk, Agra 877555",HIGH
+b1ba114f-c7b7-4c05-bdcc-362023a1ce96,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"84/80, Sibal Road, Bharatpur-383462",HIGH
+a28b8539-218f-4bc9-aa17-39f101843f70,Family of two stranded on rooftop.,FLOOD,2,False,False,"28/961, Raman Path, Rewa 455712",MEDIUM
+31e386f1-be16-41ec-9e19-bc193252bc84,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"07/91, Walla Chowk, Sambalpur-530458",HIGH
+55c99b0d-abd1-417b-9d66-b85513a2bcb2,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"47, Baria Zila, Firozabad-250141",MEDIUM
+d223c165-8db7-4270-97ef-43b4fa4595d0,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"13, Randhawa Circle, Mira-Bhayandar 117855",HIGH
+e81d2afc-28c7-4c57-bfeb-93331a253842,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 685, Saini Chowk, Dhule-328284",HIGH
+b82d6c76-48f2-4e1e-adcf-1dbe21cf2a00,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"363, Narayan Zila, Meerut-220242",MEDIUM
+56425bbd-9f34-4a90-870e-dde407a23eb7,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 886, Peri Path, Ichalkaranji 130266",MEDIUM
+2765eb8c-3fa8-47a3-9acf-665fe1dd8f08,2 people trapped inside a flooded house. One person is pregnant.,FLOOD,2,True,False,"74/02, Shroff Ganj, Amaravati-971840",HIGH
+4d13658f-2e5d-4a31-aefe-16bad7e0dbf7,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"93, Rajan Circle, Amaravati 582117",MEDIUM
+e296c6c9-e868-4da2-831c-44f2bd756bf6,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"982, Grover Road, Karnal-860007",HIGH
+35342e5f-24ee-41b3-85e8-041795b46c44,Family of one stranded on rooftop.,FLOOD,1,False,False,"40, Bumb Road, Nizamabad 555969",MEDIUM
+935f9ede-b52d-4a57-93cf-1d5a6d0e713a,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 156, Taneja Chowk, Anand 238593",MEDIUM
+2658246e-c827-40d0-a3b7-51de1b6ab9e6,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"07, Din Circle, Kirari Suleman Nagar 077024",HIGH
+dc740184-05c2-4ab0-bcd5-1628865c4efd,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 13, Mand Nagar, Bardhaman-446296",HIGH
+200b09cd-e1cb-43b9-8363-1f857dffb356,Family of one stranded on rooftop.,FLOOD,1,False,False,"81/59, Bhardwaj Road, Madurai-858797",MEDIUM
+f6d5f700-f0d4-45d3-a43e-cb20aac65444,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"20/52, Pillai Zila, Tezpur 185350",HIGH
+15680569-b9a1-4c85-9711-66febc154174,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"87/629, Baria Nagar, Giridih-598435",HIGH
+1cfcba66-9c46-49cd-aff4-219a24cf02b2,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 46, Ben Street, Jamshedpur 216584",HIGH
+a3aa653d-aaa1-4877-a20a-31197870e04c,3 people trapped inside a flooded house. One person is pregnant.,FLOOD,3,True,False,"H.No. 00, Arora Nagar, Asansol-688703",HIGH
+2336d370-cbff-4fe3-8d91-9a9c02fbf2bf,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"21/75, Shenoy Street, Bhilwara 122294",HIGH
+0335b35b-077d-406e-9020-bfe943bae2c6,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 37, Gole Ganj, Chapra 632292",HIGH
+1320b3df-5ffe-4365-8698-8f38a69fcdd0,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 200, Mangat Street, North Dumdum 995572",HIGH
+eb322053-a284-4877-bdbb-7db75b8acecf,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"05/03, Reddy Marg, Sri Ganganagar-200308",HIGH
+a5c8f3c7-1d8e-4704-a749-a11f70a66ef0,3 people trapped inside a flooded house. One person is infant.,FLOOD,3,True,False,"18, Arya, Medininagar 315018",HIGH
+2cd86735-c8ce-43d3-9716-72393f3d1edd,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 152, Parikh Street, Bhiwani 905549",MEDIUM
+1b86701e-9421-4552-b7e3-1dcf3587a1da,Family of three stranded on rooftop.,FLOOD,3,False,False,"064, Sarin Zila, Loni 831473",HIGH
+6a6ed3ce-e785-44ff-8090-e2cbb9de024a,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"07/62, Bawa Circle, Serampore 983904",MEDIUM
+38aef7ef-9d04-483a-b912-b12d8e91ac64,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 13, Seshadri, Adoni 242204",HIGH
+932d5e2d-8e2a-4797-a677-33d290dc2734,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"18, Sharma Marg, Sagar 649210",HIGH
+abb30302-81bb-44ec-9843-622b3fe0ab4d,1 people trapped inside a flooded house. One person is elderly.,FLOOD,1,True,False,"13/46, Saha Path, Coimbatore-769561",HIGH
+1e1e6b5a-c018-4dbc-97d4-430377618b0b,Family of one stranded on rooftop.,FLOOD,1,False,False,"H.No. 44, Dave Nagar, Sagar 146646",MEDIUM
+a655b229-a83c-4053-829d-0cd16845d957,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 95, Shroff Circle, Sambhal-141362",HIGH
+de6aa204-0163-4175-a4ce-9ae0bc219e1b,Family of five stranded on rooftop.,FLOOD,5,False,False,"08/727, Goel Nagar, Kalyan-Dombivli-620989",HIGH
+efb19a80-b94b-488a-b2a6-d63ffabf689b,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"22/100, Nanda Road, Etawah-572203",HIGH
+818d871d-6d9b-4fc8-9df3-8ad878e3bb69,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 553, Chaudhry Zila, Mehsana 655734",MEDIUM
+2fc75a78-5187-468f-a5b8-599fb0c66673,3 people trapped inside a flooded house. One person is disabled.,FLOOD,3,True,False,"17, Ravi, Raipur 889366",HIGH
+5a28708e-2c00-4b99-b320-0adab0c5e9ed,Family of two stranded on rooftop.,FLOOD,2,False,False,"918, Mahajan Road, Narasaraopet 365578",MEDIUM
+a4bd4e68-9be4-4a5d-83e8-e04635487e2f,Family of one stranded on rooftop.,FLOOD,1,False,False,"H.No. 307, Narasimhan Chowk, Pudukkottai-580929",MEDIUM
+0d6da983-6aaf-41a0-9f92-271932a7a404,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 31, Vohra, Hindupur 616757",HIGH
+1908cca1-27d3-436d-8346-4b65633dfd28,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 64, Maharaj Road, Nagpur-644227",HIGH
+8cc635db-455f-4470-8da8-15dfbc9db746,Family of one stranded on rooftop.,FLOOD,1,False,False,"10/21, Rana Marg, Tumkur-709472",MEDIUM
+0f889069-5c0c-49e7-a549-842925e8e6aa,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"36/750, Mallick Circle, Dhanbad 053097",MEDIUM
+a78b45fc-1187-498c-9ffa-bf8fe53a999f,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"88/756, Mand, Panihati 211273",MEDIUM
+4220851d-790f-4025-a8f8-65c70328fff2,Family of one stranded on rooftop.,FLOOD,1,False,False,"26/96, Chhabra Chowk, Rajahmundry 220514",MEDIUM
+39e1c614-9d28-4d0a-a39b-d3806c0c7f71,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"14/22, Kunda Path, Tiruvottiyur 376256",HIGH
+11cc040c-ebd9-48eb-a364-515b2a89af4e,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"54, Rana Road, Tiruchirappalli-294726",MEDIUM
+17af4182-32a1-457b-83e0-c8ed62809677,Family of five stranded on rooftop.,FLOOD,5,False,False,"04/77, Goda Circle, Hazaribagh-740593",HIGH
+38131c70-a60d-4f39-bafb-76b95096bfb5,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"10/700, Nori Zila, Ballia 529604",HIGH
+65d8fde8-663d-45a0-86c9-13b3e42fcbda,3 people trapped inside a flooded house. One person is disabled.,FLOOD,3,True,False,"H.No. 22, More Ganj, Mau-510811",HIGH
+82a0bad4-ea43-4c5c-abf3-44c50ab87929,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"68/851, Krishnan Path, Rohtak-702727",HIGH
+35391556-5c6b-4715-bd8a-5083bb9d1633,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"44/81, Pau Circle, Hospet 605731",HIGH
+0d85f595-3a1b-434c-8077-a62d3b7a24c9,5 people trapped inside a flooded house. One person is infant.,FLOOD,5,True,False,"H.No. 732, Varghese Marg, Mangalore-829920",HIGH
+5d60ca86-f239-4885-8c30-a738d817601d,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"78/41, Srinivas Circle, Lucknow-468580",HIGH
+4834bcd0-2331-4b89-91c6-0636f5456c00,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"333, Iyengar Street, Jammu-942182",HIGH
+1a0a143b-e6bd-4b07-81bf-b03d933ff461,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 478, Shah Nagar, Pondicherry 538244",MEDIUM
+e128acf7-da68-4463-b915-5dfc6d4ed42a,Family of four stranded on rooftop.,FLOOD,4,False,False,"H.No. 75, Deol Zila, Shimla 339551",HIGH
+d3d67bb0-f4f7-4cc8-870a-a04c553f80b9,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 217, Palan Ganj, Guna 686149",HIGH
+0c362308-66aa-44b3-acde-0938e077e358,Family of five stranded on rooftop.,FLOOD,5,False,False,"50/29, Bir Ganj, Bhagalpur-727320",HIGH
+7e15524d-29b9-4128-97f6-348b3cf1e086,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"72, Rattan Nagar, Eluru 705879",HIGH
+2bac8a59-a450-4f3c-b28b-59bd3e80acea,2 people trapped inside a flooded house. One person is infant.,FLOOD,2,True,False,"281, Chaudry Road, Thanjavur 598349",HIGH
+9af6ac54-babc-4ca4-a63a-5ba1327c9b7e,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"30, Raval Circle, Katihar-000481",MEDIUM
+c6d293f5-235e-40b0-a0ab-88c6c74bdd9f,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"01/502, Boase Road, Ozhukarai-255390",HIGH
+4f470ebc-4fcd-499a-a296-06a32b703b13,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 572, Banik Marg, Dibrugarh-741310",HIGH
+ca4b9209-bf2f-4477-a6a6-6052c7fa18e0,Family of two stranded on rooftop.,FLOOD,2,False,False,"495, Srivastava Path, Pune 443901",MEDIUM
+0145b796-48dc-477b-948b-62dcebe3d68a,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"H.No. 180, Hayre Ganj, Nadiad-233911",HIGH
+ab2adbec-0de7-4cf4-804c-909bb6bdb644,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"H.No. 11, Narang Path, Kumbakonam-272391",HIGH
+91cc19be-93e0-4a95-a2bd-45ed20fbeda0,3 people trapped inside a flooded house. One person is pregnant.,FLOOD,3,True,False,"39/46, Krishnamurthy Marg, Bhopal-224710",HIGH
+17497158-47ab-4985-8aee-b33ece0559f7,Family of four stranded on rooftop.,FLOOD,4,False,False,"599, Guha Path, Guwahati 801397",HIGH
+bd340544-6260-4e38-a24d-e333be5fb88f,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"154, Venkatesh Circle, Thanjavur-475832",MEDIUM
+34a8054d-74e9-408d-b145-001725f91cd8,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"673, Hayer Road, Delhi 847787",MEDIUM
+6ecf41c7-b665-4666-a835-4ecf2e4630aa,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"96/829, Dutta Nagar, Jabalpur-087085",HIGH
+2e5d29d8-9045-4171-a199-f7508b3797ad,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 40, Khanna Zila, Belgaum 668899",MEDIUM
+9148cbef-9f71-485c-9f9d-8a4f5718e1b9,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"59/09, Prasad, Kumbakonam-134167",HIGH
+aafca787-a2e3-443c-b87b-3f3fca34b277,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 50, Bhavsar Street, Vijayawada 435133",MEDIUM
+5d7e9aa4-f247-435b-a165-e1bb11b3842d,5 people trapped inside a flooded house. One person is infant.,FLOOD,5,True,False,"39/09, Bose Path, Sirsa 137725",HIGH
+bbbf377f-5bb3-49aa-90f8-14d59a247911,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"79/25, Brar Road, Shimla-568032",HIGH
+eb3fc7c8-79d8-49d1-a364-5a5a85d66a5f,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"834, Ram Circle, Dhanbad-828914",HIGH
+f774df29-64cc-45dc-898b-c46d817ef0f5,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"742, Gade Marg, Katni 700277",MEDIUM
+0c39a589-336c-4343-bcd9-53737fbca052,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"59/39, Ramachandran Chowk, Vijayawada-728022",MEDIUM
+1979955d-7869-434b-b0ff-312516d57ce3,Family of four stranded on rooftop.,FLOOD,4,False,False,"H.No. 311, Dutta Street, Nagaon 713187",HIGH
+3b4665c5-1946-4e79-a80a-b90871c9b087,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"18/967, Merchant Circle, Tiruppur-836972",HIGH
+630e4c06-6df2-4747-97be-8823ea85972e,2 people trapped inside a flooded house. One person is disabled.,FLOOD,2,True,False,"86, Bajaj Path, Gopalpur-498270",HIGH
+ed453cfc-682f-4470-975d-4808eaa05451,Family of three stranded on rooftop.,FLOOD,3,False,False,"05, Contractor Zila, Sambalpur 657469",HIGH
+08be8a1d-7a51-4307-86de-1d050dc435f8,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 683, Mital Zila, Jammu 838841",MEDIUM
+aafc21d0-1164-46cd-b39c-fbd9da9a8c89,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"679, Agate Path, Indore 567281",HIGH
+5809a31e-307b-4b92-9fbf-8c1466716a54,Family of four stranded on rooftop.,FLOOD,4,False,False,"35/51, Suri Circle, Rampur 294982",HIGH
+4ebec06d-74ac-40b5-bb78-50a6a0ae89af,3 people trapped inside a flooded house. One person is pregnant.,FLOOD,3,True,False,"94, Ravi Chowk, Thiruvananthapuram-476757",HIGH
+5f9f3520-1f1c-45c0-a2fc-13ca0c8070d0,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"50/794, Tailor Road, Vadodara 292075",MEDIUM
+f520e2b6-b0c4-4ce6-9a7b-484686b42c64,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 754, Venkatesh Road, Tezpur-327852",MEDIUM
+245e4d3e-9834-483c-9333-e161d67f2de2,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"H.No. 40, Mand Road, Mira-Bhayandar 957442",HIGH
+1dc55a6a-5747-4485-850d-32050e62ecab,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"86/167, Bose Street, Guwahati-799305",MEDIUM
+f675dbbb-81e1-475c-bc90-d66de143ddee,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"202, Padmanabhan Path, Belgaum-808061",MEDIUM
+87320e7b-d693-4d28-a7f8-6ac372eac216,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"47/879, Muni Path, Guntur 850532",HIGH
+9c1063c7-a833-4564-86bb-8020c3f6bb39,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 71, Purohit Chowk, Saharsa-760473",MEDIUM
+fd359d18-aae4-4bad-94f4-064c4c1912b3,4 people trapped inside a flooded house. One person is disabled.,FLOOD,4,True,False,"719, Wable Street, Nadiad-253049",HIGH
+f979309a-ff0e-4047-b111-e087caf564fa,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"39/820, Zacharia Street, Nagaon 743654",HIGH
+ad54e1e7-fba9-41dd-9f7d-38f97c652260,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"H.No. 63, Agate Nagar, Muzaffarpur-767874",HIGH
+2122b052-9959-4837-bae6-27c21cc111f0,Family of five stranded on rooftop.,FLOOD,5,False,False,"50, Parikh Ganj, Sambhal 185097",HIGH
+72b83e23-67e3-4be0-ac54-cdc6df52831a,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"133, Varty Circle, Silchar 226903",HIGH
+86f5a1dc-82aa-47cd-ae5e-895c29a95712,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"85, Salvi Circle, Gurgaon 708191",HIGH
+47b06694-f275-4841-a54d-9eea69da6b9c,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 14, Kata Circle, Rajahmundry 062222",HIGH
+8cb47d62-7fe8-4d22-8a43-7dbdf3f1fda4,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"H.No. 597, Nath, Gangtok 018983",HIGH
+6b0bd987-b707-463f-92c0-10a151af93bd,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"H.No. 07, Tiwari Ganj, Singrauli-219745",HIGH
+944748cd-25d3-4944-bf56-35e92008c127,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"53, Narayan Chowk, Siwan-641179",MEDIUM
+ee36a2e3-91ef-465f-b533-1784a728a366,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"682, Savant Nagar, Phusro 171773",HIGH
+3fc189df-066c-4d09-b7ac-bfe97765cfb2,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"99, More Chowk, Coimbatore 001478",HIGH
+8c3283a9-8149-4987-b20a-0cf204c945b2,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"51/381, Peri Marg, Varanasi 281357",MEDIUM
+a9d18f10-af8c-4e07-9d3f-951abe61484b,Family of three stranded on rooftop.,FLOOD,3,False,False,"21/29, Ganesan Nagar, Vasai-Virar 372793",HIGH
+780046bd-70f7-4fc8-960e-ed3d83abc2d3,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"33/69, Mammen, Mahbubnagar 577054",MEDIUM
+0107955e-28d2-4d71-8af0-baf066449bcd,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"955, Gara Nagar, Kota 499941",MEDIUM
+c0ec0a83-d183-4763-b13f-2d0d83aacdd0,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"80/65, Munshi, Katni 611937",MEDIUM
+bc9c4e6a-d673-4b14-964b-02984c31ce5a,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"74/94, Sidhu Nagar, Darbhanga 519090",MEDIUM
+8c65f4fd-2212-45ad-8c87-10638d84f18e,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"13/532, Dayal Road, Nagercoil-908855",HIGH
+2a0dec50-83db-4176-bc4c-a112b4b1b1b2,2 people trapped inside a flooded house. One person is infant.,FLOOD,2,True,False,"55/21, Chaudhry Road, Nashik-664770",HIGH
+f710be13-9246-4ae6-be0e-b775b37d4009,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"607, Bhatia Road, Burhanpur-952701",HIGH
+2b7fac00-90d1-4d70-b352-554498ef4a0f,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"34/831, Naik Marg, Rajpur Sonarpur-440518",HIGH
+83dc23c6-8225-44c0-8427-0be833cac542,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"00/718, Ganesh Marg, Tezpur-637344",HIGH
+587fd424-478f-4ff5-be36-7b9711b47269,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"H.No. 867, Goda Path, Pondicherry 812787",HIGH
+5f12bf0b-892a-412e-9fee-1a5dd990dcb5,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 860, Kamdar Ganj, Morena-794330",MEDIUM
+60f6efdc-3138-47de-a5fa-60a692828d04,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"90/45, Aurora Nagar, Gorakhpur 953525",MEDIUM
+78d3eb1e-dff8-484c-ac1d-ec1071117112,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"676, Chakraborty Path, Korba-168125",MEDIUM
+dcce329c-09fd-4fd8-a187-00f5341ea458,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"53, Varughese, Jamnagar 382454",MEDIUM
+c098846d-b626-40c6-b0bd-0c69b8c72f03,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"88/075, Patel Street, Morena-419882",MEDIUM
+b82a7fab-5a5b-4716-8cda-39887b0e9a6c,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 637, Parmer Chowk, Dhanbad 080454",HIGH
+de2f3177-60db-4205-aac6-62ed4f67c136,3 people trapped inside a flooded house. One person is elderly.,FLOOD,3,True,False,"H.No. 998, Uppal Nagar, Ujjain-212553",HIGH
+93bc2bb3-b43f-4c1c-94ae-0a5af244e996,1 people trapped inside a flooded house. One person is pregnant.,FLOOD,1,True,False,"854, Varty Nagar, Aizawl-256041",HIGH
+a30340c0-6e9e-4aa3-bdbd-41bad3ae0f8b,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"96/663, Goyal, Agartala-102029",MEDIUM
+915600cc-b0b8-4d0f-957f-4e90e345e4c1,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"59/36, Mammen Chowk, Nadiad-437203",HIGH
+4fd4a73d-e39c-49ef-b330-db736b0efac4,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 29, Kade Road, Erode 243323",HIGH
+ec9eacc9-e6ec-4634-9dbe-3d831501d3ad,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"446, Chokshi Chowk, Raiganj-414962",MEDIUM
+e0ce57fb-b5a2-4429-9a3a-58ff671d5853,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 70, Bhatt Ganj, Berhampore-803174",HIGH
+9c526f59-efc5-4309-80cc-5b70f58b6fbc,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 037, Khatri, Kirari Suleman Nagar 624411",HIGH
+e8acf02a-5bd0-49c0-b54d-199824cc0bdf,3 people trapped inside a flooded house. One person is infant.,FLOOD,3,True,False,"84, Bora Road, Gurgaon 782324",HIGH
+efd87c90-4b7e-42bf-a1e5-8832eb2f6797,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 32, Banik Circle, Sri Ganganagar-644700",MEDIUM
+8014dec1-9f60-4766-9db0-4dc562d27ed2,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"07/673, Bhagat Chowk, Siwan 297555",HIGH
+c4112d7e-10e0-4281-af19-ee4510dcaf82,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"204, Amble Nagar, Surendranagar Dudhrej-248151",HIGH
+b9149b3f-08a2-433a-97a0-a7947dfe741c,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"47/51, Nair Path, Ludhiana-605832",HIGH
+a20e63f2-02db-4af4-a24a-3e1b7d9ef89d,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"86/63, Bakshi Nagar, Siliguri-699340",HIGH
+179442be-c22e-4f9d-9a0c-fd68f316db48,Family of two stranded on rooftop.,FLOOD,2,False,False,"20/862, Dora Path, Sambalpur 147225",MEDIUM
+0e038294-5416-43c4-a18f-e588ee93db87,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"15/76, Gara Zila, Sambhal-328770",HIGH
+400c0b04-97e2-4099-8bcd-abc63cda5113,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"H.No. 04, Dugal Street, Nashik-978257",HIGH
+3d6f4c4d-f284-47d8-868d-d571cede8c7d,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"47, Hayre Circle, Ambarnath 915484",MEDIUM
+0347fad0-58af-49b0-9401-79c65717da8e,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"51, Banerjee Path, Chinsurah 734219",HIGH
+ed0106ca-715f-49c7-8deb-8fc9f0d94f5b,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"30/26, Kumar Road, Tiruvottiyur-146361",HIGH
+e2ad7595-fc21-4aec-adc1-8e2275a7c33c,4 people trapped inside a flooded house. One person is pregnant.,FLOOD,4,True,False,"H.No. 409, Khosla Circle, Raichur 747717",HIGH
+29dd322a-b7fe-4565-8274-706b1bd9cc44,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"26, Goel Circle, Gudivada-826866",HIGH
+98f26726-f07a-4c14-af7a-184724fcd392,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"81, Balay Ganj, Dhule-557645",HIGH
+e4212408-e617-4832-929e-d70f2a7d6157,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"76/71, Bajaj Circle, Motihari 971939",HIGH
+f6a978ea-2bd3-4a77-891d-7ce343fb2f3b,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 693, Amble Marg, New Delhi-110217",HIGH
+de7cbc90-d938-49d9-ae71-493dcded5fca,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"522, Sangha Zila, Chennai 185557",HIGH
+5e6242f1-ca6c-4eab-9c16-fdfa94e712d5,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"355, Deep Chowk, Narasaraopet-069914",HIGH
+719b5919-56f3-4732-bd6d-6936070a883a,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 03, Sekhon Marg, Jamshedpur 255512",MEDIUM
+016f1ed3-35a4-4ef3-bdbd-1f94ca4889be,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 741, Uppal Road, Sagar-181453",MEDIUM
+4813dd2d-9fa4-4e87-8fbe-952ebb450478,Family of three stranded on rooftop.,FLOOD,3,False,False,"H.No. 30, Mukherjee Circle, Buxar-770146",HIGH
+58477e37-409e-4dae-9eb5-d398c9f6c6ef,1 people trapped inside a flooded house. One person is pregnant.,FLOOD,1,True,False,"H.No. 805, Dixit Nagar, Rourkela-617996",HIGH
+86dffec7-b0cb-4f6f-93cd-3de5b43ed02a,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"24/98, Chauhan Road, Tiruppur-863233",MEDIUM
+871c43a1-c6a3-4e8c-ad20-d988f9e47cb4,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"H.No. 789, Kulkarni, Shimoga 913679",HIGH
+03329512-eafc-42f8-a684-bc4bf9a80f58,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"59/805, Pau, Durg-356718",MEDIUM
+43e12023-ab18-4642-ad7d-144c4abd3d0f,4 people trapped inside a flooded house. One person is elderly.,FLOOD,4,True,False,"08/92, Khatri Marg, Buxar 919531",HIGH
+849ef5e4-7d91-4210-a8b4-adc1316ae058,4 people trapped inside a flooded house. One person is disabled.,FLOOD,4,True,False,"35/932, Edwin Nagar, Vijayanagaram-697556",HIGH
+b2175720-83e7-4e9b-bc99-9f450673ed70,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"58, Srivastava Path, Delhi-248903",HIGH
+ad024682-57e0-41bd-9449-5efd5c8f5a0e,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"72, Aggarwal Zila, Vasai-Virar 596511",HIGH
+34751ba2-ef80-4328-9847-bb51407507d4,2 people trapped inside a flooded house. One person is disabled.,FLOOD,2,True,False,"942, Jani Chowk, Munger 646929",HIGH
+a1c5ee08-78b6-415a-b5d8-953233eb04d2,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"H.No. 709, Tailor Path, Raipur-009197",HIGH
+b0d88ea1-742d-4ece-b231-ee3c86599d81,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 66, Bir Nagar, Mau-869563",MEDIUM
+a40908a6-917d-407a-833f-57e45cfbe37a,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"H.No. 42, Acharya Street, Hospet-500744",HIGH
+c0c6f352-107a-41d9-a4b5-0a8f0d34bc13,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 403, Nigam Chowk, Bhopal 923991",HIGH
+d6e91386-7779-4691-ae02-0269f0c50bfc,Family of two stranded on rooftop.,FLOOD,2,False,False,"29/04, Karnik Nagar, Hapur 066432",MEDIUM
+78568860-ce3f-4115-b2d7-8df53d1616b8,1 people trapped inside a flooded house. One person is infant.,FLOOD,1,True,False,"140, Cherian Ganj, Baranagar 781843",HIGH
+3171e2c4-72c7-44aa-8c6f-d236760ae9f3,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 162, Dhar, Mehsana 782244",HIGH
+0ef4b246-6b67-49db-879c-a26a6bc950f1,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"10, Sem Path, Darbhanga-269545",MEDIUM
+90f9ef12-e9d7-4cf1-9c74-d03fa2db73df,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"17, Bali Nagar, Khandwa-933724",MEDIUM
+a602b9bd-335d-4105-ad58-3c05b0f44cef,Family of one stranded on rooftop.,FLOOD,1,False,False,"71/182, Pal, Bhopal-840749",MEDIUM
+1067073e-565f-46fa-a377-4a5f61211c23,Family of four stranded on rooftop.,FLOOD,4,False,False,"75/86, Bava Chowk, Bhiwani 295372",HIGH
+165de4e1-a393-48c5-a380-e219475fe427,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 18, Mannan, Rajpur Sonarpur-084493",MEDIUM
+7d2261c2-8db8-4b36-9799-14050c85b42b,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 258, Swaminathan Street, Pondicherry 431797",HIGH
+6a6f081c-033f-4a72-92ee-7e7f44ad1c27,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"605, Mallick Ganj, Malda 229893",MEDIUM
+4983b6bc-8165-4cb2-ad1d-2eb90123b32f,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"29/68, Shenoy Nagar, Sangli-Miraj & Kupwad 762850",HIGH
+9ceb1bdc-fc07-4912-aa72-35b7cd8eca54,5 people trapped inside a flooded house. One person is infant.,FLOOD,5,True,False,"478, Madan Road, Jalandhar 512811",HIGH
+e463a085-1bfe-4043-aad6-1cca8c7da641,Family of one stranded on rooftop.,FLOOD,1,False,False,"H.No. 582, Padmanabhan Chowk, Patna 439545",MEDIUM
+99643590-68c5-47eb-8226-195f8ab6e0aa,Family of two stranded on rooftop.,FLOOD,2,False,False,"90, Mani Street, Raichur 123545",MEDIUM
+3bd4652d-5d4c-4313-94bd-2336318ef21c,Family of five stranded on rooftop.,FLOOD,5,False,False,"H.No. 193, Saxena Road, Ahmednagar 422460",HIGH
+ffd6776c-f590-4bfb-86e3-2d3d162d631f,Family of three stranded on rooftop.,FLOOD,3,False,False,"94, Thaker Road, Kulti 777924",HIGH
+4a6f8916-7ffb-4f28-8ad7-ee7d668e3303,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"742, Agate Ganj, Satna-128495",HIGH
+44d6278f-a6f3-4f5b-b61e-e2ecbc24c4cf,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 224, Dhingra Path, Raipur 634060",HIGH
+996a4eee-b423-480f-9e58-6e2c95b5f31b,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 19, Lal Chowk, Chandigarh 166648",MEDIUM
+c8fddb30-ccc9-4171-b6a2-92b0f66c0375,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"37/42, Bassi Zila, Latur 860715",HIGH
+6fdf58d1-3eb6-4ebf-8f1f-ad0443fbc80c,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"60/42, Gola Ganj, Gangtok 819750",HIGH
+03876788-bfd4-4808-87eb-9b2fe1dea4d9,1 people trapped inside a flooded house. One person is infant.,FLOOD,1,True,False,"45/092, Solanki Marg, Gwalior-788390",HIGH
+ac2cebbe-f377-4630-bccc-9ece139e7d2c,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"03/449, Wali Nagar, Ulhasnagar 257872",HIGH
+0f41a65b-c05b-424b-bda5-3d51b8bdf355,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"237, Lanka Marg, Aurangabad-632445",MEDIUM
+7ed5104a-0ff6-410d-96f9-9920d6e04483,1 people trapped inside a flooded house. One person is disabled.,FLOOD,1,True,False,"H.No. 795, Raghavan Marg, Chittoor 153706",HIGH
+2379fbe9-d175-4db0-abd8-b19ebb29e285,3 people trapped inside a flooded house. One person is elderly.,FLOOD,3,True,False,"H.No. 94, Buch Circle, Meerut 891488",HIGH
+bb555d35-a3e8-47cb-bf4d-727c6c184e17,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 07, Bhatti Path, Khandwa-111019",HIGH
+5a4236f7-4c8e-400e-8104-9db7cd790d3f,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"117, Sampath Nagar, Muzaffarnagar-981983",MEDIUM
+f954602b-6980-46b1-9e78-b7f56e704501,2 people trapped inside a flooded house. One person is elderly.,FLOOD,2,True,False,"H.No. 56, Gour Marg, Aurangabad-471412",HIGH
+c499a602-b515-4d7c-be96-e7fa4be962b3,Family of one stranded on rooftop.,FLOOD,1,False,False,"19/17, Rajagopalan Ganj, Kavali 059373",MEDIUM
+6506d1b4-b0bc-42be-af61-52f659c8fd93,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"55/145, Sama Marg, Mathura 859471",HIGH
+68c2681e-9f52-4a3d-8862-0d2e3325f15d,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 078, Barad Chowk, Chandigarh 013309",MEDIUM
+927d2796-172c-4fa6-9c93-8b3b41951d86,4 people trapped inside a flooded house. One person is disabled.,FLOOD,4,True,False,"94, Loyal Chowk, Tirupati-325192",HIGH
+e782a2c3-6fcb-4aae-832e-3aabf934809b,Family of five stranded on rooftop.,FLOOD,5,False,False,"H.No. 88, Bhalla, Vasai-Virar 081574",HIGH
+a84f0114-a8c5-48b0-a72d-5931156c2648,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 183, Balan Ganj, Suryapet-386845",MEDIUM
+eadac394-be17-49f8-b58f-497e903642fa,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 790, Contractor Nagar, Bhopal-785036",HIGH
+61483c69-7824-45a7-9dde-93ca109045df,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 634, Kannan Chowk, Bhind 103458",MEDIUM
+6c9a9965-ed11-47ab-9a5f-ed0dd4d9b248,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"586, Wable Ganj, Rajpur Sonarpur 728156",HIGH
+a5ebe83b-7531-4816-9315-0d058255348c,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 585, Andra Chowk, Khora -104986",HIGH
+57978d50-e0a0-4129-9a25-ac29ae6e3f1c,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"910, Hari Zila, Pondicherry-562058",MEDIUM
+c2ff0f6a-e39d-471f-b839-e4ab80542566,2 people trapped inside a flooded house. One person is pregnant.,FLOOD,2,True,False,"43/90, Chander Zila, Orai-779483",HIGH
+6bd60094-4138-42b9-a713-2a928f03f4aa,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"134, Srinivas, Ramgarh-559275",HIGH
+d19c4070-dfba-416e-9093-35bc1b2ca3a2,5 people trapped inside a flooded house. One person is pregnant.,FLOOD,5,True,False,"20/340, Wable Circle, Panipat-007214",HIGH
+cb230734-afb2-4cca-a5a3-89602ddebcf9,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"185, Pau Ganj, Srinagar 826265",HIGH
+fcac000e-45f8-46b3-a509-bffb66f977e0,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"31, Brahmbhatt Ganj, Imphal-032492",HIGH
+e7d572da-8c12-4504-93f0-9dfe754a9bab,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"03, Narula, Bhiwandi-264173",HIGH
+af7ba756-0b48-4a19-b1ab-7924bafdaf8a,Family of one stranded on rooftop.,FLOOD,1,False,False,"01/214, Malhotra Nagar, Sambalpur 633912",MEDIUM
+013ce8c4-95bc-469e-b702-958a8f961416,Family of two stranded on rooftop.,FLOOD,2,False,False,"464, Minhas Nagar, Madanapalle 154165",MEDIUM
+0d868bcc-c71c-42b6-a122-94fc973fbc15,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"23, Rajagopal Path, Loni-377162",HIGH
+1c3a9eba-177a-46ea-b441-9501c274d9c6,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"52, Sundaram Street, Agartala-347366",HIGH
+1801e57a-90c1-46a9-839e-b1655400dd42,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 48, Kanda Circle, Jalandhar 360288",HIGH
+f465f222-cb21-4745-9681-d8aef09f1b75,4 people trapped inside a flooded house. One person is disabled.,FLOOD,4,True,False,"707, Modi Ganj, Kochi 233397",HIGH
+2b67c733-88d9-445a-9c6c-11715850eccd,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"88/961, Majumdar Circle, Nagpur 071009",MEDIUM
+8ddad0e6-3111-4117-a88d-f05331354a1f,3 people trapped inside a flooded house. One person is disabled.,FLOOD,3,True,False,"H.No. 62, Doctor Marg, Jhansi 785058",HIGH
+d3835c06-1ae4-4e41-8310-c4f0d0f53073,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 627, Vohra, Sambhal-092464",MEDIUM
+a758139f-222d-42c5-8b89-82d3750c3611,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"13/432, Kalla Ganj, Dehradun-880762",HIGH
+c35587e2-9bc3-4449-aae6-5378f47650f4,1 people trapped inside a flooded house. One person is infant.,FLOOD,1,True,False,"75/647, Sridhar Marg, Pune 523034",HIGH
+3fbbb66c-6766-4165-8d26-f38569d06032,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"05/616, Bath Path, Hapur 345771",HIGH
+3cee8647-83d2-47c6-863b-b82bd7516d8a,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"10, Nagy Path, Belgaum 587544",HIGH
+5b160af1-49c0-4d34-9b9b-027a8672e204,Family of two stranded on rooftop.,FLOOD,2,False,False,"76/16, Wadhwa Zila, Rajahmundry 779132",MEDIUM
+516c93c9-6ce9-4144-83c7-ffa1aaa7ab9f,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"31, Doctor Circle, Firozabad-357930",HIGH
+8284baba-1952-45ba-9413-e201831b8983,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 287, Rai Path, Adoni 391040",MEDIUM
+3261b068-d793-4473-b31f-ed70f21ad115,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"H.No. 549, Dutta Ganj, Tadepalligudem 007446",HIGH
+6e28234f-c554-49a5-a1e0-457a6e8dbe58,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"31/369, Goel Circle, Sangli-Miraj & Kupwad-320552",HIGH
+bb921fa8-43d2-45a6-b323-68281f56973f,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 53, Dora Ganj, Navi Mumbai 549155",MEDIUM
+f455442e-afe3-4d8c-883c-b9b5e64c27a5,Family of two stranded on rooftop.,FLOOD,2,False,False,"95/82, Prashad Marg, Serampore-394972",MEDIUM
+38b86de0-ffae-43d6-be61-c283785628bd,4 people trapped inside a flooded house. One person is elderly.,FLOOD,4,True,False,"725, Gola Marg, Dewas-118383",HIGH
+9084e846-d4d0-402c-858d-156edc424a42,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 576, Buch, Tadepalligudem-058276",HIGH
+2e5fc70f-4de6-4941-a49f-068f767bdbff,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"77/839, Kale, Tezpur-680491",HIGH
+50622e77-a835-4d6c-85e8-c7b15a8f31f5,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"79, Rai Ganj, Hosur 439470",HIGH
+2434dfe0-6bb2-431b-800e-1b24fd28de8a,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"H.No. 85, Golla Chowk, Aligarh 866231",HIGH
+8e745880-e79c-441d-8564-531f60211cee,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"27/02, Sehgal Circle, Jalna 312474",HIGH
+503e4eb1-aba3-4610-aed2-88e17811f620,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"H.No. 60, Basak Marg, Cuttack 478451",HIGH
+9bb3cb06-37f2-4494-bb79-b0723e54bb69,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"439, Kurian Road, Ramgarh 283676",MEDIUM
+b3e8a3ae-81e5-4364-be4d-ad5faeb411ce,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"281, Ravel Circle, Hosur 805718",HIGH
+6d064bd0-f373-4602-98a1-65c6e831b861,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 76, Bath Nagar, Coimbatore 645491",HIGH
+31e72652-65b3-4021-90c8-2f1c5bf6f07e,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 403, Zachariah Zila, Shivpuri 481440",HIGH
+bebe8d67-30a7-401a-ab4a-eb1576735d3c,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 45, Karnik Nagar, Bhind-019564",MEDIUM
+d5065ac4-03db-43c6-b4df-e6ccc52ced27,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 39, Peri, Ichalkaranji 198526",MEDIUM
+17d0e89b-5368-464a-9305-bdd85e7c061d,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 93, Balan Zila, Sambhal-171541",HIGH
+087f63ac-7562-4e28-8cdc-fd677585ef8b,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"52, Jayaraman, Raurkela Industrial Township-832755",MEDIUM
+c33e1731-7c55-4239-9785-b52e238ab107,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"21, Ram, Moradabad-249745",HIGH
+67231ef2-0a08-456b-86d4-e422e751abdd,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"266, Sastry Path, Baranagar-116318",MEDIUM
+a93da1a5-cdf2-448c-9bd9-5a3d2fb96c73,Family of five stranded on rooftop.,FLOOD,5,False,False,"504, Pant Nagar, Anantapur 340317",HIGH
+edc5f2f9-bb4e-4d84-b5a8-02f821af1246,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"78, Saraf Ganj, Naihati 339737",MEDIUM
+ed8860bc-29a1-4eb2-8ed2-7b2ac77b3299,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"75, Badami, Hapur-519988",HIGH
+79d16f2c-cb0f-44f0-888d-53be66f8105b,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"84, Borra Circle, Pondicherry-385620",HIGH
+c1d9ce97-6f24-4c4a-9145-9af1f1cf5543,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"11/40, Kata Street, Madhyamgram 952613",HIGH
+c15366e4-9f24-4d62-ab39-93648b36d9aa,Family of four stranded on rooftop.,FLOOD,4,False,False,"886, Mukherjee Zila, Danapur 723974",HIGH
+d1d31181-cef5-4b1f-a162-7bddfb1bdbf5,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 11, Krishnamurthy Street, Surat-464360",MEDIUM
+4484c927-5bee-4b6f-93a0-9ed79c29a4f5,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"85, Wason Marg, Phusro 873891",HIGH
+fb5bd2b8-a506-4dda-b104-9e26700ef18b,Family of three stranded on rooftop.,FLOOD,3,False,False,"28/42, Sengupta Road, Hindupur-007502",HIGH
+9c68a514-e108-44c9-9040-858f08205ee4,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"H.No. 405, Narayan Road, Tadepalligudem-590409",HIGH
+3e42d878-a195-4ae0-96a7-019ce431a9d5,Family of two stranded on rooftop.,FLOOD,2,False,False,"31, Mukhopadhyay Path, Ajmer-018112",MEDIUM
+7a1a5b30-be8e-48a5-bb54-33f56ef7f26e,Family of one stranded on rooftop.,FLOOD,1,False,False,"49, Bala Ganj, Raichur-541202",MEDIUM
+c3db0e9f-a882-40bc-b6a8-2a9f8f55c9a7,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"665, Varty Nagar, Vijayanagaram-840660",HIGH
+ce8e9b54-39f3-42a0-91c4-fc7d3b66ae4e,Family of one stranded on rooftop.,FLOOD,1,False,False,"35/48, Jain Zila, Medininagar-062622",MEDIUM
+8af14d26-f024-4b17-97ec-3b04a0183159,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"H.No. 72, Upadhyay Chowk, Faridabad-259868",HIGH
+9c648af9-0e93-459b-b208-0ac05e439ed1,4 people trapped inside a flooded house. One person is pregnant.,FLOOD,4,True,False,"57, Bumb Circle, Faridabad-707697",HIGH
+74d05ee6-3061-48e7-b99e-35eb034c3c5d,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"71, Sarma Street, Dibrugarh 313961",MEDIUM
+53c7138a-b217-409f-a560-d7e26652bd7a,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 50, Salvi Marg, Srikakulam-037521",MEDIUM
+ee6fe90e-6f8e-4f66-8cf7-a969aeb2981b,5 people trapped inside a flooded house. One person is disabled.,FLOOD,5,True,False,"991, Venkataraman Ganj, Ambarnath-802320",HIGH
+f7fa9893-33d1-4277-9595-e6f9771ece2a,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 778, Bhatt Zila, Hajipur 005495",HIGH
+f8d7f1ba-ecaf-42ea-a6fa-85e29317d2bd,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"07/666, Panchal Path, Mehsana-360423",HIGH
+95efada9-b3c7-422d-8e0a-6ece9190442d,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"98, Radhakrishnan Marg, Davanagere-216317",MEDIUM
+a8300100-6dd0-4550-805e-bd696262913d,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"85/74, Chandran Zila, Secunderabad-972037",HIGH
+f2e1b7b2-2b90-4c8e-9e8a-382cfe2c0bf8,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"187, Dhillon Ganj, Ambala-862652",MEDIUM
+74b92eaf-46d5-427e-815a-e714228ab584,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"H.No. 870, Taneja Street, Nandyal-622577",HIGH
+3f71562a-1360-49a3-89e8-fe9451b7e127,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"98/09, Ravi Path, Kolkata 311962",HIGH
+55323e94-6224-4136-a1db-2ffe6c4034bd,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"06/27, Vig Marg, Sikar 182225",MEDIUM
+94966392-4a80-49d0-a782-057b2b4f1b08,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 110, Wason Ganj, Guwahati 337474",MEDIUM
+b51b59e9-891b-4962-89f2-dae66ded1658,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"092, Gara Path, Srikakulam-341476",HIGH
+47666d95-66e7-4e30-974e-aa117915c8c6,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"086, Sant Circle, Karaikudi 930158",HIGH
+828b9445-0bd9-48ae-ae6b-6f16c39e1563,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 23, Sami Ganj, Secunderabad 126974",HIGH
+e39a356a-b280-43d5-8b59-f4fc46923d7f,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 75, Agarwal Road, Dehradun 275381",MEDIUM
+56b9398b-673a-4c31-8f60-15b99afb2c8f,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 805, Kanda Ganj, Udaipur-578551",MEDIUM
+3da4dbcc-809a-4845-a1f0-98ec413e4bb7,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"H.No. 94, Patla Chowk, Berhampore-200047",HIGH
+8fd55e3e-9ffd-4ce2-ae76-2ddcfaed1f26,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"09, Patel Path, Rampur-766713",HIGH
+abfb09bc-7cad-4498-bcfe-8e1aa68682d2,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 678, Pradhan Ganj, Chandrapur 058021",HIGH
+2314c899-779d-447f-8aa8-df570c5b5f4d,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"H.No. 99, Chahal Ganj, Khandwa-466879",HIGH
+bee19572-9661-42a3-8c43-105c17e31ded,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"79/82, Sen Road, Bijapur-586749",HIGH
+a4fe271a-3d57-4d33-af33-2ace9d7edfdc,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"56, Borra Nagar, Berhampur-234706",HIGH
+6057a29e-fe05-4aff-a34a-f1b30fd80490,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"09/459, Kakar, Siliguri-682231",MEDIUM
+95c8cbf8-85bf-43e9-8c29-fb0dae841ff9,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 738, Lanka Street, Kirari Suleman Nagar-548717",HIGH
+d9aadefc-a48d-4c10-8967-3e3bf98e0cf0,Water has entered the ground floor. three children are trapped.,FLOOD,3,True,False,"40, Choudhury, Secunderabad-300778",HIGH
+1303b3a1-8564-4426-be88-9941fb7dcb82,Water has entered the ground floor. two children are trapped.,FLOOD,2,True,False,"72/006, Kade Circle, Darbhanga-172316",HIGH
+358de104-2975-464b-b647-a3ccbc4083a4,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"34/981, Chander Nagar, Navi Mumbai 070889",MEDIUM
+ba1cc684-e593-4907-bd5c-0be9d422ea14,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 381, Palla Nagar, Orai 717470",MEDIUM
+7ccbd577-c569-448f-9a08-59a844367bff,5 people trapped inside a flooded house. One person is disabled.,FLOOD,5,True,False,"23/355, Rastogi Nagar, Kota 880844",HIGH
+36cde95b-a571-4082-ae50-71b9c8081809,2 people trapped inside a flooded house. One person is pregnant.,FLOOD,2,True,False,"H.No. 818, Ramanathan Ganj, Nellore-884800",HIGH
+9428db90-f19e-4085-9b1a-4fb64683f3d8,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"96, Dash Path, Pune-920138",HIGH
+7bf7d4b4-4257-4913-ad11-cc961046e67d,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 084, Dewan Road, Pali-188452",HIGH
+dc81dd13-8c8d-411e-a5a4-8f8ce814fafe,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"18, Sood Marg, Rohtak 381656",MEDIUM
+9f09bd21-1d58-4022-96d4-5c02a71cc967,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"34/66, Chaudhry Circle, Bikaner 983329",HIGH
+5d1d7526-94de-4c54-8d08-f8f4a474dbe2,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"59, Arora Circle, Rajkot-533198",MEDIUM
+9242223b-3187-428f-a312-8afaedd6b0e8,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"90/707, Yadav Road, Shahjahanpur 759929",HIGH
+0afb51ae-8380-4636-9d32-4670f7579e4c,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"06, Dara Circle, Berhampore 541292",MEDIUM
+5a333fbd-8fa6-46dd-af75-2e8534a816d9,4 people trapped inside a flooded house. One person is pregnant.,FLOOD,4,True,False,"H.No. 27, Sibal Circle, Junagadh 103813",HIGH
+0d0d8aea-0a4a-44c6-b9bf-84171788ee35,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"94, Goda Circle, Katihar-013007",HIGH
+249ec41b-aa74-4bba-99ed-da72a6617e38,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"43/26, Ramaswamy Zila, South Dumdum-841349",MEDIUM
+5e8cd728-19db-4e54-823e-1ff3b9280948,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"40/18, Bahri Street, Jamalpur-244167",HIGH
+61077257-3168-405f-90a0-a4b63d5285ca,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"67/98, Jaggi Path, Khora  455842",HIGH
+aecd3e81-281a-41e4-97fb-29b0da268df2,2 people trapped inside a flooded house. One person is disabled.,FLOOD,2,True,False,"43/77, Krishnan Zila, Ahmednagar 708123",HIGH
+1956c953-7682-471a-aab3-a9a50e776ea0,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"39/79, Arya Ganj, New Delhi 728642",MEDIUM
+662f9446-1fdb-47d6-83e8-a694736e389f,Family of five stranded on rooftop.,FLOOD,5,False,False,"322, Datta Road, Sambhal-760363",HIGH
+ebf5b7d5-6554-4df7-b6b8-3b942084fa61,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"37/280, Raghavan Ganj, Jalandhar 776668",HIGH
+7e89f580-6401-4c41-b8b0-23a5c1f78669,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"31/76, Kanda Chowk, Guntakal 754603",HIGH
+aaeef6d4-6f32-485d-80b1-3a9b47f0af99,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 39, Sekhon Path, Jaipur-140093",MEDIUM
+7c97a53c-63f5-463f-a0d8-89133e90ecb6,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"83/08, Nori Road, Chennai-093254",MEDIUM
+0ef2a317-bc1b-46ec-a850-ff6c2e9d0ac3,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"934, Cheema Zila, Tiruppur 622854",MEDIUM
+981cb975-ae49-4b15-88cb-78d2d342e581,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 179, Goyal, Durg 052757",MEDIUM
+7b4b6efc-fd26-4ee4-9c0d-0b8b14a5a5f6,Family of one stranded on rooftop.,FLOOD,1,False,False,"35, Barman Path, Mysore-820841",MEDIUM
+51f084be-2a86-4e94-8763-b3fc96e26e3e,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"32, Raman Ganj, Ahmednagar 318480",HIGH
+11d3d596-fde2-44c8-b62b-ecd2c5f5814c,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"31, Sahni Chowk, Adoni 447229",HIGH
+b95999ed-2c0d-4c79-b902-feb0b6a04b81,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 15, Chahal Nagar, Medininagar-308675",HIGH
+2ea6da41-fa9d-4fd6-af6d-53522eec7c7c,5 people trapped inside a flooded house. One person is disabled.,FLOOD,5,True,False,"37/090, Wali Ganj, Parbhani 549607",HIGH
+e1c6eb45-c03e-42f9-bea8-9b17b408fb4e,Family of three stranded on rooftop.,FLOOD,3,False,False,"H.No. 79, Jha Road, Guna-991480",HIGH
+a5591d23-d436-49a5-802a-b4fa417b0ab9,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"13, Bora Path, Berhampur 212035",MEDIUM
+96ac0033-ee6b-481c-80aa-cb78bb7be3eb,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"75, Chandra Chowk, Kozhikode 887789",MEDIUM
+8bbfe6e3-5fbc-4418-bf58-c8acf3f551fa,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"75/229, Loyal, Dindigul-388054",HIGH
+42db191f-b774-4cda-9eba-9cf8a916c0db,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"948, Shukla Zila, Unnao-528296",HIGH
+b499b772-382a-4659-af95-f516e53938b7,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"43/813, Arya, Gwalior-711182",MEDIUM
+812910f8-1b0d-4605-9f46-3220b203af21,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"129, Patla Nagar, Sambalpur-879373",MEDIUM
+a1a4b414-725f-4682-aead-ca3286cafb3a,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"45/12, Suri Circle, Thiruvananthapuram 371135",HIGH
+e9c3daf6-9ab5-47e0-98f3-8184fe3a489a,Family of five stranded on rooftop.,FLOOD,5,False,False,"67/34, Pradhan Path, Aurangabad-399002",HIGH
+9fa810a1-74e1-47fe-bb9b-5649182da049,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"43, Saha Nagar, Patna 649449",HIGH
+45e9e86d-2c47-4f11-8470-c8c740adad48,Family of two stranded on rooftop.,FLOOD,2,False,False,"40, Kari Street, Madurai 785840",MEDIUM
+69c8fd9b-3ad6-456d-9b42-0959a7f15744,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 50, Mohan Road, Moradabad 589331",MEDIUM
+f39fd8e6-7133-470e-8cd2-3a05454282a1,Family of four stranded on rooftop.,FLOOD,4,False,False,"H.No. 29, Kala Street, Katni-059528",HIGH
+70c7a30d-aee6-473a-894c-62c70b065d3a,4 people trapped inside a flooded house. One person is infant.,FLOOD,4,True,False,"436, Panchal Street, Bokaro 094962",HIGH
+60f197fb-be75-4e8e-af3b-2732f3340732,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"355, Loyal Ganj, Meerut 127961",MEDIUM
+46664d82-ab1f-491f-a472-0d17de7fec97,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"41/319, Yogi, Etawah 751529",HIGH
+b313aebb-9551-48ba-a400-c8fb54a1d2b1,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"52/03, Wable Chowk, Pali-928979",HIGH
+99453138-397f-4cfd-b463-45b3175d1f14,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"16/494, Jayaraman Zila, Amritsar 476993",HIGH
+aec13f3f-8319-4ae2-816d-e6b2a6a5379b,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"53, Chandra Street, Lucknow 914814",MEDIUM
+4dca8e19-3d42-4e31-85f0-e00e0b03c7a1,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"64, Tandon Ganj, Begusarai 184654",HIGH
+e1f74e7a-055a-4df7-8355-35a88506fa53,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"671, Bora Chowk, Ghaziabad-543736",HIGH
+39794f51-03e6-4fde-97ad-81b505f8be13,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"54/45, Lal Chowk, Ahmednagar-017253",HIGH
+ec0580cc-51d3-45d4-a243-a49c34a1a892,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"46, Raghavan Road, Proddatur-286432",MEDIUM
+2f4ebcdd-71ca-422c-830f-4080bcd2de59,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"14, Buch Chowk, Kanpur 123700",HIGH
+39efc728-5807-4a82-905b-1f9498bf8c4b,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"85/290, Naik Nagar, Korba 788686",HIGH
+82f6c9e9-f33b-48f0-9f48-d633972389e8,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"06/508, Narayanan Ganj, Alappuzha 904970",MEDIUM
+492a2b07-af45-4374-8e88-53c1d26a1dc2,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 081, Swaminathan Street, Sirsa 436141",MEDIUM
+b02c700c-9f58-4d58-a8fb-86ccafe9662a,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 459, Sarraf Road, Berhampur 926194",HIGH
+020d477c-23fd-4359-a02c-459392359107,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"18/49, Kala Chowk, Bally-217195",HIGH
+ca229cf4-133c-4713-8c81-2c4df426b9d8,Family of five stranded on rooftop.,FLOOD,5,False,False,"H.No. 92, Chada Marg, Baranagar-896491",HIGH
+a2968f3f-69f7-4c0e-ace5-fff6c43e2173,4 people trapped inside a flooded house. One person is infant.,FLOOD,4,True,False,"H.No. 72, Sani Zila, Pali-522853",HIGH
+f63f2d5e-cb06-47f4-aac6-21db94816627,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"79/52, Kadakia Ganj, Nellore-301172",HIGH
+977e36e8-0d2e-4abf-b6cc-e2754431e584,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 871, Sanghvi Zila, Dehri-224208",MEDIUM
+a1b03b79-7828-4d75-8717-8fa6ebe32b32,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"57/14, Banik Marg, Kamarhati-265880",MEDIUM
+da7e5c94-75b4-43f1-8f40-632ebcd8adcc,2 people trapped inside a flooded house. One person is disabled.,FLOOD,2,True,False,"23/365, Chhabra Ganj, Coimbatore-424214",HIGH
+08f90b39-7d16-4727-bf23-546c5f94c772,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"17/145, Loke Path, Shimoga-948707",HIGH
+d1ef040a-3bae-40dc-912e-96636c5269f4,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"44/78, Gara Marg, Bokaro 627372",HIGH
+2867f004-5848-473f-be2c-e9ddf8492ab6,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"75, More Road, Thiruvananthapuram 194454",HIGH
+7a2c5d1d-6223-4803-bdc2-1a69e69578f0,Family of five stranded on rooftop.,FLOOD,5,False,False,"H.No. 890, Kota Street, Salem 376199",HIGH
+8b9667f3-04b0-4760-a88d-2b88207cc7d8,3 people trapped inside a flooded house. One person is pregnant.,FLOOD,3,True,False,"15, Bath Ganj, Dehradun 963741",HIGH
+973057af-e202-41c3-b3ae-c97723dc2609,Water has entered the ground floor. one children are trapped.,FLOOD,1,True,False,"H.No. 237, Patil Road, Junagadh 279535",HIGH
+f900af1c-9898-448f-a452-b6e74d2f4d7d,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"02/43, Sibal, Faridabad 078954",MEDIUM
+11dfb367-4cae-45f8-ae66-a7ca48def1c9,Family of two stranded on rooftop.,FLOOD,2,False,False,"47/76, Walia Road, Bhagalpur 288142",MEDIUM
+1a3bcb21-3918-4a49-b06a-d0bfd7590409,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"40/12, Shroff Zila, Thanjavur 629414",MEDIUM
+d895cd36-d36a-4df5-985a-1040c8d5c691,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"63/73, Guha Circle, Coimbatore-849811",HIGH
+c19328e3-9140-4901-a1d0-2256bb99a015,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 623, Tailor Chowk, Jodhpur-832738",MEDIUM
+8d76f089-3eb2-4636-a717-f97648f23a55,2 people trapped inside a flooded house. One person is infant.,FLOOD,2,True,False,"593, Merchant Zila, Hospet-325831",HIGH
+0a55031e-bf3a-46aa-aff5-3b303cd75b74,Family of five stranded on rooftop.,FLOOD,5,False,False,"H.No. 304, Lad, Ludhiana 892804",HIGH
+3bee1c3c-ae4a-4a46-8dd6-2a3ea10e9cf7,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"67, Dubey Nagar, Suryapet 489013",MEDIUM
+2895d06e-4427-4806-a5dd-f7781401f6ac,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"26/638, Borah, Phusro 868753",MEDIUM
+da1efeaa-4fe3-44a3-b5f2-fd025ab4eb37,3 people trapped inside a flooded house. One person is disabled.,FLOOD,3,True,False,"H.No. 74, Deep Street, Malegaon 552784",HIGH
+6437c566-76ab-4906-802f-8828cd28fe6d,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"98/28, Bawa Street, Faridabad-834987",HIGH
+0ca8ecc4-b94c-49ac-a8bd-512d4d4faa1c,Family of two stranded on rooftop.,FLOOD,2,False,False,"76, Rao Marg, Indore 770915",MEDIUM
+f204d1ec-d04a-47dc-bb2f-31d90946fe63,Family of four stranded on rooftop.,FLOOD,4,False,False,"04, Bhagat Marg, Muzaffarpur 248155",HIGH
+fb5d1996-b3ea-4a0c-9cc5-ea29ac3a7c09,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 03, Madan Ganj, Alwar 932799",HIGH
+be56eae3-3b6c-4edf-b5ce-b0881b4cf4cd,4 people trapped inside a flooded house. One person is disabled.,FLOOD,4,True,False,"16/515, Sinha Chowk, Bangalore-341957",HIGH
+626c3acd-ad56-453d-91d5-a90a82b2f512,1 people trapped inside a flooded house. One person is infant.,FLOOD,1,True,False,"04/90, Sathe Street, Loni-675930",HIGH
+e19616c3-d47e-4464-831c-ad98a80a4ffc,3 people trapped inside a flooded house. One person is disabled.,FLOOD,3,True,False,"780, Natt, Muzaffarnagar-200385",HIGH
+fbe822c7-1d04-4137-8ad7-095c93d022be,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 56, Master Nagar, Phagwara 697779",MEDIUM
+686da7a9-f68d-45b0-9604-506881fe2d6b,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"42, Modi Marg, Kirari Suleman Nagar 701955",MEDIUM
+9d756d8c-944b-4f66-a9db-d1d82dfcfcd1,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 845, Choudhury Marg, Sambalpur 148160",MEDIUM
+cef1ee4f-4b8c-4e20-8522-5b3963a26ef2,Family of two stranded on rooftop.,FLOOD,2,False,False,"H.No. 24, Palla Zila, Visakhapatnam 264507",MEDIUM
+c0627eb7-c2d7-42e1-94e6-405f395e76be,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"01/458, Srinivas Ganj, Raiganj-557106",HIGH
+5745fc06-6281-4cd6-a8a1-4c97eda61022,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 080, Iyengar Marg, Katihar 059698",MEDIUM
+7f0879fb-72cd-4109-b07b-39f78576fb96,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"86/72, Basak Circle, Satna-980680",MEDIUM
+8ee1a9ea-7e0a-4c7d-98ca-848bd9277481,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 895, Solanki Circle, Bhind 088991",HIGH
+204ec262-96bb-4794-ba7f-4df7d5f2cf6f,3 people trapped inside a flooded house. One person is infant.,FLOOD,3,True,False,"237, Mittal Circle, Thoothukudi-555127",HIGH
+c5208429-798e-4dd6-812f-dbf8fe7d032c,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"H.No. 35, Bava Nagar, Madanapalle-411024",HIGH
+423ab201-c3b0-4525-912b-a8384c2d2eed,Water has entered the ground floor. five children are trapped.,FLOOD,5,True,False,"38, Golla Marg, Muzaffarnagar-377246",HIGH
+984cb9c7-bd44-4f4c-83c1-a5e20c442453,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"35/56, Sibal Road, Dindigul 396508",MEDIUM
+aef0627c-b603-4b82-a404-0b22cd64a929,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"H.No. 57, Arya, Nagercoil-996513",MEDIUM
+38e8f950-8023-4136-93f7-4b7964588d15,3 people trapped inside a flooded house. One person is infant.,FLOOD,3,True,False,"73/942, Banik Street, Munger-155235",HIGH
+92818c62-8a60-4c7c-a58f-372c093a01f3,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"023, Pau Road, Vijayanagaram 963895",HIGH
+e16089d3-76d9-4ff5-b30f-c2810a6d7c9e,Fire broke out due to short circuit in the flooded basement.,FIRE,0,False,False,"H.No. 02, Bali Nagar, Hospet 307549",MEDIUM
+1cb20c85-c58c-4a54-98a5-d96728355938,Water has entered the ground floor. four children are trapped.,FLOOD,4,True,False,"H.No. 450, Puri Ganj, Rajahmundry-507161",HIGH
+bcd671a6-6b50-4f68-8d2e-48e06e7d67f3,3 people trapped inside a flooded house. One person is elderly.,FLOOD,3,True,False,"59, Sant, Morbi-040883",HIGH
+04264b1f-83a9-454c-b081-3d13c0fb8961,Person injured after falling during flooding. Requires immediate medical attention.,MEDICAL,1,False,True,"H.No. 89, Karnik Circle, Nashik 837211",HIGH
+b0c9bb00-52b0-4ff5-861c-5db8c8fda936,Family of five stranded on rooftop.,FLOOD,5,False,False,"69/130, Kapur Ganj, Rajpur Sonarpur-620641",HIGH
+de8158e5-c6c1-4b90-baa1-e93af7b05bd5,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"939, Dyal Zila, Raipur-974371",HIGH
+3f15e0ac-28da-4323-b5ff-d726aa7c855d,Family of four stranded on rooftop.,FLOOD,4,False,False,"92/06, Sastry Zila, Tirupati-116008",HIGH
+7d3403fb-404a-4eda-8a7e-02fa54585dbb,Elderly patient trapped without access to regular medication.,MEDICAL,0,True,True,"83/450, More Path, Unnao 412878",HIGH
+84f4e24b-c280-4cdd-b493-5485ed32995c,Road is completely submerged and vehicle cannot move.,INFRASTRUCTURE,0,False,False,"34, Pillai Street, Bathinda-393476",MEDIUM
