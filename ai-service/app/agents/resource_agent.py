@@ -8,7 +8,8 @@ from app.schemas.domain import (
     ResourceAssignment,
     RouteResult,
     RoadAccessStatus,
-    DisasterAnalysisState
+    DisasterAnalysisState,
+    DecisionProvenance
 )
 from app.services.optimization_service import OptimizationService
 from app.errors import PipelineWarning, WarningCode
@@ -146,10 +147,21 @@ class ResourceAgent:
             w.log()
             pipeline_warnings.append(w)
 
+        provenance = DecisionProvenance(
+            agent="ResourceAgent",
+            method="or_tools_optimization",
+            confidence=1.0,  # Optimization is deterministic given inputs
+            inputs=["resources", "incident_priority", "locations"],
+            reasons=reasons,
+            warnings=[w.message for w in pipeline_warnings],
+            fallback_used=False
+        )
+
         result = ResourceAgentResult(
             assignments=assignments,
             unfulfilled_requirements=unfulfilled,
-            reasons=reasons
+            reasons=reasons,
+            decision_provenance=provenance
         )
         
         result, validation_warnings = validate_resources(result, state)

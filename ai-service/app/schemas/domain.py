@@ -1,6 +1,7 @@
+import uuid
 from enum import Enum
 from typing import List, Optional, Tuple, Dict, Any
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from datetime import datetime
 from app.errors import WarningCode
 
@@ -52,6 +53,16 @@ class QualityStatus(str, Enum):
     SUSPECT = "SUSPECT"
     INVALID = "INVALID"
 
+class SafetyStatus(str, Enum):
+    SAFE = "SAFE"
+    REVIEW_REQUIRED = "REVIEW_REQUIRED"
+    BLOCKED = "BLOCKED"
+
+class AutonomyMode(str, Enum):
+    AUTO = "AUTO"
+    ASSISTED = "ASSISTED"
+    HUMAN_REQUIRED = "HUMAN_REQUIRED"
+
 # -----------------------------------------
 # INPUT SCHEMAS
 # -----------------------------------------
@@ -73,6 +84,7 @@ class Incident(BaseModel):
     latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude coordinate")
     longitude: float = Field(..., ge=-180.0, le=180.0, description="Longitude coordinate")
     victim_count: int = Field(default=0, ge=0, description="Total number of victims")
+    critical_victim_count: int = Field(default=0, ge=0, description="Number of critically injured victims")
     elderly_count: int = Field(default=0, ge=0, description="Number of elderly victims")
     children_count: int = Field(default=0, ge=0, description="Number of child victims")
     disabled_count: int = Field(default=0, ge=0, description="Number of disabled victims")
@@ -139,7 +151,24 @@ class DisasterAnalysisState(BaseModel):
 # OUTPUT SCHEMAS
 # -----------------------------------------
 
-class DataQualityResult(BaseModel):
+class DecisionProvenance(BaseModel):
+    agent: str
+    method: str
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    inputs: List[str] = Field(default_factory=list)
+    reasons: List[str] = Field(default_factory=list)
+    fallback_used: bool = False
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    data_quality_checks: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+class AgentResultBase(BaseModel):
+    used_fallback: bool = Field(default=False)
+    fallback_reason: Optional[str] = Field(default=None)
+    degraded_mode: bool = Field(default=False)
+    decision_provenance: Optional[DecisionProvenance] = None
+
+class DataQualityResult(AgentResultBase):
     overall_quality: QualityStatus
     confidence: float = Field(..., ge=0.0, le=1.0)
     stale_fields: List[str] = Field(default_factory=list)
@@ -149,7 +178,7 @@ class DataQualityResult(BaseModel):
     warnings: List[str] = Field(default_factory=list)
     provenance: List[str] = Field(default_factory=list)
 
-class SituationResult(BaseModel):
+class SituationResult(AgentResultBase):
     is_valid: bool = Field(..., description="Whether the incident data is valid and coherent")
     summary: str
     severity_assessment: str
@@ -159,7 +188,7 @@ class SituationResult(BaseModel):
     explanations: List[str] = Field(default_factory=list)
     normalized_incident_type: str
 
-class RiskResult(BaseModel):
+class RiskResult(AgentResultBase):
     priority: Priority
     risk_level: RiskLevel
     severity: str
@@ -167,7 +196,7 @@ class RiskResult(BaseModel):
     reasons: List[str] = Field(..., description="Explainability factors for why this risk was assigned")
     confidence: float = Field(..., ge=0.0, le=1.0)
 
-class PredictionResult(BaseModel):
+class PredictionResult(AgentResultBase):
     horizon_hours: int = Field(..., ge=1, description="How far into the future this prediction looks")
     predicted_risk_trend: str = Field(..., description="E.g., STABLE, WORSENING, IMPROVING")
     worsening_probability: float = Field(..., ge=0.0, le=1.0)
@@ -177,14 +206,14 @@ class ForecastItem(BaseModel):
     horizon_minutes: int
     risk_level: RiskLevel
 
-class PredictiveAgentResult(BaseModel):
+class PredictiveAgentResult(AgentResultBase):
     current_risk: RiskLevel
     forecast: List[ForecastItem]
     escalation_detected: bool
     explanation: List[str]
     confidence: float = Field(..., ge=0.0, le=1.0)
 
-class RouteResult(BaseModel):
+class RouteResult(AgentResultBase):
     resource_id: str
     destination_id: str
     estimated_time_mins: float = Field(..., ge=0.0)
@@ -203,7 +232,7 @@ class ResponseRecommendation(BaseModel):
     primary_action: str
     required_resources: List[ResourceAssignment]
     target_hospital_id: Optional[str] = None
-    human_approval_required: bool = True
+    autonomy_decision: Optional['AutonomyDecision'] = None
 
 class RecommendedAction(str, Enum):
     MONITOR = "MONITOR"
@@ -212,7 +241,7 @@ class RecommendedAction(str, Enum):
     DISPATCH = "DISPATCH"
     IMMEDIATE_DISPATCH = "IMMEDIATE_DISPATCH"
 
-class ResourceAgentResult(BaseModel):
+class ResourceAgentResult(AgentResultBase):
     assignments: List[ResourceAssignment]
     unfulfilled_requirements: List[str]
     reasons: List[str]
@@ -223,19 +252,96 @@ class PipelineWarningResponse(BaseModel):
     source: str = Field(..., description="Agent or service that produced the warning")
     message: str = Field(..., description="Human-readable summary")
 
+class SafetyCheckResult(BaseModel):
+    status: SafetyStatus
+    risk_level: RiskLevel
+    confidence: float
+    blocking_issues: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    checks_performed: int
+    recommended_action: RecommendedAction
+    is_safe_for_autonomous_execution: bool
+
+class AutonomyDecision(BaseModel):
+    mode: AutonomyMode
+    reason: str
+    confidence: float
+    blocking_factors: List[str] = Field(default_factory=list)
+    human_review_required: bool
+
+class TraceStepStatus(str, Enum):
+    STARTED = "STARTED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+
+class TraceStep(BaseModel):
+    trace_id: str
+    step_name: str
+    agent_name: str
+    status: TraceStepStatus
+    execution_time_ms: Optional[float] = None
+    fallback_used: bool = False
+    warnings: List[str] = Field(default_factory=list)
+    errors: List[str] = Field(default_factory=list)
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class PipelineTrace(BaseModel):
+    trace_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    start_time: datetime = Field(default_factory=datetime.utcnow)
+    end_time: Optional[datetime] = None
+    total_execution_time_ms: Optional[float] = None
+    steps: List[TraceStep] = Field(default_factory=list)
+
 class FullResponsePlan(BaseModel):
     """The master output payload returned to the Node.js backend."""
-    incident_id: str
-    data_quality: Optional[DataQualityResult] = None
-    situation: Optional[SituationResult] = None
-    risk: Optional[RiskResult] = None
-    prediction: Optional[PredictiveAgentResult] = None
-    assignments: List[ResourceAssignment] = Field(default_factory=list)
-    recommended_action: RecommendedAction
-    explanation: List[str] = Field(default_factory=list)
-    warnings: List[PipelineWarningResponse] = Field(default_factory=list)
+
+    # ── Core identification ────────────────────────────────────────────────
+    incident_id: str = Field(..., description="Incident identifier from the original request")
+
+    # ── Agent results (may be None when an agent is skipped/degraded) ──────
+    data_quality: Optional[DataQualityResult] = Field(default=None, description="Input data-quality assessment")
+    situation: Optional[SituationResult] = Field(default=None, description="Situation agent output")
+    risk: Optional[RiskResult] = Field(default=None, description="Risk assessment")
+    prediction: Optional[PredictiveAgentResult] = Field(default=None, description="Predictive agent forecast")
+    resource_agent_result: Optional[ResourceAgentResult] = Field(default=None, description="Resource assignment agent output")
+    assignments: List[ResourceAssignment] = Field(default_factory=list, description="Dispatched resource assignments with routes")
+
+    # ── Recommendation ────────────────────────────────────────────────────
+    recommended_action: RecommendedAction = Field(..., description="Top-level recommended action")
+    explanation: List[str] = Field(default_factory=list, description="Human-readable explanation of how the decision was reached")
+
+    # ── Warnings & degraded state ─────────────────────────────────────────
+    warnings: List[PipelineWarningResponse] = Field(default_factory=list, description="Machine-readable pipeline warnings")
     degraded: bool = Field(default=False, description="True when any agent was skipped or failed")
-    human_approval_required: bool = True
+
+    # ── Safety & autonomy ─────────────────────────────────────────────────
+    safety_check: Optional[SafetyCheckResult] = Field(default=None, description="Response safety checker result")
+    autonomy_decision: Optional[AutonomyDecision] = Field(default=None, description="Risk-based autonomy decision")
+
+    # ── Top-level convenience fields for frontend display ─────────────────
+    overall_confidence: float = Field(
+        default=0.0, ge=0.0, le=1.0,
+        description="Minimum confidence across all non-None agents; indicates weakest link in the pipeline"
+    )
+    trace_id: Optional[str] = Field(
+        default=None,
+        description="Pipeline trace ID for log correlation and observability"
+    )
+    human_review_required: bool = Field(
+        default=False,
+        description="True when the autonomy decision requires human approval before execution"
+    )
+    fallback_used: bool = Field(
+        default=False,
+        description="True when any agent fell back to a degraded/rule-based method"
+    )
+    provenance: List[DecisionProvenance] = Field(
+        default_factory=list,
+        description="Collected decision provenance from all agents (for audit trail)"
+    )
+
+    # ── Observability trace ───────────────────────────────────────────────
+    trace: Optional[PipelineTrace] = Field(default=None, description="Full pipeline execution trace")
 
 # -----------------------------------------
 # RE-PLANNING SCHEMAS

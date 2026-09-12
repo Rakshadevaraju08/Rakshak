@@ -92,7 +92,8 @@ class TestAPIScenario1:
         assert data["prediction"] is not None
         assert len(data["assignments"]) == 1
         assert data["assignments"][0]["resource_id"] == "AMB_A1"
-        assert data["human_approval_required"] is True
+        assert data["autonomy_decision"]["mode"] == "AUTO"
+        assert data["autonomy_decision"]["human_review_required"] is False
 
     @patch("app.services.routing_service.requests.get")
     def test_response_has_security_headers(self, mock_get, client):

@@ -2,7 +2,7 @@ import logging
 from datetime import datetime, timedelta
 from typing import List
 
-from app.schemas.domain import DisasterAnalysisRequest, SituationResult, IncidentType, DisasterAnalysisState
+from app.schemas.domain import DisasterAnalysisRequest, SituationResult, IncidentType, DisasterAnalysisState, DecisionProvenance
 from app.errors import PipelineWarning, WarningCode
 from app.agents.validation import validate_situation
 
@@ -38,7 +38,10 @@ class SituationAgent:
         total_vulnerable = incident.elderly_count + incident.children_count + incident.disabled_count
         
         if incident.victim_count > 0:
-            explanations.append(f"Verified {incident.victim_count} total victims.")
+            if incident.critical_victim_count > 0:
+                explanations.append(f"Verified {incident.victim_count} total victims, including {incident.critical_victim_count} critical.")
+            else:
+                explanations.append(f"Verified {incident.victim_count} total victims.")
 
         if total_vulnerable > 0:
             vulnerable_impact = f"High impact on vulnerable populations: {total_vulnerable} individuals at risk."
@@ -69,7 +72,7 @@ class SituationAgent:
 
         # Calculate severity baseline based purely on situation
         severity = "LOW"
-        if incident.victim_count > 10 or total_vulnerable > 5:
+        if incident.critical_victim_count > 0 or incident.victim_count > 10 or total_vulnerable > 5:
             severity = "CRITICAL"
         elif incident.victim_count > 0:
             severity = "HIGH"
@@ -82,7 +85,8 @@ class SituationAgent:
                 severity = "CRITICAL" if severity == "HIGH" else severity
 
         # Final Summary formulation
-        summary = f"A {normalized_type} incident reported at coordinates ({incident.latitude}, {incident.longitude}) with {incident.victim_count} victims.{weather_context}"
+        crit_str = f" (with {incident.critical_victim_count} critical)" if incident.critical_victim_count > 0 else ""
+        summary = f"A {normalized_type} incident reported at coordinates ({incident.latitude}, {incident.longitude}) with {incident.victim_count} victims{crit_str}.{weather_context}"
 
         # Ensure confidence boundaries
         confidence = max(0.0, min(1.0, confidence))
@@ -91,6 +95,16 @@ class SituationAgent:
         for w in pipeline_warnings:
             w.log()
 
+        # Populate decision provenance
+        provenance = DecisionProvenance(
+            agent="SituationAgent",
+            method="rule_based_parsing",
+            confidence=confidence,
+            inputs=["incident_type", "location", "victim_count", "vulnerable_count", "road_access", "environment"],
+            reasons=explanations,
+            warnings=[w.message for w in pipeline_warnings]
+        )
+
         # Store warnings on the result for coordinator to collect
         result = SituationResult(
             is_valid=is_valid,
@@ -98,9 +112,10 @@ class SituationAgent:
             severity_assessment=severity,
             vulnerable_population_impact=vulnerable_impact,
             missing_information=missing_info,
-            confidence_score=round(confidence, 2),
+            confidence_score=confidence,
             explanations=explanations,
-            normalized_incident_type=normalized_type
+            normalized_incident_type=normalized_type,
+            decision_provenance=provenance
         )
         result._pipeline_warnings = pipeline_warnings
         

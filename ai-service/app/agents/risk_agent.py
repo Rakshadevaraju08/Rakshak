@@ -8,7 +8,8 @@ from app.schemas.domain import (
     Priority,
     IncidentType,
     RoadAccessStatus,
-    DisasterAnalysisState
+    DisasterAnalysisState,
+    DecisionProvenance
 )
 from app.errors import PipelineWarning, WarningCode
 from app.agents.validation import validate_risk
@@ -69,9 +70,11 @@ class RiskAgent:
         incident = request.incident
         confidence = 1.0
 
-        # 1. Victim Assessment
         if incident.victim_count > 0:
             victim_pts = min(incident.victim_count * 5, 40)
+            if incident.critical_victim_count > 0:
+                victim_pts += min(incident.critical_victim_count * 40, 60)
+                conditions.append(f"critical victims ({incident.critical_victim_count})")
             score += victim_pts
             conditions.append(f"multiple victims ({incident.victim_count})")
             
@@ -131,13 +134,24 @@ class RiskAgent:
         
         explanation = f"Priority {priority.value} because:\n" + "\n".join(f"- {c}" for c in conditions)
 
+        provenance = DecisionProvenance(
+            agent="RiskAgent",
+            method="rule_based",
+            confidence=confidence,
+            inputs=["incident.victim_count", "incident.type", "incident.road_access", "incident.water_level", "incident.rainfall"],
+            reasons=conditions,
+            warnings=[w.message for w in call_warnings],
+            fallback_used=False
+        )
+
         return RiskResult(
             priority=priority,
             risk_level=risk_level,
             severity=severity,
             score=round(score, 2),
             reasons=[explanation],
-            confidence=round(confidence, 2)
+            confidence=round(confidence, 2),
+            decision_provenance=provenance
         )
 
     def _map_score_to_levels(self, score: float) -> Tuple[Priority, RiskLevel, str]:
@@ -197,12 +211,18 @@ class RiskAgent:
                 confidence=0.85  # Arbitrary confidence for demo ML
             )
 
-        except Exception as e:
-            logger.warning(f"ML Prediction failed: {type(e).__name__}. Falling back to rule-based scoring.")
+        except Exception as exc:
+            logger.warning(f"ML prediction failed: {type(exc).__name__}. Falling back to rule-based scoring.")
             call_warnings.append(PipelineWarning(
                 code=WarningCode.MODEL_PREDICTION_FAILED,
                 source="RiskAgent",
-                message=f"ML prediction failed ({type(e).__name__}). Using rule-based risk assessment.",
-                detail=str(e),
+                message=f"ML prediction failed ({type(exc).__name__}). Using rule-based fallback.",
+                detail=str(exc),
             ))
-            return self._run_rule_based_scoring(request, call_warnings)
+            
+            # --- FALLBACK ---
+            fallback_result = self._run_rule_based_scoring(request, call_warnings)
+            fallback_result.used_fallback = True
+            fallback_result.fallback_reason = f"ML prediction failed ({type(exc).__name__}). Using rule-based fallback."
+            fallback_result.degraded_mode = True
+            return fallback_result

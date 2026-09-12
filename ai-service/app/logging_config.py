@@ -105,7 +105,7 @@ class AuditLogger:
             "incident_id": plan.incident_id,
             "recommended_action": plan.recommended_action.value,
             "degraded": plan.degraded,
-            "human_approval_required": plan.human_approval_required,
+            "human_approval_required": plan.autonomy_decision.human_review_required if plan.autonomy_decision else True,
             "warnings_count": len(plan.warnings)
         }
         

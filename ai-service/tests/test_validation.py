@@ -196,12 +196,10 @@ def test_validate_coordinator_plan_demote_action(base_state):
             is_valid=True, summary="T", severity_assessment="L", vulnerable_population_impact="N", confidence_score=1.0, normalized_incident_type="T"
         ),
         risk=risk,
-        recommended_action=RecommendedAction.IMMEDIATE_DISPATCH,
-        human_approval_required=False
+        recommended_action=RecommendedAction.IMMEDIATE_DISPATCH
     )
     
     val_plan, warnings = validate_coordinator_plan(plan, base_state)
     
     assert val_plan.recommended_action == RecommendedAction.DISPATCH
-    assert val_plan.human_approval_required is True
     assert any(w.code == WarningCode.OPTIMIZATION_FAILURE for w in warnings)

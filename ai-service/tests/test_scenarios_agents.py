@@ -778,7 +778,7 @@ class TestMasterCoordinator:
         assert plan.recommended_action == RecommendedAction.IMMEDIATE_DISPATCH
         assert plan.situation.severity_assessment == "CRITICAL"
         assert len(plan.assignments) >= 1
-        assert plan.human_approval_required is True
+        assert plan.autonomy_decision.human_review_required is True
 
     # --- Scenario 3: Mass casualty flood ---
     @patch('app.services.routing_service.requests.get')

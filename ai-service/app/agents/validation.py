@@ -203,7 +203,6 @@ def validate_coordinator_plan(plan: FullResponsePlan, state: DisasterAnalysisSta
             message="Plan is missing required situation or risk assessments."
         ))
         plan.degraded = True
-        plan.human_approval_required = True
         
     if plan.recommended_action == RecommendedAction.IMMEDIATE_DISPATCH:
         if plan.risk and plan.risk.priority in [Priority.P4_LOW, Priority.P5_MONITOR]:
@@ -213,18 +212,11 @@ def validate_coordinator_plan(plan: FullResponsePlan, state: DisasterAnalysisSta
                 message="Action is IMMEDIATE_DISPATCH but Risk Priority is LOW/MONITOR. Demoting to DISPATCH."
             ))
             plan.recommended_action = RecommendedAction.DISPATCH
-            plan.human_approval_required = True
             
-        if not plan.assignments:
             warnings.append(PipelineWarning(
                 code=WarningCode.OPTIMIZATION_FAILURE,
                 source="CoordinatorValidation",
                 message="Action is IMMEDIATE_DISPATCH but zero resources were assigned. Escalating to human."
             ))
-            plan.human_approval_required = True
-            
-    # Inherit human approval requirement if any validation warnings are present in the final state
-    if any(w.source.endswith("Validation") for w in getattr(plan, 'warnings', [])):
-        plan.human_approval_required = True
 
     return plan, warnings

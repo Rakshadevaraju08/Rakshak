@@ -30,6 +30,8 @@ from app.schemas.domain import (
     Environment,
     RoadAccessStatus,
     RecommendedAction,
+    AutonomyMode,
+    SafetyStatus,
     ChangeCategory,
     Observation
 )
@@ -123,8 +125,10 @@ class TestReplanScenarios:
         state1 = _base_state()
         plan1 = coordinator.analyze(state1)
         
-        # State 2: OSRM fails (simulating blocked road / routing unavailable)
+        # State 2: Incident explicitly updates road_access to BLOCKED
         state2 = copy.deepcopy(state1)
+        state2.incident.road_access = RoadAccessStatus.BLOCKED
+        # OSRM fails due to blocked route logic
         mock_get.side_effect = requests.exceptions.ConnectionError("OSRM down")
         
         revision = coordinator.reanalyze(state2, plan1)
@@ -137,7 +141,10 @@ class TestReplanScenarios:
         assert route_changes[0].field == "assignments[BOAT_1].route.route_status"
         assert route_changes[0].new_value == "ROUTE_UNAVAILABLE"
         
-        # May not be "significant" if just route changes, but the diff catches it
+        # Check invalidation explanation
+        explanations = revision.new_plan.explanation
+        assert any("Previous plan invalidated because road access became BLOCKED." in e for e in explanations)
+        assert any("Recomputed plan selected new route" in e for e in explanations)
 
     @patch('app.services.routing_service.requests.get')
     def test_ambulance_becomes_unavailable(self, mock_get, coordinator):
@@ -163,6 +170,11 @@ class TestReplanScenarios:
         assert ChangeCategory.RESOURCE_REMOVED in cats
         assert ChangeCategory.RESOURCE_ADDED in cats
 
+        # Check invalidation explanation
+        explanations = revision.new_plan.explanation
+        assert any(f"Previous plan invalidated because assigned resource {assigned_id} is now DISPATCHED." in e for e in explanations)
+        assert any("Recomputed plan assigned alternative resource" in e for e in explanations)
+
     @patch('app.services.routing_service.requests.get')
     def test_water_level_rises_priority_changes(self, mock_get, coordinator):
         mock_get.return_value = _osrm_success_mock()
@@ -178,6 +190,7 @@ class TestReplanScenarios:
         assert revision.is_significant_change is True
         cats = [c.category for c in revision.changes]
         assert ChangeCategory.RISK_LEVEL_CHANGE in cats or ChangeCategory.PRIORITY_CHANGE in cats
+        pass
         
         # Risk should go up (base is LOW, 3.5m water adds 30 pts -> 40 pts = MEDIUM)
         risk_change = next(c for c in revision.changes if c.category == ChangeCategory.RISK_LEVEL_CHANGE)
@@ -204,6 +217,28 @@ class TestReplanScenarios:
         esc_change = next(c for c in revision.changes if c.category == ChangeCategory.ESCALATION_CHANGE)
         assert esc_change.previous_value == "False"
         assert esc_change.new_value == "True"
+
+    @patch('app.services.routing_service.requests.get')
+    def test_hospital_becomes_full_requires_review(self, mock_get, coordinator):
+        mock_get.return_value = _osrm_success_mock()
+        state1 = _base_state()
+        plan1 = coordinator.analyze(state1)
+
+        state2 = copy.deepcopy(state1)
+        state2.hospitals[0].available_beds = 0
+
+        revision = coordinator.reanalyze(state2, plan1)
+
+        assert revision.new_plan.trace_id != plan1.trace_id
+        assert revision.new_plan.safety_check.status in (
+            SafetyStatus.REVIEW_REQUIRED,
+            SafetyStatus.BLOCKED,
+        )
+        assert any(
+            "zero capacity" in warning.lower()
+            for warning in revision.new_plan.safety_check.warnings
+        )
+        assert revision.new_plan.autonomy_decision.mode == AutonomyMode.HUMAN_REQUIRED
 
     @patch('app.services.routing_service.requests.get')
     def test_new_victims_severity_changes(self, mock_get, coordinator):

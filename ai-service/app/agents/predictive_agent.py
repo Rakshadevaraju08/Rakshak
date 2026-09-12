@@ -8,7 +8,8 @@ from app.schemas.domain import (
     PredictiveAgentResult,
     ForecastItem,
     IncidentType,
-    DisasterAnalysisState
+    DisasterAnalysisState,
+    DecisionProvenance
 )
 from app.errors import PipelineWarning, WarningCode
 from app.agents.validation import validate_prediction
@@ -66,6 +67,11 @@ class PredictiveAgent:
 
         result = self._run_baseline_prediction(request, current_risk, pipeline_warnings)
         
+        if self.use_ml:
+            result.used_fallback = True
+            result.fallback_reason = "ML prediction model unavailable or failed. Using baseline deterministic forecast."
+            result.degraded_mode = True
+            
         result, validation_warnings = validate_prediction(result, state)
         if validation_warnings:
             pipeline_warnings.extend(validation_warnings)
@@ -174,12 +180,23 @@ class PredictiveAgent:
 
         confidence = max(0.0, min(1.0, confidence))
 
+        provenance = DecisionProvenance(
+            agent="PredictiveAgent",
+            method="baseline_heuristic",
+            confidence=confidence,
+            inputs=["request.environment", "current_risk"],
+            reasons=explanation,
+            warnings=[w.message for w in pipeline_warnings],
+            fallback_used=False
+        )
+
         return PredictiveAgentResult(
             current_risk=current_risk.risk_level,
             forecast=forecast,
             escalation_detected=escalation_detected,
             explanation=explanation,
-            confidence=round(confidence, 2)
+            confidence=round(confidence, 2),
+            decision_provenance=provenance
         )
 
     def _run_ml_model(self, request: DisasterAnalysisRequest, current_risk: RiskResult) -> PredictiveAgentResult:
@@ -216,10 +233,21 @@ class PredictiveAgent:
         
         forecast = [ForecastItem(horizon_minutes=pred['predictionHorizonMinutes'], risk_level=predicted_enum)]
         
+        provenance = DecisionProvenance(
+            agent="PredictiveAgent",
+            method="ml_model",
+            confidence=pred['probability'],
+            inputs=["features_dict"],
+            reasons=pred['factors'],
+            warnings=[],
+            fallback_used=False
+        )
+
         return PredictiveAgentResult(
             current_risk=current_risk.risk_level,
             forecast=forecast,
             escalation_detected=escalation,
             explanation=pred['factors'],
-            confidence=pred['probability']
+            confidence=pred['probability'],
+            decision_provenance=provenance
         )

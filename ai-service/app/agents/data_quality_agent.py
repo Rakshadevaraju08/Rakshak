@@ -142,6 +142,9 @@ class DataQualityAgent:
             if overall_quality != QualityStatus.INVALID:
                 overall_quality = QualityStatus.SUSPECT
                 
+        used_fallback = bool(stale_fields or missing_fields or conflicting_fields)
+        fallback_reason = "Using stale, partial, or conflicting cache data due to live data unavailability." if used_fallback else None
+
         result = DataQualityResult(
             overall_quality=overall_quality,
             confidence=round(confidence, 2),
@@ -150,7 +153,10 @@ class DataQualityAgent:
             missing_fields=missing_fields,
             conflicting_fields=conflicting_fields,
             warnings=warnings,
-            provenance=provenance
+            provenance=provenance,
+            used_fallback=used_fallback,
+            fallback_reason=fallback_reason,
+            degraded_mode=used_fallback
         )
         
         # Attach transient warnings for coordinator

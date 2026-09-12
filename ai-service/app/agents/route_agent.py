@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple, Optional
 
-from app.schemas.domain import RouteResult, RoadAccessStatus
+from app.schemas.domain import RouteResult, RoadAccessStatus, DecisionProvenance
 from app.services.routing_service import RoutingService
 from app.errors import PipelineWarning, WarningCode
 
@@ -37,6 +37,15 @@ class RouteAgent:
             )
             w.log()
             pipeline_warnings.append(w)
+            provenance = DecisionProvenance(
+                agent="RouteAgent",
+                method="validation",
+                confidence=1.0,
+                inputs=["origin_lat", "origin_lon"],
+                reasons=["Missing coordinates"],
+                warnings=[w.message for w in pipeline_warnings],
+                fallback_used=False
+            )
             result = RouteResult(
                 resource_id=resource_id,
                 destination_id=destination_id,
@@ -45,6 +54,7 @@ class RouteAgent:
                 waypoints=[],
                 route_status=RoadAccessStatus.ROUTE_UNAVAILABLE,
                 explanation="Resource coordinates are missing. Route cannot be computed.",
+                decision_provenance=provenance
             )
             result._pipeline_warnings = pipeline_warnings
             return result
@@ -57,6 +67,15 @@ class RouteAgent:
             )
             w.log()
             pipeline_warnings.append(w)
+            provenance = DecisionProvenance(
+                agent="RouteAgent",
+                method="validation",
+                confidence=1.0,
+                inputs=["dest_lat", "dest_lon"],
+                reasons=["Missing coordinates"],
+                warnings=[w.message for w in pipeline_warnings],
+                fallback_used=False
+            )
             result = RouteResult(
                 resource_id=resource_id,
                 destination_id=destination_id,
@@ -65,6 +84,7 @@ class RouteAgent:
                 waypoints=[],
                 route_status=RoadAccessStatus.ROUTE_UNAVAILABLE,
                 explanation="Destination coordinates are missing. Route cannot be computed.",
+                decision_provenance=provenance
             )
             result._pipeline_warnings = pipeline_warnings
             return result
@@ -94,6 +114,16 @@ class RouteAgent:
                 f"- shortest available ETA ({route_data['time_mins']} mins)"
             )
         
+        provenance = DecisionProvenance(
+            agent="RouteAgent",
+            method="osrm" if route_data["success"] else "fallback_straight_line",
+            confidence=1.0,
+            inputs=["origin", "destination"],
+            reasons=[explanation],
+            warnings=[w.message for w in pipeline_warnings],
+            fallback_used=not route_data["success"]
+        )
+
         result = RouteResult(
             resource_id=resource_id,
             destination_id=destination_id,
@@ -101,7 +131,14 @@ class RouteAgent:
             distance_km=route_data["distance_km"],
             waypoints=route_data["waypoints"],
             route_status=status,
-            explanation=explanation
+            explanation=explanation,
+            decision_provenance=provenance
         )
+        
+        if not route_data["success"]:
+            result.used_fallback = True
+            result.fallback_reason = "OSRM routing unavailable. Using straight-line distance estimates."
+            result.degraded_mode = True
+            
         result._pipeline_warnings = pipeline_warnings
         return result
