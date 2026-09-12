@@ -2,7 +2,7 @@
 
 ## Member 1 — Backend + Database + Integration
 **Responsibilities:**
-- Set up Node.js, Express, Prisma, and PostgreSQL.
+- Set up Node.js, Express, Prisma, and MySQL.
 - Implement REST API endpoints for frontend and mobile.
 - Set up Redis for real-time pub/sub.
 - Manage dispatch logic, hospital capacities, and resources.

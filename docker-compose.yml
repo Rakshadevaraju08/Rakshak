@@ -1,16 +1,15 @@
-version: '3.8'
-
 services:
   db:
-    image: postgres:15-alpine
+    image: mysql:8.4
     environment:
-      POSTGRES_USER: disaster_user
-      POSTGRES_PASSWORD: disaster_password
-      POSTGRES_DB: disaster_db
+      MYSQL_DATABASE: disaster_db
+      MYSQL_USER: disaster_user
+      MYSQL_PASSWORD: disaster_password
+      MYSQL_ROOT_PASSWORD: disaster_root_password
     ports:
-      - "5432:5432"
+      - "3307:3306"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mysqldata:/var/lib/mysql
 
   redis:
     image: redis:7-alpine
@@ -18,4 +17,4 @@ services:
       - "6379:6379"
 
 volumes:
-  pgdata:
+  mysqldata:

@@ -1,5 +1,11 @@
 # API Documentation
 
+### Authentication
+- `POST /api/auth/register`
+  - **Request body:** `{ "email", "password", "name" }`; creates a citizen user.
+- `POST /api/auth/login`
+  - **Request body:** `{ "email", "password" }`; returns a signed token when `JWT_SECRET` is configured.
+
 ## PLANNED ENDPOINTS
 
 ### Incidents
@@ -19,6 +25,10 @@
 
 - `PATCH /api/incidents/:id`
   - **Purpose:** Update incident status.
+- `POST /api/incidents/:id/reports`
+  - **Purpose:** Add a citizen or operator update to an incident.
+- `POST /api/incidents/:id/outcomes`
+  - **Purpose:** Resolve an incident and record the outcome.
 
 ### Resources
 - `GET /api/resources`
@@ -31,12 +41,16 @@
 ### Hospitals
 - `GET /api/hospitals`
   - **Purpose:** List hospitals and capacity.
-- `PATCH /api/hospitals/:id`
+- `POST /api/hospitals`
+  - **Purpose:** Create a hospital, optionally with its initial bed capacity.
+- `PATCH /api/hospitals/:id/capacity`
   - **Purpose:** Update hospital capacity.
 
 ### Roads
 - `GET /api/roads`
   - **Purpose:** List road statuses.
+- `POST /api/roads`
+  - **Purpose:** Create a road for live route monitoring.
 - `PATCH /api/roads/:id`
   - **Purpose:** Update road status (e.g., OPEN, BLOCKED).
 
@@ -59,3 +73,16 @@
 ### Predictions
 - `GET /api/predictions`
   - **Purpose:** Retrieve predictions for map visualization.
+- `POST /api/predictions`
+  - **Purpose:** Store an AI prediction and notify live dashboards.
+
+### Environmental observations
+- `POST /api/observations/weather`
+  - **Purpose:** Store a weather measurement and publish `WEATHER_CHANGED`.
+- `POST /api/observations/water-levels`
+  - **Purpose:** Store a water-level reading and publish `WATER_LEVEL_CHANGED`.
+
+### Live updates
+- `GET /api/events`
+  - **Purpose:** Server-Sent Events stream for SOS, road, hospital, resource,
+    prediction, and dispatch changes.
