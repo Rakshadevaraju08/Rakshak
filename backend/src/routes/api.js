@@ -2,6 +2,7 @@ const express = require('express');
 const prisma = require('../utils/prisma');
 const { publish, subscribe } = require('../services/events');
 const { createPlan } = require('../services/dispatch');
+const { requestAIAnalysis } = require('../services/ai');
 const { requireRole, signToken } = require('../middleware/auth');
 const crypto = require('crypto');
 
@@ -57,5 +58,90 @@ router.get('/predictions', async (req, res, next) => { try { res.json(await pris
 router.post('/predictions', ops, async (req, res, next) => { try { const { predictedRisk, predictedWorsening, incidentId, weatherObservationId, waterLevelId } = req.body; if (typeof predictedRisk !== 'number' || typeof predictedWorsening !== 'boolean') return res.status(400).json({ error: 'predictedRisk (number) and predictedWorsening (boolean) are required' }); const prediction = await prisma.prediction.create({ data: { predictedRisk, predictedWorsening, incidentId, weatherObservationId, waterLevelId } }); await publish('PREDICTION_UPDATED', prediction); res.status(201).json(prediction); } catch (e) { next(e); } });
 router.post('/observations/weather', ops, async (req, res, next) => { try { const { locationLat, locationLng, rainfallMm } = req.body; if (![locationLat, locationLng, rainfallMm].every((value) => typeof value === 'number')) return res.status(400).json({ error: 'locationLat, locationLng, and rainfallMm must be numbers' }); const observation = await prisma.weatherObservation.create({ data: { locationLat, locationLng, rainfallMm } }); await publish('WEATHER_CHANGED', observation); res.status(201).json(observation); } catch (e) { next(e); } });
 router.post('/observations/water-levels', ops, async (req, res, next) => { try { const { locationLat, locationLng, levelMeters } = req.body; if (![locationLat, locationLng, levelMeters].every((value) => typeof value === 'number')) return res.status(400).json({ error: 'locationLat, locationLng, and levelMeters must be numbers' }); const observation = await prisma.waterLevel.create({ data: { locationLat, locationLng, levelMeters } }); await publish('WATER_LEVEL_CHANGED', observation); res.status(201).json(observation); } catch (e) { next(e); } });
+
+router.post('/incidents/:id/analyze', ops, async (req, res, next) => {
+  try {
+    const incident = await prisma.incident.findUnique({ where: { id: req.params.id } });
+    if (!incident) return res.status(404).json({ error: 'Incident not found' });
+    
+    const [resources, hospitals, roads, weatherObv, waterObv] = await Promise.all([
+      prisma.resource.findMany({ where: { status: 'AVAILABLE' } }),
+      prisma.hospital.findMany({ include: { capacities: { orderBy: { updatedAt: 'desc' }, take: 1 } } }),
+      prisma.road.findMany(),
+      prisma.weatherObservation.findFirst({ orderBy: { timestamp: 'desc' } }),
+      prisma.waterLevel.findFirst({ orderBy: { timestamp: 'desc' } })
+    ]);
+
+    const context = {
+      incident: {
+        id: incident.id,
+        type: incident.type || "OTHER",
+        latitude: incident.locationLat || 0,
+        longitude: incident.locationLng || 0,
+        victim_count: incident.victimCount || 0,
+        elderly_count: incident.elderlyCount || 0,
+        children_count: incident.childrenCount || 0,
+        disabled_count: incident.disabledCount || 0,
+        water_level: incident.waterLevel !== null ? incident.waterLevel : null,
+        rainfall: incident.rainfall !== null ? incident.rainfall : null,
+        road_access: incident.roadAccess || "OPEN"
+      },
+      resources: resources.map(r => ({
+        id: r.id,
+        type: r.type,
+        status: r.status,
+        latitude: r.locationLat || 0,
+        longitude: r.locationLng || 0
+      })),
+      hospitals: hospitals.map(h => ({
+        id: h.id,
+        name: h.name,
+        latitude: h.locationLat || 0,
+        longitude: h.locationLng || 0,
+        available_beds: h.capacities?.[0]?.available || 0
+      })),
+      roads: roads.map(r => ({
+        id: r.id,
+        name: r.name,
+        status: r.status
+      })),
+      environment: {}
+    };
+
+    if (weatherObv || waterObv) {
+      if (weatherObv) context.environment.rainfall_trend_mm_per_hour = weatherObv.rainfallMm;
+      if (waterObv) context.environment.water_level_trend_m_per_hour = waterObv.levelMeters;
+    }
+
+    const aiRecommendation = await requestAIAnalysis(context);
+
+    const plan = await prisma.dispatchPlan.create({
+      data: {
+        incidentId: incident.id,
+        status: 'PENDING',
+        details: aiRecommendation
+      }
+    });
+    
+    await publish('DISPATCH_PLANNED', plan);
+    res.status(201).json(aiRecommendation);
+
+  } catch (error) {
+    if (error.code === 'AI_SERVICE_TIMEOUT' || error.code === 'AI_SERVICE_UNAVAILABLE') {
+      return res.status(error.status).json({
+        error: error.code,
+        message: error.message
+      });
+    }
+    if (error.status === 422 || error.status === 400) {
+      return res.status(400).json({
+        error: 'VALIDATION_ERROR',
+        message: 'Invalid disaster analysis request',
+        details: error.details
+      });
+    }
+    next(error);
+  }
+});
 
 module.exports = router;

@@ -29,6 +29,15 @@ model Incident {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  type          String   @default("OTHER")
+  victimCount   Int?
+  elderlyCount  Int?
+  childrenCount Int?
+  disabledCount Int?
+  waterLevel    Float?
+  rainfall      Float?
+  roadAccess    String?
+
   reporterId String?
   reporter   User?   @relation(fields: [reporterId], references: [id])
 
