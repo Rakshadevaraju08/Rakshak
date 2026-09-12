@@ -14,11 +14,11 @@ The system consists of:
 - **Mobile App:** For citizens to send SOS (supports offline mesh).
 - **Backend:** Node.js/Express service orchestrating events.
 - **AI Service:** Python/FastAPI service hosting the 6-agent architecture.
-- **Data Layer:** PostgreSQL (Prisma) for operational data and Redis for real-time events.
+- **Data Layer:** MySQL (Prisma) for operational data and Redis for real-time events.
 
 ## Tech Stack
 - Frontend: React, Vite, TailwindCSS (Planned)
-- Backend: Node.js, Express, Prisma, PostgreSQL, Redis
+- Backend: Node.js, Express, Prisma, MySQL, Redis
 - AI Service: Python, FastAPI, scikit-learn, OR-Tools
 - Mobile: React Native/Expo (Planned)
 
@@ -34,11 +34,11 @@ The system consists of:
 
 ## How to Start Services
 
-### Infrastructure (PostgreSQL, Redis)
+### Infrastructure (MySQL, Redis)
 ```bash
 docker-compose up -d
 ```
-*(If you prefer local installations, ensure PostgreSQL and Redis are running locally.)*
+*(If you prefer local installations, ensure MySQL and Redis are running locally.)*
 
 ### Backend
 ```bash
