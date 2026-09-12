@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  role      String   @default("CITIZEN") // e.g., CITIZEN, OPERATOR, ADMIN
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  incidents Incident[]
+}
+
+model Incident {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  status      String   @default("NEW") // NEW, ACTIVE, RESOLVED
+  locationLat Float?
+  locationLng Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  reporterId String?
+  reporter   User?   @relation(fields: [reporterId], references: [id])
+
+  reports       IncidentReport[]
+  predictions   Prediction[]
+  dispatchPlans DispatchPlan[]
+  outcomes      IncidentOutcome[]
+  meshMessages  MeshMessage[]
+  roads         Road[]
+}
+
+model IncidentReport {
+  id          String   @id @default(uuid())
+  content     String
+  createdAt   DateTime @default(now())
+  
+  incidentId  String
+  incident    Incident @relation(fields: [incidentId], references: [id])
+}
+
+model Resource {
+  id        String   @id @default(uuid())
+  type      String   // AMBULANCE, RESCUE_TEAM
+  status    String   @default("AVAILABLE") // AVAILABLE, DISPATCHED, MAINTENANCE
+  name      String
+  locationLat Float?
+  locationLng Float?
+
+  ambulances   Ambulance[]
+  rescueTeams  RescueTeam[]
+}
+
+model Ambulance {
+  id          String   @id @default(uuid())
+  plateNumber String
+  resourceId  String
+  resource    Resource @relation(fields: [resourceId], references: [id])
+}
+
+model RescueTeam {
+  id         String   @id @default(uuid())
+  personnel  Int
+  resourceId String
+  resource   Resource @relation(fields: [resourceId], references: [id])
+}
+
+model Hospital {
+  id          String   @id @default(uuid())
+  name        String
+  locationLat Float?
+  locationLng Float?
+
+  capacities  HospitalCapacity[]
+}
+
+model HospitalCapacity {
+  id         String   @id @default(uuid())
+  totalBeds  Int
+  available  Int
+  updatedAt  DateTime @default(now())
+  
+  hospitalId String
+  hospital   Hospital @relation(fields: [hospitalId], references: [id])
+}
+
+model Road {
+  id          String   @id @default(uuid())
+  name        String
+  status      String   @default("OPEN") // OPEN, BLOCKED, HAZARDOUS
+
+  incidentId  String?
+  incident    Incident? @relation(fields: [incidentId], references: [id])
+}
+
+model WeatherObservation {
+  id          String   @id @default(uuid())
+  locationLat Float
+  locationLng Float
+  rainfallMm  Float
+  timestamp   DateTime @default(now())
+
+  predictions Prediction[]
+}
+
+model WaterLevel {
+  id          String   @id @default(uuid())
+  locationLat Float
+  locationLng Float
+  levelMeters Float
+  timestamp   DateTime @default(now())
+
+  predictions Prediction[]
+}
+
+model Prediction {
+  id                   String   @id @default(uuid())
+  predictedRisk        Float
+  predictedWorsening   Boolean
+  timestamp            DateTime @default(now())
+
+  incidentId           String?
+  incident             Incident? @relation(fields: [incidentId], references: [id])
+  weatherObservationId String?
+  weatherObservation   WeatherObservation? @relation(fields: [weatherObservationId], references: [id])
+  waterLevelId         String?
+  waterLevel           WaterLevel? @relation(fields: [waterLevelId], references: [id])
+}
+
+model DispatchPlan {
+  id          String   @id @default(uuid())
+  status      String   @default("PENDING") // PENDING, APPROVED, EXECUTED, CANCELLED
+  details     Json
+  createdAt   DateTime @default(now())
+
+  incidentId  String
+  incident    Incident @relation(fields: [incidentId], references: [id])
+}
+
+model IncidentOutcome {
+  id          String   @id @default(uuid())
+  resolution  String
+  feedback    String?
+  createdAt   DateTime @default(now())
+
+  incidentId  String
+  incident    Incident @relation(fields: [incidentId], references: [id])
+}
+
+model MeshMessage {
+  id          String   @id @default(uuid())
+  payload     String
+  senderId    String
+  receivedAt  DateTime @default(now())
+
+  incidentId  String?
+  incident    Incident? @relation(fields: [incidentId], references: [id])
+}
