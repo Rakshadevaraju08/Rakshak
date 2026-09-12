@@ -1,6 +1,17 @@
-# Mobile Application (Citizen SOS)
+# DisasterLink mobile web app
 
-This directory will contain the mobile application source code.
+A standalone, mobile-first Citizen SOS website. It uses device geolocation when permission is granted and offers an intentional hold-to-send SOS control.
+
+## Run
+
+```bash
+npm install
+npm run dev
+```
+
+Build it for production with `npm run build`.
+
+The UI currently keeps an SOS request in the client flow; connect the dispatch function in `src/App.tsx` to the backend incident endpoint when that API is available.
 
 ## Purpose
 The mobile app allows citizens to submit SOS requests, capture their location, and send them to the disaster response system.
