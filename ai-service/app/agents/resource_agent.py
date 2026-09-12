@@ -7,10 +7,12 @@ from app.schemas.domain import (
     ResourceAgentResult,
     ResourceAssignment,
     RouteResult,
-    RoadAccessStatus
+    RoadAccessStatus,
+    DisasterAnalysisState
 )
 from app.services.optimization_service import OptimizationService
 from app.errors import PipelineWarning, WarningCode
+from app.agents.validation import validate_resources
 
 logger = logging.getLogger("disaster.resource")
 
@@ -25,8 +27,13 @@ class ResourceAgent:
     def __init__(self):
         self.optimizer = OptimizationService()
 
-    def analyze(self, request: DisasterAnalysisRequest, risk_result: RiskResult) -> ResourceAgentResult:
+    def analyze(self, state: DisasterAnalysisState) -> DisasterAnalysisState:
         pipeline_warnings: List[PipelineWarning] = []
+        request = state.request
+        risk_result = state.risk
+        
+        if not risk_result:
+            raise ValueError("ResourceAgent requires risk assessment to be present in the state.")
 
         # --- Guard: no resources provided ---
         if not request.resources:
@@ -43,7 +50,8 @@ class ResourceAgent:
                 reasons=["No resources were provided in the request."],
             )
             result._pipeline_warnings = pipeline_warnings
-            return result
+            state.resource_assignments = result
+            return state
 
         # --- Guard: empty hospital list (warning only, not blocking) ---
         if not request.hospitals:
@@ -80,7 +88,8 @@ class ResourceAgent:
                 reasons=[f"Optimization failed: {type(exc).__name__}"],
             )
             result._pipeline_warnings = pipeline_warnings
-            return result
+            state.resource_assignments = result
+            return state
 
         # Collect any warnings from the optimization service
         opt_warnings = opt_result.get("warnings", [])
@@ -142,5 +151,13 @@ class ResourceAgent:
             unfulfilled_requirements=unfulfilled,
             reasons=reasons
         )
+        
+        result, validation_warnings = validate_resources(result, state)
+        if validation_warnings:
+            pipeline_warnings.extend(validation_warnings)
+            for w in validation_warnings:
+                w.log()
+                
         result._pipeline_warnings = pipeline_warnings
-        return result
+        state.resource_assignments = result
+        return state

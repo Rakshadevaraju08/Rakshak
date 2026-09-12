@@ -4,7 +4,9 @@ from app.schemas.domain import (
     Incident,
     IncidentType,
     Environment,
-    RoadAccessStatus
+    RoadAccessStatus,
+    DisasterAnalysisState,
+    Observation
 )
 from app.agents.situation_agent import SituationAgent
 
@@ -23,14 +25,14 @@ def test_flood_missing_data(agent):
             victim_count=5
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).situation
     
     assert result.is_valid is True
-    assert "water_level" in result.missing_information
-    assert "rainfall" in result.missing_information
+    assert "water_level" not in result.missing_information
+    assert "rainfall" not in result.missing_information
     assert "road_access" in result.missing_information
-    assert result.confidence_score < 1.0
-    assert result.confidence_score == 0.6  # 1.0 - 0.2 - 0.1 - 0.1
+    assert result.confidence_score == 0.9  # 1.0 - 0.1
     assert result.severity_assessment == "HIGH"
 
 def test_inconsistent_victims(agent):
@@ -46,12 +48,13 @@ def test_inconsistent_victims(agent):
             children_count=1
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).situation
     
     assert result.is_valid is False
     assert result.confidence_score < 1.0
     # The agent auto-corrects the victim count to 3
-    assert "Auto-corrected total victim count to 3." in result.explanations
+    assert any("Auto-corrected total victim count" in exp for exp in result.explanations)
 
 def test_high_severity_weather(agent):
     """Test that bad weather escalates severity."""
@@ -62,15 +65,16 @@ def test_high_severity_weather(agent):
             latitude=10.0,
             longitude=20.0,
             victim_count=2,
-            water_level=2.0,
-            rainfall=150.0,
+            water_level=Observation(value=2.0),
+            rainfall=Observation(value=150.0),
             road_access=RoadAccessStatus.BLOCKED
         ),
         environment=Environment(
             general_weather="Heavy rain storm"
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).situation
     
     assert result.is_valid is True
     assert result.severity_assessment == "CRITICAL"
@@ -89,9 +93,12 @@ def test_structural_collapse(agent):
             road_access=RoadAccessStatus.BLOCKED
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).situation
     
     assert result.is_valid is True
     assert result.severity_assessment == "CRITICAL"
     assert result.confidence_score == 1.0
     assert result.normalized_incident_type == "EARTHQUAKE"
+
+

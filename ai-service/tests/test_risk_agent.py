@@ -5,7 +5,10 @@ from app.schemas.domain import (
     IncidentType,
     RoadAccessStatus,
     Priority,
-    RiskLevel
+    RiskLevel,
+    DisasterAnalysisState,
+    Environment,
+    Observation
 )
 from app.agents.risk_agent import RiskAgent
 from app.errors import WarningCode
@@ -22,12 +25,13 @@ def test_low_risk_incident(agent):
             type=IncidentType.OTHER,
             latitude=10.0,
             longitude=20.0,
-            victim_count=0,
-            rainfall=10.0,
+            water_level=Observation(value=0.5),
+            rainfall=Observation(value=10.0),
             road_access=RoadAccessStatus.OPEN
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).risk
     
     # 0 score -> P5_MONITOR, LOW
     assert result.priority == Priority.P5_MONITOR
@@ -43,10 +47,11 @@ def test_medium_risk_incident(agent):
             latitude=10.0,
             longitude=20.0,
             victim_count=6, # 6 * 5 = 30 points
-            rainfall=10.0
+            rainfall=Observation(value=10.0)
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).risk
     
     # 30 score -> P3_MEDIUM, MEDIUM
     assert result.priority == Priority.P3_MEDIUM
@@ -63,12 +68,13 @@ def test_critical_flood(agent):
             latitude=10.0,
             longitude=20.0,
             victim_count=10,       # 10 * 5 = 50 points (capped at 40)
-            water_level=2.5,       # > 2.0 = 30 points
-            rainfall=120.0,        # > 100 = 20 points
+            water_level=Observation(value=2.5),       # > 2.0 = 30 points
+            rainfall=Observation(value=120.0),        # > 100 = 20 points
             road_access=RoadAccessStatus.BLOCKED # 15 points
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).risk
     
     # 40 + 30 + 20 + 15 = 105 (capped at 100)
     assert result.priority == Priority.P1_CRITICAL
@@ -87,10 +93,11 @@ def test_vulnerable_victim(agent):
             longitude=20.0,
             victim_count=2,       # 2 * 5 = 10 points
             elderly_count=2,      # 2 * 10 = 20 points
-            rainfall=0.0
+            rainfall=Observation(value=0.0)
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).risk
     
     # 10 + 20 = 30 points -> P3_MEDIUM
     assert result.priority == Priority.P3_MEDIUM
@@ -108,9 +115,10 @@ def test_missing_environmental_data(agent):
             victim_count=0
         )
     )
-    result = agent.analyze(request)
+    state = DisasterAnalysisState(request=request)
+    result = agent.analyze(state).risk
     
-    # Missing water_level (-0.2), missing rainfall (-0.1) -> 0.7 confidence
+    # Missing water_level + rainfall for a flood incident reduces confidence
     assert result.confidence == 0.7
     assert result.score == 0.0 # No victims, no data to add points
     assert result.priority == Priority.P5_MONITOR

@@ -6,7 +6,8 @@ from app.schemas.domain import (
     Resource,
     ResourceType,
     ResourceStatus,
-    Priority
+    Priority,
+    DisasterAnalysisState
 )
 from app.agents.resource_agent import ResourceAgent
 from app.services.optimization_service import OptimizationService
@@ -38,8 +39,10 @@ def test_one_incident_one_ambulance(agent):
         ]
     )
     risk = DummyRiskResult(Priority.P2_HIGH)
+    state = DisasterAnalysisState(request=request)
+    state.risk = risk
     
-    result = agent.analyze(request, risk)
+    result = agent.analyze(state).resource_assignments
     assert len(result.assignments) == 1
     assert result.assignments[0].resource_id == "AMB_1"
     assert len(result.unfulfilled_requirements) == 0
@@ -59,8 +62,10 @@ def test_unavailable_resource(agent):
         ]
     )
     risk = DummyRiskResult(Priority.P1_CRITICAL)
+    state = DisasterAnalysisState(request=request)
+    state.risk = risk
     
-    result = agent.analyze(request, risk)
+    result = agent.analyze(state).resource_assignments
     assert len(result.assignments) == 0
     assert "INC_FIRE" in result.unfulfilled_requirements
 
@@ -82,8 +87,10 @@ def test_incompatible_resource(agent):
         ]
     )
     risk = DummyRiskResult(Priority.P2_HIGH)
+    state = DisasterAnalysisState(request=request)
+    state.risk = risk
     
-    result = agent.analyze(request, risk)
+    result = agent.analyze(state).resource_assignments
     assert len(result.assignments) == 0
     assert "INC_FIRE" in result.unfulfilled_requirements
 
@@ -140,8 +147,10 @@ def test_empty_resources(agent):
         resources=[]
     )
     risk = DummyRiskResult(Priority.P2_HIGH)
+    state = DisasterAnalysisState(request=request)
+    state.risk = risk
     
-    result = agent.analyze(request, risk)
+    result = agent.analyze(state).resource_assignments
     assert len(result.assignments) == 0
     warnings = getattr(result, '_pipeline_warnings', [])
     assert any(w.code == WarningCode.MISSING_RESOURCES for w in warnings)

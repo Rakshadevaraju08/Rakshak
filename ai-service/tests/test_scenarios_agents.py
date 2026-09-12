@@ -35,6 +35,8 @@ from app.schemas.domain import (
     RiskResult,
     Priority,
     RecommendedAction,
+    DisasterAnalysisState,
+    Observation
 )
 from app.agents.situation_agent import SituationAgent
 from app.agents.risk_agent import RiskAgent
@@ -125,8 +127,8 @@ class _Scenario2:
                 victim_count=4,
                 elderly_count=2,
                 children_count=1,
-                water_level=2.5,
-                rainfall=130.0,
+                water_level=Observation(value=2.5),
+                rainfall=Observation(value=130.0),
                 road_access=RoadAccessStatus.BLOCKED,
             ),
             resources=[
@@ -179,8 +181,8 @@ class _Scenario3:
                 elderly_count=3,
                 children_count=4,
                 disabled_count=1,
-                water_level=3.0,
-                rainfall=200.0,
+                water_level=Observation(value=3.0),
+                rainfall=Observation(value=200.0),
                 road_access=RoadAccessStatus.BLOCKED,
             ),
             resources=[
@@ -299,8 +301,8 @@ class _Scenario8:
                 latitude=INCIDENT_LAT,
                 longitude=INCIDENT_LON,
                 victim_count=3,
-                water_level=1.5,
-                rainfall=60.0,
+                water_level=Observation(value=1.5),
+                rainfall=Observation(value=60.0),
             ),
             resources=[
                 Resource(id="BOAT_801", type=ResourceType.RESCUE_BOAT,
@@ -327,7 +329,8 @@ class TestSituationAgent:
 
     # --- Scenario 1: Normal medical ---
     def test_s1_normal_medical(self, agent):
-        result = agent.analyze(_Scenario1.request())
+        state = DisasterAnalysisState(request=_Scenario1.request())
+        result = agent.analyze(state).situation
 
         assert result.is_valid is True
         assert result.normalized_incident_type == "MEDICAL"
@@ -339,7 +342,8 @@ class TestSituationAgent:
 
     # --- Scenario 2: High-priority flood with elderly ---
     def test_s2_flood_elderly(self, agent):
-        result = agent.analyze(_Scenario2.request())
+        state = DisasterAnalysisState(request=_Scenario2.request())
+        result = agent.analyze(state).situation
 
         assert result.is_valid is True
         assert result.normalized_incident_type == "FLOOD"
@@ -351,7 +355,8 @@ class TestSituationAgent:
 
     # --- Scenario 3: Multiple victims mass casualty ---
     def test_s3_mass_flood(self, agent):
-        result = agent.analyze(_Scenario3.request())
+        state = DisasterAnalysisState(request=_Scenario3.request())
+        result = agent.analyze(state).situation
 
         assert result.is_valid is True
         assert result.severity_assessment == "CRITICAL"  # 15 victims > 10
@@ -359,18 +364,17 @@ class TestSituationAgent:
 
     # --- Scenario 7: Missing environmental data ---
     def test_s7_missing_flood_data(self, agent):
-        result = agent.analyze(_Scenario7.request())
+        state = DisasterAnalysisState(request=_Scenario7.request())
+        result = agent.analyze(state).situation
 
         assert result.is_valid is True
-        assert "water_level" in result.missing_information
-        assert "rainfall" in result.missing_information
+        assert "water_level" not in result.missing_information
+        assert "rainfall" not in result.missing_information
         assert "road_access" in result.missing_information
-        # -0.2 (water) -0.1 (rainfall) -0.1 (road) = 0.6
-        assert result.confidence_score == 0.6
+        assert result.confidence_score == 0.9
 
         # Check structured warnings were attached
         warnings = getattr(result, '_pipeline_warnings', [])
-        assert any(w.code == WarningCode.INCOMPLETE_INCIDENT for w in warnings)
         assert any(w.code == WarningCode.MISSING_ENVIRONMENT_DATA for w in warnings)
         assert any(w.code == WarningCode.EMPTY_HOSPITAL_LIST for w in warnings)
 
@@ -388,7 +392,8 @@ class TestRiskAgent:
 
     # --- Scenario 1: Normal medical → LOW / P4 ---
     def test_s1_medical_risk(self, agent):
-        result = agent.analyze(_Scenario1.request())
+        state = DisasterAnalysisState(request=_Scenario1.request())
+        result = agent.analyze(state).risk
 
         # 1 victim × 5 = 5 points → <10 → P5_MONITOR
         assert result.priority == Priority.P5_MONITOR
@@ -397,7 +402,8 @@ class TestRiskAgent:
 
     # --- Scenario 2: High-priority flood → CRITICAL ---
     def test_s2_flood_elderly_risk(self, agent):
-        result = agent.analyze(_Scenario2.request())
+        state = DisasterAnalysisState(request=_Scenario2.request())
+        result = agent.analyze(state).risk
 
         # 4 victims × 5 = 20 (capped component)
         # 3 vulnerable × 10 = 30
@@ -414,7 +420,8 @@ class TestRiskAgent:
 
     # --- Scenario 3: Mass casualty flood → CRITICAL ---
     def test_s3_mass_risk(self, agent):
-        result = agent.analyze(_Scenario3.request())
+        state = DisasterAnalysisState(request=_Scenario3.request())
+        result = agent.analyze(state).risk
 
         assert result.priority == Priority.P1_CRITICAL
         assert result.risk_level == RiskLevel.CRITICAL
@@ -423,7 +430,8 @@ class TestRiskAgent:
     # --- Scenario 4: Medical with no resources → still scored ---
     def test_s4_medical_risk_is_independent_of_resources(self, agent):
         """Risk score depends on incident, not on resource availability."""
-        result = agent.analyze(_Scenario4.request())
+        state = DisasterAnalysisState(request=_Scenario4.request())
+        result = agent.analyze(state).risk
 
         # 2 victims × 5 = 10, 1 elderly × 10 = 10 → total 20
         # rainfall None → -0.1 confidence
@@ -433,7 +441,8 @@ class TestRiskAgent:
 
     # --- Scenario 7: Missing data reduces confidence ---
     def test_s7_missing_data_confidence(self, agent):
-        result = agent.analyze(_Scenario7.request())
+        state = DisasterAnalysisState(request=_Scenario7.request())
+        result = agent.analyze(state).risk
 
         # FLOOD with no water_level → -0.2, no rainfall → -0.1
         assert result.confidence == 0.7
@@ -466,7 +475,9 @@ class TestPredictiveAgent:
         req = _Scenario2.request()
         risk = self._risk(RiskLevel.HIGH)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).prediction
 
         assert result.current_risk == RiskLevel.HIGH
         # rainfall 8 mm/hr < 10 → +0.5, water 0.3 m/hr < 0.5 → +0.5 → trend = 1.0
@@ -480,7 +491,9 @@ class TestPredictiveAgent:
         req = _Scenario3.request()
         risk = self._risk(RiskLevel.CRITICAL)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).prediction
 
         assert result.current_risk == RiskLevel.CRITICAL
         # Already critical — can't go higher, stays CRITICAL in forecast
@@ -492,7 +505,9 @@ class TestPredictiveAgent:
         req = _Scenario7.request()
         risk = self._risk(RiskLevel.MEDIUM)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).prediction
 
         assert result.confidence == 0.5
         assert result.escalation_detected is False
@@ -507,7 +522,9 @@ class TestPredictiveAgent:
         req = _Scenario8.request()
         risk = self._risk(RiskLevel.MEDIUM)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).prediction
 
         # rainfall 20 > 10 → +1.0, water 0.8 > 0.5 → +1.5 → trend = 2.5
         # At 60 min: 2 + 2.5*1.0 = 4.5 → capped 4 → CRITICAL
@@ -544,7 +561,9 @@ class TestResourceAgent:
         req = _Scenario1.request()
         risk = self._risk(Priority.P4_LOW)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).resource_assignments
 
         assert len(result.assignments) == 1
         assert result.assignments[0].resource_id == "AMB_101"
@@ -556,7 +575,9 @@ class TestResourceAgent:
         req = _Scenario2.request()
         risk = self._risk(Priority.P1_CRITICAL)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).resource_assignments
 
         # At least one compatible resource assigned (boat or rescue team)
         assert len(result.assignments) >= 1
@@ -568,7 +589,9 @@ class TestResourceAgent:
         req = _Scenario4.request()
         risk = self._risk(Priority.P2_HIGH)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).resource_assignments
 
         assert len(result.assignments) == 0
         assert "MED_NO_AMB_001" in result.unfulfilled_requirements
@@ -583,7 +606,9 @@ class TestResourceAgent:
         req = _Scenario5.request()
         risk = self._risk(Priority.P2_HIGH)
 
-        result = agent.analyze(req, risk)
+        state = DisasterAnalysisState(request=req)
+        state.risk = risk
+        result = agent.analyze(state).resource_assignments
 
         assert len(result.assignments) == 0
         assert "FIRE_LIM_001" in result.unfulfilled_requirements

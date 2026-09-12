@@ -4,7 +4,9 @@ from app.schemas.domain import (
     Incident,
     IncidentType,
     Environment,
-    RiskLevel
+    RiskLevel,
+    Priority,
+    DisasterAnalysisState
 )
 from app.agents.predictive_agent import PredictiveAgent
 
@@ -25,7 +27,10 @@ def test_escalating_risk(agent):
     )
     current_risk = DummyRiskResult(RiskLevel.MEDIUM)
     
-    result = agent.analyze(request, current_risk)
+    state = DisasterAnalysisState(request=request)
+    state.risk = current_risk
+    
+    result = agent.analyze(state).prediction
     
     assert result.current_risk == RiskLevel.MEDIUM
     assert result.escalation_detected is True
@@ -43,7 +48,10 @@ def test_de_escalating_risk(agent):
     )
     current_risk = DummyRiskResult(RiskLevel.HIGH) # High risk currently
     
-    result = agent.analyze(request, current_risk)
+    state = DisasterAnalysisState(request=request)
+    state.risk = current_risk
+    
+    result = agent.analyze(state).prediction
     
     assert result.current_risk == RiskLevel.HIGH
     assert result.escalation_detected is False
@@ -60,7 +68,10 @@ def test_stable_risk(agent):
     )
     current_risk = DummyRiskResult(RiskLevel.MEDIUM)
     
-    result = agent.analyze(request, current_risk)
+    state = DisasterAnalysisState(request=request)
+    state.risk = current_risk
+    
+    result = agent.analyze(state).prediction
     
     assert result.escalation_detected is False
     for item in result.forecast:
@@ -74,7 +85,10 @@ def test_missing_data_fallback(agent):
     )
     current_risk = DummyRiskResult(RiskLevel.HIGH)
     
-    result = agent.analyze(request, current_risk)
+    state = DisasterAnalysisState(request=request)
+    state.risk = current_risk
+    
+    result = agent.analyze(state).prediction
     
     assert result.escalation_detected is False
     # Missing completely -> drops confidence by 0.5

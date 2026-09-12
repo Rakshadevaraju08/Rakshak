@@ -19,6 +19,7 @@ from app.schemas.domain import (
     Environment,
     RecommendedAction,
     RoadAccessStatus,
+    DisasterAnalysisState
 )
 from app.agents.master_coordinator import MasterCoordinator
 from app.agents.situation_agent import SituationAgent
@@ -82,12 +83,14 @@ class TestMissingEnvironmentalData:
 
     def test_predictive_agent_reduced_confidence(self):
         """PredictiveAgent reduces confidence when environment is missing."""
-        from app.schemas.domain import RiskLevel, Priority
+        from app.schemas.domain import RiskLevel, Priority, DisasterAnalysisState
         agent = PredictiveAgent()
         request = _make_request(environment=None)
         risk = DummyRiskResult(RiskLevel.HIGH, Priority.P2_HIGH)
 
-        result = agent.analyze(request, risk)
+        state = DisasterAnalysisState(request=request)
+        state.risk = risk
+        result = agent.analyze(state).prediction
 
         assert result.confidence == 0.5
         assert "no environmental data provided" in result.explanation[0].lower()
@@ -262,7 +265,8 @@ class TestModelFileMissing:
             agent = RiskAgent(use_ml=True)
 
         request = _make_request()
-        result = agent.analyze(request)
+        state = DisasterAnalysisState(request=request)
+        result = agent.analyze(state).risk
 
         # Should still produce a valid result
         assert result.score >= 0
@@ -292,7 +296,8 @@ class TestModelPredictionFailure:
         agent.ml_service = mock_ml
 
         request = _make_request()
-        result = agent.analyze(request)
+        state = DisasterAnalysisState(request=request)
+        result = agent.analyze(state).risk
 
         # Should still produce valid result via rule-based fallback
         assert result.score >= 0
@@ -373,8 +378,8 @@ class TestIncompleteIncidentInfo:
 
         plan = coordinator.analyze(request)
 
-        assert plan.situation.confidence_score < 1.0
-        assert "water_level" in plan.situation.missing_information
+        assert plan.data_quality.confidence < 1.0
+        assert "water_level" in plan.data_quality.missing_fields
         assert _has_warning_code(plan, WarningCode.INCOMPLETE_INCIDENT)
 
 
@@ -386,7 +391,7 @@ class TestOptimizationFailure:
     def test_solver_unavailable(self):
         """When solver creation fails → empty assignments + warning."""
         agent = ResourceAgent()
-        from app.schemas.domain import Priority, RiskLevel
+        from app.schemas.domain import Priority, RiskLevel, DisasterAnalysisState
 
         # Mock optimizer to raise
         with patch.object(agent.optimizer, 'optimize_dispatch', side_effect=RuntimeError("Solver crashed")):
@@ -396,7 +401,9 @@ class TestOptimizationFailure:
                 ],
             )
             risk = DummyRiskResult(RiskLevel.HIGH, Priority.P2_HIGH)
-            result = agent.analyze(request, risk)
+            state = DisasterAnalysisState(request=request)
+            state.risk = risk
+            result = agent.analyze(state).resource_assignments
 
         assert len(result.assignments) == 0
         warnings = getattr(result, '_pipeline_warnings', [])

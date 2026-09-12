@@ -93,3 +93,32 @@ def setup_logging(level: int = logging.INFO) -> None:
     # Suppress noisy third-party loggers
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("httpcore").setLevel(logging.WARNING)
+
+import json
+
+class AuditLogger:
+    """Writes structured JSON traces of pipeline execution for SIEM/Audit logging."""
+    @staticmethod
+    def log_plan(plan: 'FullResponsePlan') -> None:
+        audit_data = {
+            "type": "AUDIT_TRAIL",
+            "incident_id": plan.incident_id,
+            "recommended_action": plan.recommended_action.value,
+            "degraded": plan.degraded,
+            "human_approval_required": plan.human_approval_required,
+            "warnings_count": len(plan.warnings)
+        }
+        
+        context = getattr(plan, '_pipeline_context', None)
+        if context:
+            if context.situation:
+                audit_data["situation_confidence"] = context.situation.confidence_score
+            if context.risk:
+                audit_data["risk_confidence"] = context.risk.confidence
+            if context.prediction:
+                audit_data["prediction_confidence"] = context.prediction.confidence
+            if context.request and context.request.incident:
+                audit_data["data_source"] = getattr(context.request.incident, 'source', 'SYSTEM')
+                
+        # Log as structured JSON
+        logging.getLogger("disaster.audit").info(json.dumps(audit_data))

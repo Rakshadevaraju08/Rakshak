@@ -1,8 +1,10 @@
 import logging
+from datetime import datetime, timedelta
 from typing import List
 
-from app.schemas.domain import DisasterAnalysisRequest, SituationResult, IncidentType
+from app.schemas.domain import DisasterAnalysisRequest, SituationResult, IncidentType, DisasterAnalysisState
 from app.errors import PipelineWarning, WarningCode
+from app.agents.validation import validate_situation
 
 logger = logging.getLogger("disaster.situation")
 
@@ -14,7 +16,8 @@ class SituationAgent:
     information, and constructs a coherent understanding of the situation.
     """
 
-    def analyze(self, request: DisasterAnalysisRequest) -> SituationResult:
+    def analyze(self, state: DisasterAnalysisState) -> DisasterAnalysisState:
+        request = state.request
         incident = request.incident
         explanations = []
         missing_info = []
@@ -23,26 +26,18 @@ class SituationAgent:
         is_valid = True
         confidence = 1.0
 
+        # 0. Base Confidence
+        if getattr(incident, 'confidence', None) is not None:
+            confidence = min(confidence, incident.confidence)
+
         # 1. Normalize Incident Type
         normalized_type = incident.type.value
         explanations.append(f"Incident identified as {normalized_type}.")
 
-        # 2. Victim Validation
+        # 2. Victim Info Collection
         total_vulnerable = incident.elderly_count + incident.children_count + incident.disabled_count
         
-        if total_vulnerable > incident.victim_count:
-            explanations.append(f"Data inconsistency: Total vulnerable victims ({total_vulnerable}) exceeds total victim count ({incident.victim_count}).")
-            is_valid = False
-            confidence -= 0.3
-            # Attempt to normalize by fixing the total victim count
-            incident.victim_count = total_vulnerable
-            explanations.append(f"Auto-corrected total victim count to {incident.victim_count}.")
-            pipeline_warnings.append(PipelineWarning(
-                code=WarningCode.INCOMPLETE_INCIDENT,
-                source="SituationAgent",
-                message=f"Victim count inconsistency detected and auto-corrected (vulnerable={total_vulnerable} > reported total).",
-            ))
-        elif incident.victim_count > 0:
+        if incident.victim_count > 0:
             explanations.append(f"Verified {incident.victim_count} total victims.")
 
         if total_vulnerable > 0:
@@ -50,27 +45,7 @@ class SituationAgent:
         else:
             vulnerable_impact = "No specific vulnerable populations identified."
 
-        # 3. Data Completeness & Specific Checks
-        if incident.type == IncidentType.FLOOD:
-            if incident.water_level is None:
-                missing_info.append("water_level")
-                confidence -= 0.2
-                explanations.append("Missing water level data for a FLOOD incident.")
-                pipeline_warnings.append(PipelineWarning(
-                    code=WarningCode.INCOMPLETE_INCIDENT,
-                    source="SituationAgent",
-                    message="Missing water level data for FLOOD incident. Risk assessment confidence reduced.",
-                ))
-            if incident.rainfall is None:
-                missing_info.append("rainfall")
-                confidence -= 0.1
-                explanations.append("Missing rainfall data for a FLOOD incident.")
-                pipeline_warnings.append(PipelineWarning(
-                    code=WarningCode.INCOMPLETE_INCIDENT,
-                    source="SituationAgent",
-                    message="Missing rainfall data for FLOOD incident.",
-                ))
-
+        # 3. Specific Checks
         if incident.road_access is None:
             missing_info.append("road_access")
             confidence -= 0.1
@@ -127,6 +102,13 @@ class SituationAgent:
             explanations=explanations,
             normalized_incident_type=normalized_type
         )
-        # Attach warnings as a transient attribute for coordinator pickup
         result._pipeline_warnings = pipeline_warnings
-        return result
+        
+        result, validation_warnings = validate_situation(result, state)
+        if validation_warnings:
+            result._pipeline_warnings.extend(validation_warnings)
+            for w in validation_warnings:
+                w.log()
+        
+        state.situation = result
+        return state

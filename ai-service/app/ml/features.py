@@ -29,8 +29,13 @@ def extract_risk_features(incident_data: Dict[str, Any]) -> List[float]:
     Extracts numerical feature vector for the Risk Model from raw incident dictionaries.
     Used uniformly by both training scripts and real-time inference services.
     """
-    rainfall = float(incident_data.get('rainfall', 0.0) or 0.0)
-    water_level = float(incident_data.get('water_level', 0.0) or 0.0)
+    def _get_obs_val(obs: Any) -> float:
+        if not obs: return 0.0
+        if isinstance(obs, dict): return float(obs.get('value', 0.0) or 0.0)
+        return float(obs)
+
+    rainfall = _get_obs_val(incident_data.get('rainfall'))
+    water_level = _get_obs_val(incident_data.get('water_level'))
     
     road_access = incident_data.get('road_access', 'OPEN')
     road_blocked = 1.0 if road_access == 'BLOCKED' else 0.0

@@ -29,7 +29,9 @@ from app.schemas.domain import (
     Hospital,
     Environment,
     RoadAccessStatus,
-    ChangeCategory
+    RecommendedAction,
+    ChangeCategory,
+    Observation
 )
 
 @pytest.fixture
@@ -57,8 +59,8 @@ def _base_state():
             latitude=12.97,
             longitude=77.59,
             victim_count=2,
-            water_level=1.0,
-            rainfall=20.0,
+            water_level=Observation(value=1.0),
+            rainfall=Observation(value=20.0),
             road_access=RoadAccessStatus.OPEN
         ),
         resources=[
@@ -169,7 +171,7 @@ class TestReplanScenarios:
         
         # State 2: Water level jumps to 3.5m (Dangerous)
         state2 = copy.deepcopy(state1)
-        state2.incident.water_level = 3.5
+        state2.incident.water_level = Observation(value=3.5)
         
         revision = coordinator.reanalyze(state2, plan1)
         
@@ -234,7 +236,7 @@ class TestAPIReplan:
         mock_get.return_value = _osrm_success_mock()
         
         # 1. Get initial plan
-        state1 = _base_state().model_dump()
+        state1 = _base_state().model_dump(mode='json')
         resp1 = client.post("/api/ai/analyze", json=state1)
         assert resp1.status_code == 200
         plan1 = resp1.json()
@@ -242,8 +244,8 @@ class TestAPIReplan:
         # 2. Mutate state (increase victim count heavily and add severe environmental factors)
         state2 = copy.deepcopy(state1)
         state2["incident"]["victim_count"] = 50
-        state2["incident"]["water_level"] = 3.5
-        state2["incident"]["rainfall"] = 150
+        state2["incident"]["water_level"] = {"value": 3.5}
+        state2["incident"]["rainfall"] = {"value": 150}
         
         # 3. Call reanalyze
         payload = {

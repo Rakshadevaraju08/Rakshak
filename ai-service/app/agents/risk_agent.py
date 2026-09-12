@@ -7,9 +7,11 @@ from app.schemas.domain import (
     RiskLevel,
     Priority,
     IncidentType,
-    RoadAccessStatus
+    RoadAccessStatus,
+    DisasterAnalysisState
 )
 from app.errors import PipelineWarning, WarningCode
+from app.agents.validation import validate_risk
 
 logger = logging.getLogger("disaster.risk")
 
@@ -40,18 +42,26 @@ class RiskAgent:
                     detail=str(exc),
                 ))
 
-    def analyze(self, request: DisasterAnalysisRequest) -> RiskResult:
+    def analyze(self, state: DisasterAnalysisState) -> DisasterAnalysisState:
         # Reset per-call warnings (keep init warnings)
         call_warnings: List[PipelineWarning] = []
 
         if self.use_ml:
-            result = self._run_ml_model(request, call_warnings)
+            result = self._run_ml_model(state.request, call_warnings)
         else:
-            result = self._run_rule_based_scoring(request, call_warnings)
+            result = self._run_rule_based_scoring(state.request, call_warnings)
 
         # Attach warnings for coordinator pickup
         result._pipeline_warnings = self._pipeline_warnings + call_warnings
-        return result
+        
+        result, validation_warnings = validate_risk(result, state)
+        if validation_warnings:
+            result._pipeline_warnings.extend(validation_warnings)
+            for w in validation_warnings:
+                w.log()
+        
+        state.risk = result
+        return state
 
     def _run_rule_based_scoring(self, request: DisasterAnalysisRequest, call_warnings: List[PipelineWarning]) -> RiskResult:
         score = 0.0
@@ -72,10 +82,10 @@ class RiskAgent:
 
         # 2. Environmental / Physical Hazards
         if incident.type == IncidentType.FLOOD and incident.water_level is not None:
-            if incident.water_level > 2.0:
+            if incident.water_level.value > 2.0:
                 score += 30
                 conditions.append("dangerously high water level (>2.0m)")
-            elif incident.water_level > 1.0:
+            elif incident.water_level.value > 1.0:
                 score += 15
                 conditions.append("high water level (>1.0m)")
         elif incident.type == IncidentType.FLOOD and incident.water_level is None:
@@ -83,10 +93,10 @@ class RiskAgent:
             confidence -= 0.2
 
         if incident.rainfall is not None:
-            if incident.rainfall > 100:
+            if incident.rainfall.value > 100:
                 score += 20
                 conditions.append("extreme rainfall (>100mm)")
-            elif incident.rainfall > 50:
+            elif incident.rainfall.value > 50:
                 score += 10
                 conditions.append("heavy rainfall (>50mm)")
         else:
@@ -99,6 +109,9 @@ class RiskAgent:
         elif incident.type == IncidentType.EARTHQUAKE:
             score += 25
             conditions.append("earthquake structural risks")
+        elif incident.type == IncidentType.LOCALIZED_ACCIDENT:
+            score += 15
+            conditions.append("localized accident requires immediate specific intervention")
 
         # 4. Infrastructure Impact
         if incident.road_access == RoadAccessStatus.BLOCKED:

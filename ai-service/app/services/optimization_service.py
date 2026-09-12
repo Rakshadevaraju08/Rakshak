@@ -24,6 +24,7 @@ class OptimizationService:
             IncidentType.FLOOD: [ResourceType.RESCUE_BOAT, ResourceType.RESCUE_TEAM],
             IncidentType.MEDICAL: [ResourceType.AMBULANCE, ResourceType.MEDICAL_TEAM],
             IncidentType.EARTHQUAKE: [ResourceType.RESCUE_TEAM, ResourceType.MEDICAL_TEAM],
+            IncidentType.LOCALIZED_ACCIDENT: [ResourceType.AMBULANCE, ResourceType.FIRE_TRUCK, ResourceType.RESCUE_TEAM, ResourceType.MEDICAL_TEAM],
             IncidentType.OTHER: [r for r in ResourceType]
         }
 

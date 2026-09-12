@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List, Optional, Tuple, Dict, Any
 from pydantic import BaseModel, Field
+from datetime import datetime
 from app.errors import WarningCode
 
 # -----------------------------------------
@@ -12,6 +13,7 @@ class IncidentType(str, Enum):
     EARTHQUAKE = "EARTHQUAKE"
     FIRE = "FIRE"
     MEDICAL = "MEDICAL"
+    LOCALIZED_ACCIDENT = "LOCALIZED_ACCIDENT"
     OTHER = "OTHER"
 
 class RoadAccessStatus(str, Enum):
@@ -45,27 +47,46 @@ class Priority(int, Enum):
     P4_LOW = 4
     P5_MONITOR = 5
 
+class QualityStatus(str, Enum):
+    VALID = "VALID"
+    SUSPECT = "SUSPECT"
+    INVALID = "INVALID"
+
 # -----------------------------------------
 # INPUT SCHEMAS
 # -----------------------------------------
 
+class Observation(BaseModel):
+    value: float
+    source: str = Field(default="SYSTEM")
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
+    quality: QualityStatus = Field(default=QualityStatus.VALID)
+    sensor_id: Optional[str] = None
+
 class Incident(BaseModel):
     id: str = Field(..., description="Unique identifier for the incident")
     type: IncidentType
+    timestamp: datetime = Field(default_factory=datetime.utcnow, description="When the data was reported")
+    source: str = Field(default="SYSTEM", description="Source of the data (e.g. CITIZEN_APP, IOT, DISPATCHER)")
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Raw input confidence")
     latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude coordinate")
     longitude: float = Field(..., ge=-180.0, le=180.0, description="Longitude coordinate")
     victim_count: int = Field(default=0, ge=0, description="Total number of victims")
     elderly_count: int = Field(default=0, ge=0, description="Number of elderly victims")
     children_count: int = Field(default=0, ge=0, description="Number of child victims")
     disabled_count: int = Field(default=0, ge=0, description="Number of disabled victims")
-    water_level: Optional[float] = Field(default=None, ge=0.0, description="Water level in meters")
-    rainfall: Optional[float] = Field(default=None, ge=0.0, description="Rainfall in mm")
+    water_level: Optional[Observation] = Field(default=None, description="Water level observation")
+    rainfall: Optional[Observation] = Field(default=None, description="Rainfall observation")
     road_access: Optional[RoadAccessStatus] = None
 
 class Resource(BaseModel):
     id: str
     type: ResourceType
     status: ResourceStatus
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    source: str = Field(default="SYSTEM")
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
     longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
     capacity: Optional[int] = Field(None, ge=0, description="E.g., number of seats or payload capacity")
@@ -86,6 +107,9 @@ class Road(BaseModel):
     status: RoadAccessStatus
 
 class Environment(BaseModel):
+    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    source: str = Field(default="SYSTEM")
+    confidence: float = Field(default=1.0, ge=0.0, le=1.0)
     general_weather: Optional[str] = None
     temperature_celsius: Optional[float] = None
     forecast_summary: Optional[str] = None
@@ -100,9 +124,30 @@ class DisasterAnalysisRequest(BaseModel):
     roads: List[Road] = Field(default_factory=list)
     environment: Optional[Environment] = None
 
+class DisasterAnalysisState(BaseModel):
+    """Explicit shared pipeline state passed through and enriched by all agents."""
+    request: DisasterAnalysisRequest
+    data_quality: Optional['DataQualityResult'] = None
+    situation: Optional['SituationResult'] = None
+    risk: Optional['RiskResult'] = None
+    prediction: Optional['PredictiveAgentResult'] = None
+    resource_assignments: Optional['ResourceAgentResult'] = None
+    degraded: bool = False
+    warnings: List['PipelineWarningResponse'] = Field(default_factory=list)
+
 # -----------------------------------------
 # OUTPUT SCHEMAS
 # -----------------------------------------
+
+class DataQualityResult(BaseModel):
+    overall_quality: QualityStatus
+    confidence: float = Field(..., ge=0.0, le=1.0)
+    stale_fields: List[str] = Field(default_factory=list)
+    invalid_fields: List[str] = Field(default_factory=list)
+    missing_fields: List[str] = Field(default_factory=list)
+    conflicting_fields: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    provenance: List[str] = Field(default_factory=list)
 
 class SituationResult(BaseModel):
     is_valid: bool = Field(..., description="Whether the incident data is valid and coherent")
@@ -181,6 +226,7 @@ class PipelineWarningResponse(BaseModel):
 class FullResponsePlan(BaseModel):
     """The master output payload returned to the Node.js backend."""
     incident_id: str
+    data_quality: Optional[DataQualityResult] = None
     situation: Optional[SituationResult] = None
     risk: Optional[RiskResult] = None
     prediction: Optional[PredictiveAgentResult] = None

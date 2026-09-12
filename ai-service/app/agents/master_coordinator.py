@@ -7,15 +7,21 @@ from app.schemas.domain import (
     PipelineWarningResponse,
     RecommendedAction,
     RiskLevel,
-    ResponsePlanRevision
+    ResponsePlanRevision,
+    ResponsePlanRevision,
+    DisasterAnalysisState,
+    QualityStatus
 )
+from app.agents.data_quality_agent import DataQualityAgent
 from app.agents.situation_agent import SituationAgent
 from app.agents.risk_agent import RiskAgent
 from app.agents.predictive_agent import PredictiveAgent
 from app.agents.resource_agent import ResourceAgent
 from app.agents.route_agent import RouteAgent
+from app.agents.validation import validate_routes, validate_coordinator_plan
 from app.errors import PipelineWarning, WarningCode, safe_execute
 from app.services.plan_diff import compute_plan_diff
+from app.logging_config import AuditLogger
 
 logger = logging.getLogger("disaster.coordinator")
 
@@ -28,6 +34,7 @@ class MasterCoordinator:
     """
 
     def __init__(self, use_ml_risk: bool = False):
+        self.data_quality_agent = DataQualityAgent()
         self.situation_agent = SituationAgent()
         self.risk_agent = RiskAgent(use_ml=use_ml_risk)
         self.predictive_agent = PredictiveAgent()
@@ -39,9 +46,27 @@ class MasterCoordinator:
         all_warnings: List[PipelineWarning] = []
         degraded = False
         
+        state = DisasterAnalysisState(request=request)
+        
+        # 0. Run Data Quality Agent (Provenance)
+        try:
+            state = self.data_quality_agent.analyze(state)
+            dq = state.data_quality
+            if dq.warnings:
+                explanation.extend(dq.warnings)
+            if dq.provenance:
+                explanation.extend(dq.provenance)
+            all_warnings.extend(getattr(dq, '_pipeline_warnings', []))
+            if dq.overall_quality == QualityStatus.INVALID:
+                degraded = True
+        except Exception as e:
+            logger.error(f"Data Quality Agent failed critically: {type(e).__name__}")
+            raise RuntimeError("Data quality analysis is a strict dependency but it failed.") from e
+
         # 1. Run Situation Agent (Required)
         try:
-            situation = self.situation_agent.analyze(request)
+            state = self.situation_agent.analyze(state)
+            situation = state.situation
             if situation.missing_information:
                 all_warnings.append(PipelineWarning(
                     code=WarningCode.INCOMPLETE_INCIDENT,
@@ -57,7 +82,8 @@ class MasterCoordinator:
 
         # 2. Run Risk Agent (Required)
         try:
-            risk = self.risk_agent.analyze(request)
+            state = self.risk_agent.analyze(state)
+            risk = state.risk
             explanation.extend(risk.reasons)
             # Collect structured warnings from the agent
             all_warnings.extend(getattr(risk, '_pipeline_warnings', []))
@@ -69,14 +95,15 @@ class MasterCoordinator:
         prediction = None
         pred_result, pred_warnings = safe_execute(
             self.predictive_agent.analyze,
-            request, risk,
+            state,
             agent_name="PredictiveAgent",
             failure_code=WarningCode.PREDICTION_FAILURE,
         )
         all_warnings.extend(pred_warnings)
 
         if pred_result is not None:
-            prediction = pred_result
+            state = pred_result  # The agent returns the mutated state
+            prediction = state.prediction
             explanation.extend(prediction.explanation)
             all_warnings.extend(getattr(prediction, '_pipeline_warnings', []))
         else:
@@ -87,14 +114,15 @@ class MasterCoordinator:
         assignments = []
         res_result, res_warnings = safe_execute(
             self.resource_agent.analyze,
-            request, risk,
+            state,
             agent_name="ResourceAgent",
             failure_code=WarningCode.RESOURCE_FAILURE,
         )
         all_warnings.extend(res_warnings)
 
         if res_result is not None:
-            resource_result = res_result
+            state = res_result
+            resource_result = state.resource_assignments
             assignments = resource_result.assignments
             explanation.extend(resource_result.reasons)
             all_warnings.extend(getattr(resource_result, '_pipeline_warnings', []))
@@ -122,6 +150,14 @@ class MasterCoordinator:
                             dest_lat=request.incident.latitude,
                             dest_lon=request.incident.longitude
                         )
+                        
+                        validated_routes, validation_warnings = validate_routes([route], state)
+                        route = validated_routes[0]
+                        if validation_warnings:
+                            all_warnings.extend(validation_warnings)
+                            for w in validation_warnings:
+                                w.log()
+                                
                         assignment.route = route
                         assignment.estimated_arrival_time_mins = route.estimated_time_mins
                         # Collect route warnings
@@ -188,11 +224,32 @@ class MasterCoordinator:
             WarningCode.OSRM_UNAVAILABLE,
             WarningCode.MODEL_FILE_MISSING,
             WarningCode.MODEL_PREDICTION_FAILED,
+            WarningCode.STALE_DATA,
+            WarningCode.DATA_CONFLICT,
         ) for w in unique_warnings):
             degraded = True
+            
+        state.degraded = degraded
+        state.warnings = warning_responses
+        
+        # Determine human approval based on Risk-based autonomy
+        confidences = [state.data_quality.confidence, situation.confidence_score, risk.confidence]
+        if prediction:
+            confidences.append(prediction.confidence)
+        
+        overall_confidence = min(confidences) if confidences else 0.0
+
+        human_approval_required = True
+        if overall_confidence < 0.8 or degraded or risk_lvl == RiskLevel.CRITICAL:
+            human_approval_required = True
+            explanation.append(f"Human approval required (Confidence: {overall_confidence}, Degraded: {degraded}, Risk: {risk_lvl.value}).")
+        elif risk_lvl in (RiskLevel.LOW, RiskLevel.MEDIUM) and overall_confidence > 0.9:
+            human_approval_required = False
+            explanation.append(f"Risk-based autonomy engaged: Automatic action approved based on high confidence ({overall_confidence}) and acceptable risk.")
 
         plan = FullResponsePlan(
             incident_id=request.incident.id,
+            data_quality=state.data_quality,
             situation=situation,
             risk=risk,
             prediction=prediction,
@@ -201,8 +258,24 @@ class MasterCoordinator:
             explanation=explanation,
             warnings=warning_responses,
             degraded=degraded,
-            human_approval_required=True
+            human_approval_required=human_approval_required
         )
+        
+        plan, validation_warnings = validate_coordinator_plan(plan, state)
+        if validation_warnings:
+            # Need to append to the pipeline responses
+            for w in validation_warnings:
+                w.log()
+                plan.warnings.append(PipelineWarningResponse(
+                    code=w.code,
+                    source=w.source,
+                    message=w.message
+                ))
+        
+        # Attach context transiently for the AuditLogger
+        plan._pipeline_context = state
+
+        AuditLogger.log_plan(plan)
 
         return plan
 

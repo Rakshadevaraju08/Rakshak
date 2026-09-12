@@ -119,8 +119,8 @@ class TestAPIScenario2:
             "longitude": 77.59,
             "victim_count": 5,
             "elderly_count": 3,
-            "water_level": 2.8,
-            "rainfall": 140.0,
+            "water_level": {"value": 2.8},
+            "rainfall": {"value": 140.0},
             "road_access": "BLOCKED",
         },
         "resources": [
@@ -203,8 +203,8 @@ class TestAPIScenario3:
             "elderly_count": 3,
             "children_count": 4,
             "disabled_count": 1,
-            "water_level": 3.5,
-            "rainfall": 220.0,
+            "water_level": {"value": 3.5},
+            "rainfall": {"value": 220.0},
             "road_access": "BLOCKED",
         },
         "resources": [
@@ -370,8 +370,8 @@ class TestAPIScenario6:
             "latitude": 12.97,
             "longitude": 77.59,
             "victim_count": 4,
-            "water_level": 2.0,
-            "rainfall": 100.0,
+            "water_level": {"value": 2.0},
+            "rainfall": {"value": 100.0},
         },
         "resources": [
             {
@@ -465,8 +465,8 @@ class TestAPIScenario7:
         assert data["prediction"]["confidence"] < 1.0
 
         # Missing info flagged
-        assert "water_level" in data["situation"]["missing_information"]
-        assert "rainfall" in data["situation"]["missing_information"]
+        assert "water_level" in data.get("data_quality", {}).get("missing_fields", [])
+        assert "rainfall" in data.get("data_quality", {}).get("missing_fields", [])
 
     @patch("app.services.routing_service.requests.get")
     def test_warnings_for_missing_data(self, mock_get, client):
@@ -495,8 +495,8 @@ class TestAPIScenario8:
             "latitude": 12.97,
             "longitude": 77.59,
             "victim_count": 3,
-            "water_level": 1.5,
-            "rainfall": 65.0,
+            "water_level": {"value": 1.5},
+            "rainfall": {"value": 65.0},
         },
         "resources": [
             {
@@ -536,7 +536,7 @@ class TestAPIScenario8:
 
         response = client.post("/api/ai/analyze", json=self.PAYLOAD)
         data = response.json()
-
+        # Check pipeline warnings in explanation
         explanations = " ".join(data["explanation"]).lower()
         assert "heavily increasing" in explanations or "rising rapidly" in explanations
 

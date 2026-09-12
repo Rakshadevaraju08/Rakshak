@@ -7,9 +7,11 @@ from app.schemas.domain import (
     RiskLevel,
     PredictiveAgentResult,
     ForecastItem,
-    IncidentType
+    IncidentType,
+    DisasterAnalysisState
 )
 from app.errors import PipelineWarning, WarningCode
+from app.agents.validation import validate_prediction
 
 logger = logging.getLogger("disaster.predictive")
 
@@ -25,14 +27,27 @@ class PredictiveAgent:
         self.use_ml = use_ml
         self.horizons = [20, 45, 60]
 
-    def analyze(self, request: DisasterAnalysisRequest, current_risk: RiskResult) -> PredictiveAgentResult:
+    def analyze(self, state: DisasterAnalysisState) -> DisasterAnalysisState:
         pipeline_warnings: List[PipelineWarning] = []
+        request = state.request
+        current_risk = state.risk
+        
+        if not current_risk:
+            raise ValueError("PredictiveAgent requires risk assessment to be present in the state.")
 
         if self.use_ml:
             try:
                 result = self._run_ml_model(request, current_risk)
+                
+                result, validation_warnings = validate_prediction(result, state)
+                if validation_warnings:
+                    pipeline_warnings.extend(validation_warnings)
+                    for w in validation_warnings:
+                        w.log()
+                
                 result._pipeline_warnings = pipeline_warnings
-                return result
+                state.prediction = result
+                return state
             except NotImplementedError:
                 logger.warning("ML model not implemented for predictions. Falling back to baseline.")
                 pipeline_warnings.append(PipelineWarning(
@@ -50,8 +65,16 @@ class PredictiveAgent:
                 ))
 
         result = self._run_baseline_prediction(request, current_risk, pipeline_warnings)
+        
+        result, validation_warnings = validate_prediction(result, state)
+        if validation_warnings:
+            pipeline_warnings.extend(validation_warnings)
+            for w in validation_warnings:
+                w.log()
+                
         result._pipeline_warnings = pipeline_warnings
-        return result
+        state.prediction = result
+        return state
 
     def _run_baseline_prediction(
         self,
