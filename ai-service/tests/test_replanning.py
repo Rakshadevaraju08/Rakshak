@@ -239,9 +239,11 @@ class TestAPIReplan:
         assert resp1.status_code == 200
         plan1 = resp1.json()
         
-        # 2. Mutate state (increase victim count heavily)
+        # 2. Mutate state (increase victim count heavily and add severe environmental factors)
         state2 = copy.deepcopy(state1)
         state2["incident"]["victim_count"] = 50
+        state2["incident"]["water_level"] = 3.5
+        state2["incident"]["rainfall"] = 150
         
         # 3. Call reanalyze
         payload = {

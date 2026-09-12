@@ -150,31 +150,13 @@ class RiskAgent:
 
             incident = request.incident
             
-            # 1. Feature Extraction (must match train_risk.py ordering)
-            # ['victim_count', 'elderly_count', 'children_count', 'disabled_count',
-            #  'rainfall', 'water_level', 'road_access_blocked', 'is_flood', 'is_fire', 'is_earthquake']
+            # 1. Feature Extraction using shared ml module
+            from app.ml.features import extract_risk_features
             
-            # Treat missing numerical values as 0.0 for the ML baseline
-            rainfall = incident.rainfall if incident.rainfall is not None else 0.0
-            water_level = incident.water_level if incident.water_level is not None else 0.0
+            # Convert incident Pydantic model to a dict for the extractor
+            incident_dict = incident.model_dump()
             
-            road_blocked = 1 if incident.road_access == RoadAccessStatus.BLOCKED else 0
-            is_flood = 1 if incident.type == IncidentType.FLOOD else 0
-            is_fire = 1 if incident.type == IncidentType.FIRE else 0
-            is_earthquake = 1 if incident.type == IncidentType.EARTHQUAKE else 0
-            
-            features = [
-                incident.victim_count,
-                incident.elderly_count,
-                incident.children_count,
-                incident.disabled_count,
-                rainfall,
-                water_level,
-                road_blocked,
-                is_flood,
-                is_fire,
-                is_earthquake
-            ]
+            features = extract_risk_features(incident_dict)
 
             # 2. Prediction
             priority_val = self.ml_service.predict(features)

@@ -11,8 +11,8 @@ logger = logging.getLogger("disaster.routing")
 
 class RoutingService:
     def __init__(self):
-        # Allow override via environment variable, fallback to public demo server
-        self.osrm_base_url = os.getenv("OSRM_BASE_URL", "http://router.project-osrm.org")
+        from app.config.settings import settings
+        self.osrm_base_url = settings.osrm_base_url
         self.timeout_sec = 5.0
 
     @staticmethod

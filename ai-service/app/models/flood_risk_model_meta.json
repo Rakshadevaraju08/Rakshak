@@ -1,0 +1,24 @@
+{
+  "model_type": "RandomForestClassifier",
+  "training_date": "2026-09-12T10:42:27.692907",
+  "feature_names": [
+    "rainfall_current",
+    "rainfall_1h",
+    "rainfall_3h",
+    "rainfall_6h",
+    "rainfall_24h",
+    "rainfall_trend",
+    "elevation_m"
+  ],
+  "dataset_type": "SYNTHETIC",
+  "evaluation_metrics": {
+    "accuracy": 1.0,
+    "high_risk_recall": 1.0,
+    "high_risk_f1": 1.0
+  },
+  "limitations": "DEMO / PROTOTYPE MODEL. Target labels are heuristically generated based on extreme rainfall and low elevation due to lack of high-frequency historical flood labels.",
+  "is_demo_model": true,
+  "extra": {
+    "prediction_horizon_minutes": 30
+  }
+}

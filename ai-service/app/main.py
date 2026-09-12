@@ -16,6 +16,8 @@ from app.schemas.domain import (
 )
 from app.agents.master_coordinator import MasterCoordinator
 from app.errors import AgentError
+from app.config.settings import settings
+from app.services.flood_prediction_service import FloodPredictionService
 from app.logging_config import setup_logging
 
 # Initialize logging at module load
@@ -31,11 +33,16 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv("CORS_ORIGINS", "*").split(",")],
+    allow_origins=[settings.cors_origins.split(",")],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ---------------------------------------------------------------------------
+# Instantiate Shared Services
+# ---------------------------------------------------------------------------
+flood_service = FloodPredictionService()
 
 
 # ---------------------------------------------------------------------------
@@ -180,10 +187,7 @@ def predict_flood_risk(request: FloodPredictionRequest):
     using the trained Random Forest model.
     """
     try:
-        from app.services.flood_prediction_service import FloodPredictionService
-        service = FloodPredictionService()
-        
-        if not service.is_available():
+        if not flood_service.is_available():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail="Flood prediction model is currently unavailable."
@@ -202,7 +206,7 @@ def predict_flood_risk(request: FloodPredictionRequest):
         # Override approximations if client provided 24h via a hypothetical extension 
         # (keeping API contract strictly per prompt for now)
         
-        result = service.predict_flood_risk(features)
+        result = flood_service.predict_flood_risk(features)
         return result
     except ValueError as ve:
         raise HTTPException(

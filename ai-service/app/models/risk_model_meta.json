@@ -1,0 +1,23 @@
+{
+  "model_type": "RandomForestClassifier",
+  "training_date": "2026-09-12T10:42:30.829568",
+  "feature_names": [
+    "victim_count",
+    "elderly_count",
+    "children_count",
+    "disabled_count",
+    "rainfall",
+    "water_level",
+    "road_access_blocked",
+    "is_flood",
+    "is_fire",
+    "is_earthquake"
+  ],
+  "dataset_type": "SYNTHETIC",
+  "evaluation_metrics": {
+    "accuracy": 0.943
+  },
+  "limitations": "DEMO / PROTOTYPE MODEL. Trained entirely on synthetically generated rule-based labels because real labeled emergency priority datasets were unavailable.",
+  "is_demo_model": true,
+  "extra": {}
+}

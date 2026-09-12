@@ -1,6 +1,7 @@
 fastapi
 uvicorn
 pydantic
+pydantic-settings
 scikit-learn
 pandas
 numpy
@@ -10,6 +11,3 @@ joblib
 httpx
 pyyaml
 faker
-geopandas
-shapely
-rasterio
