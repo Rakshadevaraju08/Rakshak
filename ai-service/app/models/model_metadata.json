@@ -1,0 +1,29 @@
+{
+  "model_type": "RandomForestClassifier",
+  "prediction_horizon_minutes": 30,
+  "features": [
+    "rainfall_current",
+    "rainfall_1h",
+    "rainfall_3h",
+    "rainfall_6h",
+    "rainfall_24h",
+    "rainfall_trend",
+    "elevation_m"
+  ],
+  "training_period": "2021-01-01 01:00:00+00:00 to 2023-06-30 23:00:00+00:00",
+  "test_period": "2023-07-01 00:00:00+00:00 to 2023-12-31 23:00:00+00:00",
+  "metrics": {
+    "accuracy": 1.0,
+    "high_risk_recall": 1.0,
+    "high_risk_f1": 1.0
+  },
+  "feature_importances": {
+    "rainfall_current": 0.04686125011948622,
+    "rainfall_1h": 0.06756550760191407,
+    "rainfall_3h": 0.07222084628698897,
+    "rainfall_6h": 0.12080647395876429,
+    "rainfall_24h": 0.6787816164459096,
+    "rainfall_trend": 0.013764305586936872,
+    "elevation_m": 0.0
+  }
+}

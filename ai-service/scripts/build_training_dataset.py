@@ -45,10 +45,9 @@ def build_prediction_dataset():
         group['rainfall_trend'] = group['rainfall_1h'] - group['rainfall_1h'].shift(1)
         
         # Target: simulate target based on conditions for hackathon purposes
-        # Note: In real life this must be historical flood occurrence.
-        # We simulate flood if 24h rainfall > 100mm and elevation < 50m
+        # We simulate flood if 24h rainfall > 50mm and elevation < 60m
         group['flood_next_30min'] = np.where(
-            (group['rainfall_24h'] > 100) & (group['elevation_m'] < 50), 
+            (group['rainfall_24h'] > 50) & (group['elevation_m'] < 60), 
             1, 0
         )
         

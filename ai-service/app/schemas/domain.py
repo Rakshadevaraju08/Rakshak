@@ -225,3 +225,26 @@ class ResponsePlanRevision(BaseModel):
     changes: List[PlanChange] = Field(default_factory=list)
     new_plan: FullResponsePlan
     is_significant_change: bool = False
+
+# -----------------------------------------
+# STANDALONE ML PREDICTION SCHEMAS
+# -----------------------------------------
+
+class FloodPredictionRequest(BaseModel):
+    latitude: float
+    longitude: float
+    rainfallCurrent: float
+    rainfall1h: float
+    rainfall3h: float
+    rainfall6h: float
+    waterLevel: Optional[float] = None
+    waterLevelChange: Optional[float] = None
+    aboveDangerLevel: Optional[bool] = None
+    elevation: float
+    historicalFlood: Optional[bool] = None
+
+class FloodPredictionResponse(BaseModel):
+    riskLevel: str
+    probability: float
+    predictionHorizonMinutes: int
+    factors: List[str]

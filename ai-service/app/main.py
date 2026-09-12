@@ -10,7 +10,9 @@ from app.schemas.domain import (
     DisasterAnalysisRequest, 
     FullResponsePlan, 
     ReplanRequest, 
-    ResponsePlanRevision
+    ResponsePlanRevision,
+    FloodPredictionRequest,
+    FloodPredictionResponse
 )
 from app.agents.master_coordinator import MasterCoordinator
 from app.errors import AgentError
@@ -169,4 +171,47 @@ def reanalyze_disaster(request: ReplanRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="An unexpected error occurred during reanalysis."
+        )
+
+@app.post("/api/ai/predict-flood-risk", response_model=FloodPredictionResponse)
+def predict_flood_risk(request: FloodPredictionRequest):
+    """
+    Standalone endpoint for predicting flood risk based on environmental factors
+    using the trained Random Forest model.
+    """
+    try:
+        from app.services.flood_prediction_service import FloodPredictionService
+        service = FloodPredictionService()
+        
+        if not service.is_available():
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Flood prediction model is currently unavailable."
+            )
+            
+        features = {
+            'rainfall_current': request.rainfallCurrent,
+            'rainfall_1h': request.rainfall1h,
+            'rainfall_3h': request.rainfall3h,
+            'rainfall_6h': request.rainfall6h,
+            'rainfall_24h': (request.rainfallCurrent) * 24, # Fallback, ideally provided
+            'rainfall_trend': 0, # Approximation for now
+            'elevation_m': request.elevation
+        }
+        
+        # Override approximations if client provided 24h via a hypothetical extension 
+        # (keeping API contract strictly per prompt for now)
+        
+        result = service.predict_flood_risk(features)
+        return result
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(ve)
+        )
+    except Exception as e:
+        logger.exception(f"Prediction failed: {type(e).__name__}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during prediction."
         )

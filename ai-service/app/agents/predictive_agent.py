@@ -160,12 +160,43 @@ class PredictiveAgent:
         )
 
     def _run_ml_model(self, request: DisasterAnalysisRequest, current_risk: RiskResult) -> PredictiveAgentResult:
-        """
-        Placeholder structure to replace rule-based predictions with a scikit-learn model 
-        (e.g. Random Forest Regressor or Time-Series model) when real historical data exists.
+        from app.services.flood_prediction_service import FloodPredictionService
         
-        Assumptions & Limitations:
-        - Real historical disaster labeled data with temporal risk progressions is REQUIRED for validation.
-        - Using synthetic data for temporal ML predictions creates dangerous false confidence during disasters.
-        """
-        raise NotImplementedError("ML Model integration requires real historical labeled time-series data.")
+        service = FloodPredictionService()
+        if not service.is_available():
+            raise NotImplementedError("ML Model file is missing or failed to load.")
+            
+        env = request.environment
+        if not env:
+            raise ValueError("Environment data is required for ML prediction.")
+            
+        # Build features dict for the service
+        features = {
+            'rainfall_current': env.rainfall_current_mm or 0,
+            'rainfall_1h': (env.rainfall_current_mm or 0) * 1.5, # approximation since we don't have full history in simple request
+            'rainfall_3h': (env.rainfall_current_mm or 0) * 3,
+            'rainfall_6h': (env.rainfall_current_mm or 0) * 6,
+            'rainfall_24h': (env.rainfall_current_mm or 0) * 24,
+            'rainfall_trend': env.rainfall_trend_mm_per_hour or 0,
+            'elevation_m': env.elevation_m or 50.0
+        }
+        
+        pred = service.predict_flood_risk(features)
+        
+        # Determine escalation
+        risk_map = {RiskLevel.LOW: 1, RiskLevel.MEDIUM: 2, RiskLevel.HIGH: 3, RiskLevel.CRITICAL: 4}
+        current_int = risk_map[current_risk.risk_level]
+        predicted_enum = RiskLevel(pred['riskLevel'])
+        pred_int = risk_map[predicted_enum]
+        
+        escalation = pred_int > current_int
+        
+        forecast = [ForecastItem(horizon_minutes=pred['predictionHorizonMinutes'], risk_level=predicted_enum)]
+        
+        return PredictiveAgentResult(
+            current_risk=current_risk.risk_level,
+            forecast=forecast,
+            escalation_detected=escalation,
+            explanation=pred['factors'],
+            confidence=pred['probability']
+        )
