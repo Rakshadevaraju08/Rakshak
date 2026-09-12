@@ -12,7 +12,7 @@ Frontend / Mobile
 Node.js + Express
         ↓
  ┌───────────────┐
- │ PostgreSQL    │
+ │ MySQL         │
  │ Redis         │
  └───────────────┘
         ↓
@@ -36,7 +36,7 @@ Dispatch / Re-planning
 
 ## 3. Data Flow
 1. Incident is reported via Frontend/Mobile.
-2. Backend stores to PostgreSQL and publishes to Redis.
+2. Backend stores to MySQL and publishes to Redis.
 3. AI Service consumes the event and triggers agents.
 4. AI generates a Response Plan.
 5. Plan is presented on Frontend for Operator approval.
@@ -67,7 +67,7 @@ AI Pipeline
 ```
 
 ## 6. Database Layer
-PostgreSQL for relational data (Incidents, Resources, Hospitals, Roads).
+MySQL for relational data (Incidents, Resources, Hospitals, Roads).
 Prisma as ORM.
 
 ## 7. Real-Time/Event Layer

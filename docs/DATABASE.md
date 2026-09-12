@@ -1,7 +1,7 @@
 # DATABASE STRUCTURE
 
 ## Purpose
-PostgreSQL stores the core structured data of the Disaster Response Agent. It is managed using Prisma ORM.
+MySQL stores the core structured data of the Disaster Response Agent. It is managed using Prisma ORM.
 
 ## Major Entities
 

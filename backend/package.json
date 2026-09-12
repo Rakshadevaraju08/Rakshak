@@ -2,11 +2,13 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "db:push": "prisma db push",
+    "db:generate": "prisma generate",
+    "test": "node --test",
     "postinstall": "prisma skills sync || exit 0"
   },
   "keywords": [],
@@ -14,13 +16,13 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
-    "@prisma/client": "^7.10.0",
+    "@prisma/client": "^6.19.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
     "morgan": "^1.12.1",
-    "prisma": "^8.0.0-rc.13",
+    "prisma": "^6.19.0",
     "redis": "^6.2.1"
   },
   "devDependencies": {

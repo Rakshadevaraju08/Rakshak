@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -11,6 +11,7 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
+  passwordHash String?
   role      String   @default("CITIZEN") // e.g., CITIZEN, OPERATOR, ADMIN
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -55,6 +56,8 @@ model Resource {
   name      String
   locationLat Float?
   locationLng Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   ambulances   Ambulance[]
   rescueTeams  RescueTeam[]
@@ -62,7 +65,7 @@ model Resource {
 
 model Ambulance {
   id          String   @id @default(uuid())
-  plateNumber String
+  plateNumber String @unique
   resourceId  String
   resource    Resource @relation(fields: [resourceId], references: [id])
 }
@@ -87,7 +90,7 @@ model HospitalCapacity {
   id         String   @id @default(uuid())
   totalBeds  Int
   available  Int
-  updatedAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   
   hospitalId String
   hospital   Hospital @relation(fields: [hospitalId], references: [id])
@@ -97,6 +100,7 @@ model Road {
   id          String   @id @default(uuid())
   name        String
   status      String   @default("OPEN") // OPEN, BLOCKED, HAZARDOUS
+  updatedAt   DateTime @updatedAt
 
   incidentId  String?
   incident    Incident? @relation(fields: [incidentId], references: [id])
@@ -141,6 +145,7 @@ model DispatchPlan {
   status      String   @default("PENDING") // PENDING, APPROVED, EXECUTED, CANCELLED
   details     Json
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   incidentId  String
   incident    Incident @relation(fields: [incidentId], references: [id])
