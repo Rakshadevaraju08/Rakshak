@@ -1,10 +1,8 @@
-from app.schemas.domain import DisasterAnalysisRequest, Incident, IncidentType
-from app.agents.situation_agent import SituationAgent
-from app.agents.risk_agent import RiskAgent
+from app.schemas.domain import DisasterAnalysisRequest, Incident, IncidentType, Resource, ResourceType, ResourceStatus, Environment
+from app.agents.master_coordinator import MasterCoordinator
 
-# 1. Initialize the Agents
-situation_agent = SituationAgent()
-risk_agent = RiskAgent(use_ml=True)
+# 1. Initialize the Coordinator
+coordinator = MasterCoordinator()
 
 # 2. Create some fake disaster data
 request = DisasterAnalysisRequest(
@@ -15,15 +13,19 @@ request = DisasterAnalysisRequest(
         longitude=-118.24,
         victim_count=12,
         elderly_count=3
+    ),
+    resources=[
+        Resource(id="FIRE_TRUCK_1", type=ResourceType.FIRE_TRUCK, status=ResourceStatus.AVAILABLE, latitude=34.00, longitude=-118.20)
+    ],
+    environment=Environment(
+        rainfall_trend_mm_per_hour=0.0,
+        water_level_trend_m_per_hour=0.0
     )
 )
 
-# 3. Run the agents
-situation_result = situation_agent.analyze(request)
-risk_result = risk_agent.analyze(request)
+# 3. Run the complete pipeline
+plan = coordinator.analyze(request)
 
-# 4. Print the results
-print("--- SITUATION ---")
-print(situation_result.model_dump_json(indent=2))
-print("\n--- RISK ---")
-print(risk_result.model_dump_json(indent=2))
+# 4. Print the final response plan
+print("--- MASTER COORDINATOR FINAL PLAN ---")
+print(plan.model_dump_json(indent=2))

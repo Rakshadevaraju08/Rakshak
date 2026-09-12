@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Tuple, Dict, Any
 from pydantic import BaseModel, Field
 
 # -----------------------------------------
@@ -17,6 +17,7 @@ class RoadAccessStatus(str, Enum):
     OPEN = "OPEN"
     PARTIAL = "PARTIAL"
     BLOCKED = "BLOCKED"
+    ROUTE_UNAVAILABLE = "ROUTE_UNAVAILABLE"
 
 class ResourceType(str, Enum):
     AMBULANCE = "AMBULANCE"
@@ -79,12 +80,16 @@ class Hospital(BaseModel):
 class Road(BaseModel):
     id: str
     name: str
+    latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
     status: RoadAccessStatus
 
 class Environment(BaseModel):
     general_weather: Optional[str] = None
     temperature_celsius: Optional[float] = None
     forecast_summary: Optional[str] = None
+    rainfall_trend_mm_per_hour: Optional[float] = None
+    water_level_trend_m_per_hour: Optional[float] = None
 
 class DisasterAnalysisRequest(BaseModel):
     """The master input payload expected from the Node.js backend."""
@@ -122,13 +127,25 @@ class PredictionResult(BaseModel):
     worsening_probability: float = Field(..., ge=0.0, le=1.0)
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score of the AI prediction")
 
+class ForecastItem(BaseModel):
+    horizon_minutes: int
+    risk_level: RiskLevel
+
+class PredictiveAgentResult(BaseModel):
+    current_risk: RiskLevel
+    forecast: List[ForecastItem]
+    escalation_detected: bool
+    explanation: List[str]
+    confidence: float = Field(..., ge=0.0, le=1.0)
+
 class RouteResult(BaseModel):
     resource_id: str
     destination_id: str
     estimated_time_mins: float = Field(..., ge=0.0)
     distance_km: float = Field(..., ge=0.0)
-    waypoints: List[Dict[str, float]] = Field(..., description="List of dicts with 'lat' and 'lng' keys")
+    waypoints: List[Tuple[float, float]] = Field(default_factory=list, description="List of (lat, lon) waypoints")
     route_status: RoadAccessStatus
+    explanation: str = ""
 
 class ResourceAssignment(BaseModel):
     resource_id: str
@@ -142,6 +159,13 @@ class ResponseRecommendation(BaseModel):
     target_hospital_id: Optional[str] = None
     human_approval_required: bool = True
 
+class RecommendedAction(str, Enum):
+    MONITOR = "MONITOR"
+    PREPARE = "PREPARE"
+    PRE_POSITION = "PRE_POSITION"
+    DISPATCH = "DISPATCH"
+    IMMEDIATE_DISPATCH = "IMMEDIATE_DISPATCH"
+
 class ResourceAgentResult(BaseModel):
     assignments: List[ResourceAssignment]
     unfulfilled_requirements: List[str]
@@ -150,9 +174,11 @@ class ResourceAgentResult(BaseModel):
 class FullResponsePlan(BaseModel):
     """The master output payload returned to the Node.js backend."""
     incident_id: str
-    situation: SituationResult
-    risk: RiskResult
-    prediction: PredictionResult
-    resource_assignments: List[ResourceAssignment]
-    recommendation: ResponseRecommendation
-    explanations: List[str] = Field(..., description="Overall reasoning for the generated plan")
+    situation: Optional[SituationResult] = None
+    risk: Optional[RiskResult] = None
+    prediction: Optional[PredictiveAgentResult] = None
+    assignments: List[ResourceAssignment] = Field(default_factory=list)
+    recommended_action: RecommendedAction
+    explanation: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+    human_approval_required: bool = True
