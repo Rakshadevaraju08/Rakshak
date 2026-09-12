@@ -1,0 +1,158 @@
+from enum import Enum
+from typing import List, Optional, Dict, Any
+from pydantic import BaseModel, Field
+
+# -----------------------------------------
+# ENUMS
+# -----------------------------------------
+
+class IncidentType(str, Enum):
+    FLOOD = "FLOOD"
+    EARTHQUAKE = "EARTHQUAKE"
+    FIRE = "FIRE"
+    MEDICAL = "MEDICAL"
+    OTHER = "OTHER"
+
+class RoadAccessStatus(str, Enum):
+    OPEN = "OPEN"
+    PARTIAL = "PARTIAL"
+    BLOCKED = "BLOCKED"
+
+class ResourceType(str, Enum):
+    AMBULANCE = "AMBULANCE"
+    RESCUE_TEAM = "RESCUE_TEAM"
+    FIRE_TRUCK = "FIRE_TRUCK"
+    RESCUE_BOAT = "RESCUE_BOAT"
+    MEDICAL_TEAM = "MEDICAL_TEAM"
+
+class ResourceStatus(str, Enum):
+    AVAILABLE = "AVAILABLE"
+    DISPATCHED = "DISPATCHED"
+    MAINTENANCE = "MAINTENANCE"
+
+class RiskLevel(str, Enum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+class Priority(int, Enum):
+    P1_CRITICAL = 1
+    P2_HIGH = 2
+    P3_MEDIUM = 3
+    P4_LOW = 4
+    P5_MONITOR = 5
+
+# -----------------------------------------
+# INPUT SCHEMAS
+# -----------------------------------------
+
+class Incident(BaseModel):
+    id: str = Field(..., description="Unique identifier for the incident")
+    type: IncidentType
+    latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude coordinate")
+    longitude: float = Field(..., ge=-180.0, le=180.0, description="Longitude coordinate")
+    victim_count: int = Field(default=0, ge=0, description="Total number of victims")
+    elderly_count: int = Field(default=0, ge=0, description="Number of elderly victims")
+    children_count: int = Field(default=0, ge=0, description="Number of child victims")
+    disabled_count: int = Field(default=0, ge=0, description="Number of disabled victims")
+    water_level: Optional[float] = Field(default=None, ge=0.0, description="Water level in meters")
+    rainfall: Optional[float] = Field(default=None, ge=0.0, description="Rainfall in mm")
+    road_access: Optional[RoadAccessStatus] = None
+
+class Resource(BaseModel):
+    id: str
+    type: ResourceType
+    status: ResourceStatus
+    latitude: Optional[float] = Field(None, ge=-90.0, le=90.0)
+    longitude: Optional[float] = Field(None, ge=-180.0, le=180.0)
+    capacity: Optional[int] = Field(None, ge=0, description="E.g., number of seats or payload capacity")
+
+class Hospital(BaseModel):
+    id: str
+    name: str
+    latitude: float = Field(..., ge=-90.0, le=90.0)
+    longitude: float = Field(..., ge=-180.0, le=180.0)
+    total_beds: int = Field(..., ge=0)
+    available_beds: int = Field(..., ge=0)
+
+class Road(BaseModel):
+    id: str
+    name: str
+    status: RoadAccessStatus
+
+class Environment(BaseModel):
+    general_weather: Optional[str] = None
+    temperature_celsius: Optional[float] = None
+    forecast_summary: Optional[str] = None
+
+class DisasterAnalysisRequest(BaseModel):
+    """The master input payload expected from the Node.js backend."""
+    incident: Incident
+    resources: List[Resource] = Field(default_factory=list)
+    hospitals: List[Hospital] = Field(default_factory=list)
+    roads: List[Road] = Field(default_factory=list)
+    environment: Optional[Environment] = None
+
+# -----------------------------------------
+# OUTPUT SCHEMAS
+# -----------------------------------------
+
+class SituationResult(BaseModel):
+    is_valid: bool = Field(..., description="Whether the incident data is valid and coherent")
+    summary: str
+    severity_assessment: str
+    vulnerable_population_impact: str
+    missing_information: List[str] = Field(default_factory=list)
+    confidence_score: float = Field(..., ge=0.0, le=1.0)
+    explanations: List[str] = Field(default_factory=list)
+    normalized_incident_type: str
+
+class RiskResult(BaseModel):
+    priority: Priority
+    risk_level: RiskLevel
+    severity: str
+    score: float = Field(..., ge=0.0, le=100.0, description="Calculated risk score out of 100")
+    reasons: List[str] = Field(..., description="Explainability factors for why this risk was assigned")
+    confidence: float = Field(..., ge=0.0, le=1.0)
+
+class PredictionResult(BaseModel):
+    horizon_hours: int = Field(..., ge=1, description="How far into the future this prediction looks")
+    predicted_risk_trend: str = Field(..., description="E.g., STABLE, WORSENING, IMPROVING")
+    worsening_probability: float = Field(..., ge=0.0, le=1.0)
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score of the AI prediction")
+
+class RouteResult(BaseModel):
+    resource_id: str
+    destination_id: str
+    estimated_time_mins: float = Field(..., ge=0.0)
+    distance_km: float = Field(..., ge=0.0)
+    waypoints: List[Dict[str, float]] = Field(..., description="List of dicts with 'lat' and 'lng' keys")
+    route_status: RoadAccessStatus
+
+class ResourceAssignment(BaseModel):
+    resource_id: str
+    action: str = Field(..., description="E.g., DISPATCH_TO_INCIDENT, STANDBY")
+    route: RouteResult
+    estimated_arrival_time_mins: float = Field(..., ge=0.0)
+
+class ResponseRecommendation(BaseModel):
+    primary_action: str
+    required_resources: List[ResourceAssignment]
+    target_hospital_id: Optional[str] = None
+    human_approval_required: bool = True
+
+class ResourceAgentResult(BaseModel):
+    assignments: List[ResourceAssignment]
+    unfulfilled_requirements: List[str]
+    reasons: List[str]
+
+class FullResponsePlan(BaseModel):
+    """The master output payload returned to the Node.js backend."""
+    incident_id: str
+    situation: SituationResult
+    risk: RiskResult
+    prediction: PredictionResult
+    resource_assignments: List[ResourceAssignment]
+    recommendation: ResponseRecommendation
+    explanations: List[str] = Field(..., description="Overall reasoning for the generated plan")
