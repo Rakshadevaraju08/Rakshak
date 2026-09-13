@@ -421,3 +421,166 @@ class MasterCoordinator:
             new_plan=new_plan,
             is_significant_change=is_significant
         )
+
+    def analyze_with_continuity(self, request: DisasterAnalysisRequest, previous_plan: FullResponsePlan) -> FullResponsePlan:
+        """
+        Re-evaluates the disaster state using incremental reasoning (Incident Continuity).
+        Reuses previous agent results if their inputs have not changed and are still valid.
+        """
+        from app.services.plan_invalidation import check_plan_invalidation
+        
+        trace = PipelineTrace()
+        with self._trace_step(trace, "Request Received (Continuity)", "MasterCoordinator"):
+            explanation: List[str] = ["INCIDENT CONTINUITY: Processing update..."]
+            all_warnings: List[PipelineWarning] = []
+            degraded = False
+            
+            state = DisasterAnalysisState(request=request)
+            invalidations = check_plan_invalidation(previous_plan, request)
+
+            # Change Detection
+            prev_req = previous_plan._pipeline_context.request if hasattr(previous_plan, '_pipeline_context') else None
+            
+            victims_changed = True
+            water_level_changed = True
+            rainfall_changed = True
+            location_changed = True
+            
+            if prev_req:
+                victims_changed = request.incident.victim_count != prev_req.incident.victim_count
+                location_changed = (request.incident.latitude != prev_req.incident.latitude) or (request.incident.longitude != prev_req.incident.longitude)
+                
+                prev_wl = prev_req.incident.water_level.value if prev_req.incident.water_level else None
+                curr_wl = request.incident.water_level.value if request.incident.water_level else None
+                water_level_changed = prev_wl != curr_wl
+                
+                prev_rf = prev_req.incident.rainfall.value if prev_req.incident.rainfall else None
+                curr_rf = request.incident.rainfall.value if request.incident.rainfall else None
+                rainfall_changed = prev_rf != curr_rf
+
+        # 0. Data Quality
+        with self._trace_step(trace, "Data Quality Analysis", "DataQualityAgent") as step:
+            state = self.data_quality_agent.analyze(state)
+            
+        # 1. Situation
+        with self._trace_step(trace, "Situation Analysis", "SituationAgent") as step:
+            if not victims_changed and not location_changed and previous_plan.situation:
+                state.situation = previous_plan.situation
+                explanation.append("Situation     : REUSED (Inputs unchanged)")
+            else:
+                state = self.situation_agent.analyze(state)
+                explanation.append("Situation     : RECOMPUTED (Victims/Location changed)")
+                
+        # 2. Risk
+        with self._trace_step(trace, "Risk Analysis", "RiskAgent") as step:
+            if not victims_changed and not water_level_changed and not rainfall_changed and previous_plan.risk:
+                state.risk = previous_plan.risk
+                explanation.append("Risk          : REUSED (Situation & Environment unchanged)")
+            else:
+                try:
+                    state = self.risk_agent.analyze(state)
+                    explanation.append("Risk          : RECOMPUTED (Inputs changed)")
+                except Exception as e:
+                    logger.warning(f"Risk Agent failed: {str(e)}")
+                    step.status = TraceStepStatus.FAILED
+                    degraded = True
+
+        # 3. Prediction
+        with self._trace_step(trace, "Predictive Analysis", "PredictiveAgent") as step:
+            if not water_level_changed and not rainfall_changed and previous_plan.prediction:
+                state.prediction = previous_plan.prediction
+                explanation.append("Prediction    : REUSED (Environment unchanged)")
+            else:
+                try:
+                    state = self.predictive_agent.analyze(state)
+                    explanation.append("Prediction    : RECOMPUTED (Environment changed)")
+                except Exception as e:
+                    logger.warning(f"Predictive Agent failed: {str(e)}")
+                    step.status = TraceStepStatus.FAILED
+                    degraded = True
+
+        # 4. Resource & 5. Route
+        with self._trace_step(trace, "Resource & Route", "ResourceAgent") as step:
+            # Check if any invalidations affect resources/routes
+            resource_invalidated = any("assigned resource" in inv for inv in invalidations)
+            route_invalidated = any("road access became BLOCKED" in inv for inv in invalidations)
+            risk_changed = (victims_changed or water_level_changed or rainfall_changed)
+            
+            if not risk_changed and not resource_invalidated and not route_invalidated and previous_plan.resource_agent_result:
+                state.resource_assignments = previous_plan.resource_agent_result
+                explanation.append("Resource/Route: REUSED (Risk & Availability unchanged)")
+            else:
+                try:
+                    state = self.resource_agent.analyze(state)
+                    assignments = state.resource_assignments.assignments if state.resource_assignments else []
+                    if assignments:
+                        blocked_roads = [r for r in request.roads if r.status.value == "BLOCKED"]
+                        for assignment in assignments:
+                            res_obj = next((r for r in request.resources if r.id == assignment.resource_id), None)
+                            if res_obj:
+                                route = self.route_agent.analyze(
+                                    resource_id=res_obj.id,
+                                    destination_id=request.incident.id,
+                                    origin_lat=res_obj.latitude,
+                                    origin_lon=res_obj.longitude,
+                                    dest_lat=request.incident.latitude,
+                                    dest_lon=request.incident.longitude,
+                                    blocked_roads=blocked_roads
+                                )
+                                from app.agents.validation import validate_routes
+                                validated_routes, _ = validate_routes([route], state)
+                                assignment.route = validated_routes[0]
+                                assignment.estimated_arrival_time_mins = assignment.route.estimated_time_mins
+                    explanation.append("Resource/Route: RECOMPUTED (Invalidated or Risk changed)")
+                except Exception as e:
+                    logger.warning(f"Resource/Route Agent failed: {str(e)}")
+                    step.status = TraceStepStatus.FAILED
+                    degraded = True
+
+        # Assemble new plan shell
+        plan = FullResponsePlan(
+            incident_id=request.incident.id,
+            recommended_action=RecommendedAction.MONITOR,
+            explanation=explanation,
+            data_quality=state.data_quality,
+            situation=state.situation,
+            risk=state.risk,
+            prediction=state.prediction,
+            resource_agent_result=state.resource_assignments,
+            assignments=state.resource_assignments.assignments if state.resource_assignments else [],
+            warnings=all_warnings,
+            degraded=degraded
+        )
+
+        # 6. Action determination
+        risk_lvl = state.risk.risk_level if state.risk else RiskLevel.LOW
+        escalating = state.prediction.escalation_detected if state.prediction else False
+        if risk_lvl == RiskLevel.CRITICAL:
+            plan.recommended_action = RecommendedAction.IMMEDIATE_DISPATCH
+        elif risk_lvl == RiskLevel.HIGH and escalating:
+            plan.recommended_action = RecommendedAction.IMMEDIATE_DISPATCH
+        elif risk_lvl == RiskLevel.HIGH:
+            plan.recommended_action = RecommendedAction.DISPATCH
+        elif risk_lvl == RiskLevel.MEDIUM and escalating:
+            plan.recommended_action = RecommendedAction.PRE_POSITION
+        elif risk_lvl == RiskLevel.MEDIUM:
+            plan.recommended_action = RecommendedAction.PREPARE
+        else:
+            plan.recommended_action = RecommendedAction.MONITOR
+
+        # 7. Safety Check (Always rerun on final assembled state)
+        with self._trace_step(trace, "Safety Check", "ResponseSafetyChecker") as step:
+            safety_result = self.safety_checker.check(state, plan)
+            plan.safety_check = safety_result
+            explanation.append("Safety Check  : RE-RUN (Mandatory validation)")
+            
+        # 8. Autonomy Decision (Always rerun)
+        with self._trace_step(trace, "Autonomy Decision", "AutonomyDecisionMaker") as step:
+            autonomy_decision = self.autonomy_decision_maker.decide(state, plan, safety_result)
+            plan.autonomy_decision = autonomy_decision
+            explanation.append("Autonomy      : RE-RUN (Mandatory decision)")
+
+        trace.end_time = datetime.utcnow()
+        plan.trace = trace
+        plan._pipeline_context = state
+        return plan
