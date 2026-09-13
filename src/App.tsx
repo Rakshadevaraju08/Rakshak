@@ -168,18 +168,82 @@ const sidebarItems = [
   { label: 'Alerts', icon: 'notifications_active', to: '/alerts' },
 ];
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = localStorage.getItem('rescuegrid-auth-token');
+  const response = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options.headers || {}),
+    },
+  });
+
+  const contentType = response.headers.get('content-type') || '';
+  const payload = contentType.includes('application/json') ? await response.json() : await response.text();
+
+  if (!response.ok) {
+    const message = typeof payload === 'string' ? payload : payload?.error || 'Request failed';
+    throw new Error(message);
+  }
+
+  return payload as T;
+}
+
+const normalizeIncident = (incident: any) => ({
+  id: incident.id || `INC-${Math.random().toString(36).slice(2, 8)}`,
+  disasterType: incident.type || incident.disasterType || 'OTHER',
+  title: incident.title || 'Emergency alert',
+  location: incident.location || incident.locationName || 'Field report',
+  latitude: Number(incident.locationLat ?? incident.latitude ?? 12.2958),
+  longitude: Number(incident.locationLng ?? incident.longitude ?? 76.6394),
+  victims: Number(incident.victimCount ?? incident.victims ?? 0),
+  vulnerable: Number(incident.elderlyCount ?? incident.vulnerable ?? 0) + Number(incident.childrenCount ?? 0),
+  priority: Number(incident.priority ?? 3),
+  severity: incident.severity || (Number(incident.priority ?? 0) >= 5 ? 'CRITICAL' : Number(incident.priority ?? 0) >= 4 ? 'HIGH' : 'MEDIUM'),
+  timeReceivedMinutesAgo: Number(incident.timeReceivedMinutesAgo ?? 0),
+  status: incident.status || 'NEW',
+  relatedReports: Array.isArray(incident.relatedReports) ? incident.relatedReports : [],
+  routeDistanceKm: Number(incident.routeDistanceKm ?? 8),
+  etaMinutes: Number(incident.etaMinutes ?? 15),
+  hospital: incident.hospital || 'Regional Hospital',
+  prediction: incident.prediction || 'Risk monitored',
+  recommendation: incident.recommendation || 'DISPATCH RESOURCE',
+  reason: incident.reason || incident.description || 'Live incident data received from backend',
+});
+
+const normalizeResource = (resource: any) => ({
+  id: resource.id || `RES-${Math.random().toString(36).slice(2, 6)}`,
+  type: resource.type || 'AMBULANCE',
+  label: resource.name || resource.label || resource.type,
+  status: resource.status || 'AVAILABLE',
+  latitude: Number(resource.locationLat ?? resource.latitude ?? 12.3),
+  longitude: Number(resource.locationLng ?? resource.longitude ?? 76.6),
+});
+
+const normalizeHospital = (hospital: any) => ({
+  id: hospital.id || `H-${Math.random().toString(36).slice(2, 6)}`,
+  name: hospital.name || 'Hospital',
+  status: hospital.status || 'AVAILABLE',
+  capacity: Number(hospital.totalBeds ?? hospital.capacity ?? 50),
+  latitude: Number(hospital.locationLat ?? hospital.latitude ?? 12.3),
+  longitude: Number(hospital.locationLng ?? hospital.longitude ?? 76.6),
+});
+
 export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
     if (typeof window === 'undefined') return false;
-    return localStorage.getItem('rescuegrid-demo-auth') === 'true';
+    return localStorage.getItem('rescuegrid-demo-auth') === 'true' || !!localStorage.getItem('rescuegrid-auth-token');
   });
   const [loginForm, setLoginForm] = useState({ email: 'admin@rescuegrid.io', password: 'rescuegrid123' });
   const [loginError, setLoginError] = useState('');
   const [incidents, setIncidents] = useState(initialIncidents);
-  const [selectedIncidentId, setSelectedIncidentId] = useState(initialIncidents[0].id);
+  const [selectedIncidentId, setSelectedIncidentId] = useState(initialIncidents[0]?.id ?? '');
   const [resources, setResources] = useState(initialResources);
-  const [hospitals] = useState(initialHospitals);
-  const [roads] = useState(initialRoads);
+  const [hospitals, setHospitals] = useState(initialHospitals);
+  const [roads, setRoads] = useState(initialRoads);
   const [selectedResourceId, setSelectedResourceId] = useState('AMB-03');
   const [notifications, setNotifications] = useState(initialNotifications);
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
@@ -202,6 +266,51 @@ export default function App() {
     );
   }, []);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const loadLiveData = async () => {
+      try {
+        const [incidentList, resourceList, hospitalList, roadList] = await Promise.all([
+          apiRequest<any[]>('/incidents').catch(() => []),
+          apiRequest<any[]>('/resources').catch(() => []),
+          apiRequest<any[]>('/hospitals').catch(() => []),
+          apiRequest<any[]>('/roads').catch(() => []),
+        ]);
+
+        if (incidentList.length) {
+          const mapped = incidentList.map(normalizeIncident);
+          setIncidents(mapped);
+          setSelectedIncidentId((current) => current || mapped[0]?.id || '');
+        }
+
+        if (resourceList.length) {
+          const mapped = resourceList.map(normalizeResource);
+          setResources(mapped);
+          setSelectedResourceId((current) => current || mapped[0]?.id || 'AMB-03');
+        }
+
+        if (hospitalList.length) {
+          setHospitals(hospitalList.map(normalizeHospital));
+        }
+
+        if (roadList.length) {
+          const mapped = roadList.map((road) => ({
+            id: road.id,
+            name: road.name || 'Road segment',
+            blocked: road.status === 'BLOCKED',
+            routePoints: road.routePoints || [[12.3, 76.6], [12.35, 76.65]],
+          }));
+          setRoads(mapped);
+        }
+      } catch {
+        setNotifications((current) => [{ id: `N-${Date.now()}`, text: 'LIVE_SYNC_FAILED: using demo fallback data.', time: 'just now' }, ...current]);
+      }
+    };
+
+    loadLiveData();
+  }, [isAuthenticated]);
+
   const selectedIncident = useMemo(
     () => incidents.find((incident) => incident.id === selectedIncidentId) ?? incidents[0],
     [incidents, selectedIncidentId]
@@ -221,7 +330,7 @@ export default function App() {
     return { distanceKm: 15.2, etaMinutes: 21, reason: 'Road blockage detected', visible: true };
   }, [roads, selectedIncident]);
 
-  const handleLoginSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleLoginSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
 
     const email = loginForm.email.trim().toLowerCase();
@@ -232,19 +341,52 @@ export default function App() {
       return;
     }
 
+    try {
+      const data = await apiRequest<{ user?: { email?: string; name?: string }; token?: string }>('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (data?.token) {
+        localStorage.setItem('rescuegrid-auth-token', data.token);
+        localStorage.setItem('rescuegrid-demo-auth', 'true');
+        setIsAuthenticated(true);
+        setLoginError('');
+        toast.success(`Welcome back, ${data.user?.name || data.user?.email || 'operator'}`);
+        return;
+      }
+    } catch (error) {
+      const fallbackMessage = 'Unable to authenticate against the backend. Using demo access instead.';
+      const isDemoMatch = email === 'admin@rescuegrid.io' && password === 'rescuegrid123';
+
+      if (isDemoMatch) {
+        localStorage.setItem('rescuegrid-demo-auth', 'true');
+        localStorage.setItem('rescuegrid-auth-token', 'demo-token');
+        setIsAuthenticated(true);
+        setLoginError('');
+        toast.success('Login successful (demo fallback)');
+        return;
+      }
+
+      setLoginError(error instanceof Error ? error.message : fallbackMessage);
+      return;
+    }
+
     if (email === 'admin@rescuegrid.io' && password === 'rescuegrid123') {
       localStorage.setItem('rescuegrid-demo-auth', 'true');
+      localStorage.setItem('rescuegrid-auth-token', 'demo-token');
       setIsAuthenticated(true);
       setLoginError('');
       toast.success('Login successful');
       return;
     }
 
-    setLoginError('Invalid credentials. Use the demo operator login.');
+    setLoginError('Invalid credentials. Use the demo operator login or a valid backend account.');
   };
 
   const handleLogout = () => {
     localStorage.removeItem('rescuegrid-demo-auth');
+    localStorage.removeItem('rescuegrid-auth-token');
     setIsAuthenticated(false);
     setLoginError('');
     toast.success('Signed out');
@@ -257,7 +399,19 @@ export default function App() {
 
   const handleApprove = () => setDispatchModalOpen(true);
 
-  const handleDispatchConfirm = () => {
+  const handleDispatchConfirm = async () => {
+    try {
+      const selected = selectedIncident;
+      if (selected?.id) {
+        await apiRequest('/dispatch/execute', {
+          method: 'POST',
+          body: JSON.stringify({ planId: selected.id }),
+        }).catch(() => undefined);
+      }
+    } catch {
+      // backend dispatch may be unavailable in local/demo mode; continue with local UI update
+    }
+
     setResources((current) => current.map((resource) => (resource.id === 'AMB-03' ? { ...resource, status: 'DISPATCHED' } : resource)));
     setIncidents((current) => current.map((incident) => (incident.id === selectedIncidentId ? { ...incident, status: 'DISPATCHED' } : incident)));
     setNotifications((current) => [{ id: `N-${Date.now()}`, text: `DISPATCH_CREATED: Ambulance AMB-03 assigned to ${selectedIncident.id}.`, time: 'just now' }, ...current]);
@@ -275,7 +429,38 @@ export default function App() {
     toast.error('Recommendation rejected');
   };
 
-  const handleSOSSubmit = (payload) => {
+  const handleSOSSubmit = async (payload) => {
+    const locationLat = Number(payload.latitude) || 12.2958;
+    const locationLng = Number(payload.longitude) || 76.6394;
+
+    try {
+      const created = await apiRequest<any>('/sos', {
+        method: 'POST',
+        body: JSON.stringify({
+          title: 'New SOS alert',
+          description: payload.message || 'Emergency report from field',
+          locationLat,
+          locationLng,
+          reporterId: 'demo-operator',
+        }),
+      });
+
+      const newIncident = normalizeIncident({
+        ...created,
+        location: payload.location || 'Field report',
+        latitude: locationLat,
+        longitude: locationLng,
+      });
+
+      setIncidents((current) => [newIncident, ...current]);
+      setSelectedIncidentId(newIncident.id);
+      setNotifications((current) => [{ id: `N-${Date.now()}`, text: `SOS_RECEIVED: ${newIncident.id} reported at ${newIncident.location}.`, time: 'just now' }, ...current]);
+      toast.success('SOS submitted to backend');
+      return;
+    } catch {
+      // fallback to demo-only behavior when backend is unreachable
+    }
+
     const newIncident = {
       id: `INC-${Math.floor(2000 + Math.random() * 1000)}`,
       disasterType: 'FLOOD',
@@ -308,46 +493,69 @@ export default function App() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-950 px-4 py-8 text-slate-200">
         <Toaster position="top-right" toastOptions={{ style: { background: '#0f172a', color: '#e2e8f0', border: '1px solid #334155' } }} />
-        <div className="w-full max-w-md rounded-3xl border border-slate-700 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/50 backdrop-blur-sm">
-          <div className="mb-6 text-center">
-            <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/60 bg-cyan-500/10 text-2xl font-black text-cyan-300">R</div>
-            <div className="text-[10px] uppercase tracking-[0.28em] text-cyan-300">State Emergency Operations</div>
-            <h1 className="mt-2 text-3xl font-black tracking-tight text-white">RESCUEGRID</h1>
+        <div className="w-full max-w-5xl rounded-3xl border border-slate-700 bg-slate-900/80 p-6 shadow-2xl shadow-slate-950/50 backdrop-blur-sm">
+          <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+            <div className="rounded-2xl border border-slate-700 bg-slate-950/50 p-5">
+              <div className="mb-6 text-center lg:text-left">
+                <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl border border-cyan-400/60 bg-cyan-500/10 text-2xl font-black text-cyan-300 lg:mx-0">R</div>
+                <div className="text-[10px] uppercase tracking-[0.28em] text-cyan-300">State Emergency Operations</div>
+                <h1 className="mt-2 text-3xl font-black tracking-tight text-white">RESCUEGRID</h1>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="space-y-4">
+                <div>
+                  <label className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-slate-400">Operator Email</label>
+                  <input
+                    type="email"
+                    value={loginForm.email}
+                    onChange={(event) => setLoginForm((current) => ({ ...current, email: event.target.value }))}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-slate-400">Password</label>
+                  <input
+                    type="password"
+                    value={loginForm.password}
+                    onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))}
+                    className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
+                  />
+                </div>
+
+                {loginError && (
+                  <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{loginError}</div>
+                )}
+
+                <div className="rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-slate-300">
+                  Demo login: admin@rescuegrid.io / rescuegrid123
+                </div>
+
+                <button type="submit" className="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-950 transition hover:bg-cyan-400">
+                  Sign In
+                </button>
+              </form>
+            </div>
+
+            <div className="rounded-2xl border border-cyan-500/20 bg-cyan-500/5 p-5">
+              <div className="mb-5 text-[10px] uppercase tracking-[0.24em] text-cyan-300">Operator briefing</div>
+              <div className="space-y-4">
+                <div className="rounded-xl border border-slate-700 bg-slate-950/60 p-3">
+                  <div className="text-[10px] uppercase tracking-[0.18em] text-slate-400">Operator</div>
+                  <div className="mt-2 text-xl font-black text-white">Arjun Kumar</div>
+                </div>
+
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                  <InfoRow label="Designation" value="Incident Commander" />
+                  <InfoRow label="Duty Station" value="Kodagu Control Room" />
+                  <InfoRow label="Location" value="Madikeri, Karnataka" />
+                  <InfoRow label="Shift" value="Night Operations" />
+                  <InfoRow label="Access Level" value="Regional Command" />
+                  <InfoRow label="Status" value="Online / Ready" />
+                </div>
+              </div>
+            </div>
           </div>
-
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
-            <div>
-              <label className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-slate-400">Operator Email</label>
-              <input
-                type="email"
-                value={loginForm.email}
-                onChange={(event) => setLoginForm((current) => ({ ...current, email: event.target.value }))}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-[10px] uppercase tracking-[0.18em] text-slate-400">Password</label>
-              <input
-                type="password"
-                value={loginForm.password}
-                onChange={(event) => setLoginForm((current) => ({ ...current, password: event.target.value }))}
-                className="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-3 text-sm text-white outline-none transition focus:border-cyan-400"
-              />
-            </div>
-
-            {loginError && (
-              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">{loginError}</div>
-            )}
-
-            <div className="rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2 text-[10px] uppercase tracking-[0.18em] text-slate-300">
-              Demo login: admin@rescuegrid.io / rescuegrid123
-            </div>
-
-            <button type="submit" className="w-full rounded-xl bg-cyan-500 px-4 py-3 text-sm font-black uppercase tracking-[0.18em] text-slate-950 transition hover:bg-cyan-400">
-              Sign In
-            </button>
-          </form>
         </div>
       </div>
     );
@@ -460,29 +668,22 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
         ))}
       </div>
 
-      <div className="mb-5 grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+      <div className="mb-5 grid gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/30">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <div className="text-[10px] uppercase tracking-[0.22em] text-slate-400">Live network trends</div>
-              <div className="mt-1 text-lg font-bold text-white">Response pressure</div>
-            </div>
-            <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200">+18.4%</span>
-          </div>
-          <div className="flex h-28 items-end gap-2">
-            {liveTrendSeries.map((value, index) => (
-              <div key={`${value}-${index}`} className="flex-1 rounded-t-xl bg-gradient-to-t from-cyan-500 via-sky-400 to-blue-300" style={{ height: `${value}%`, opacity: index > 5 ? 1 : 0.82 }} />
-            ))}
+          <div className="mb-4 text-[10px] uppercase tracking-[0.22em] text-slate-400">Operational snapshot</div>
+          <div className="space-y-3 text-sm text-slate-200">
+            <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2"><span>Ambulance availability</span><span className="font-bold text-emerald-300">78%</span></div>
+            <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2"><span>Rescue readiness</span><span className="font-bold text-amber-300">63%</span></div>
+            <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2"><span>Field access status</span><span className="font-bold text-cyan-300">Stable</span></div>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/30">
-          <div className="mb-4 text-[10px] uppercase tracking-[0.22em] text-slate-400">Resource balance</div>
+          <div className="mb-4 text-[10px] uppercase tracking-[0.22em] text-slate-400">Command summary</div>
           <div className="space-y-3 text-sm text-slate-200">
-            <div className="flex items-center justify-between"><span>Ambulance availability</span><span className="font-bold text-emerald-300">78%</span></div>
-            <div className="h-2 rounded-full bg-slate-800"><div className="h-full w-[78%] rounded-full bg-emerald-400" /></div>
-            <div className="flex items-center justify-between"><span>Rescue readiness</span><span className="font-bold text-amber-300">63%</span></div>
-            <div className="h-2 rounded-full bg-slate-800"><div className="h-full w-[63%] rounded-full bg-amber-400" /></div>
+            <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2"><span>Incident load</span><span className="font-bold text-white">04 active</span></div>
+            <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2"><span>Dispatch queue</span><span className="font-bold text-violet-300">02 pending</span></div>
+            <div className="flex items-center justify-between rounded-xl border border-slate-700 bg-slate-950/50 px-3 py-2"><span>Critical path</span><span className="font-bold text-rose-300">Flood / Kodagu</span></div>
           </div>
         </div>
       </div>
