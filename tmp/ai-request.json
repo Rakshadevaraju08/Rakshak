@@ -1,0 +1,62 @@
+﻿{
+  "incident": {
+    "id": "INC-1042",
+    "type": "FLOOD",
+    "timestamp": "2026-09-13T06:07:00Z",
+    "source": "OPERATOR_DASHBOARD",
+    "confidence": 0.96,
+    "latitude": 12.304,
+    "longitude": 76.653,
+    "victim_count": 6,
+    "critical_victim_count": 2,
+    "elderly_count": 2,
+    "children_count": 0,
+    "disabled_count": 0,
+    "water_level": {
+      "value": 1.2,
+      "source": "OPERATOR_DASHBOARD",
+      "timestamp": "2026-09-13T06:07:00Z",
+      "confidence": 0.85,
+      "quality": "VALID",
+      "sensor_id": "dashboard-water-level"
+    },
+    "rainfall": {
+      "value": 18,
+      "source": "OPERATOR_DASHBOARD",
+      "timestamp": "2026-09-13T06:07:00Z",
+      "confidence": 0.85,
+      "quality": "VALID",
+      "sensor_id": "dashboard-rainfall"
+    },
+    "road_access": "BLOCKED"
+  },
+  "resources": [
+    {"id":"AMB-01","type":"AMBULANCE","status":"AVAILABLE","timestamp":"2026-09-13T06:07:00Z","source":"OPERATOR_DASHBOARD","confidence":0.95,"latitude":12.308,"longitude":76.632},
+    {"id":"AMB-02","type":"AMBULANCE","status":"MAINTENANCE","timestamp":"2026-09-13T06:07:00Z","source":"OPERATOR_DASHBOARD","confidence":0.95,"latitude":12.282,"longitude":76.665},
+    {"id":"AMB-03","type":"AMBULANCE","status":"AVAILABLE","timestamp":"2026-09-13T06:07:00Z","source":"OPERATOR_DASHBOARD","confidence":0.95,"latitude":12.318,"longitude":76.647},
+    {"id":"AMB-04","type":"AMBULANCE","status":"DISPATCHED","timestamp":"2026-09-13T06:07:00Z","source":"OPERATOR_DASHBOARD","confidence":0.95,"latitude":12.287,"longitude":76.621},
+    {"id":"RES-01","type":"RESCUE_TEAM","status":"AVAILABLE","timestamp":"2026-09-13T06:07:00Z","source":"OPERATOR_DASHBOARD","confidence":0.95,"latitude":12.334,"longitude":76.665},
+    {"id":"RES-02","type":"RESCUE_TEAM","status":"DISPATCHED","timestamp":"2026-09-13T06:07:00Z","source":"OPERATOR_DASHBOARD","confidence":0.95,"latitude":12.284,"longitude":76.61},
+    {"id":"RES-03","type":"RESCUE_TEAM","status":"AVAILABLE","timestamp":"2026-09-13T06:07:00Z","source":"OPERATOR_DASHBOARD","confidence":0.95,"latitude":12.316,"longitude":76.607}
+  ],
+  "hospitals": [
+    {"id":"H-01","name":"District Hospital","latitude":12.285,"longitude":76.675,"total_beds":96,"available_beds":81},
+    {"id":"H-02","name":"City Emergency Hospital","latitude":12.322,"longitude":76.688,"total_beds":81,"available_beds":81},
+    {"id":"H-03","name":"Taluk Hospital","latitude":12.338,"longitude":76.61,"total_beds":34,"available_beds":34}
+  ],
+  "roads": [
+    {"id":"RD-01","name":"Mysore-Kodagu Link","latitude":12.315,"longitude":76.639,"status":"OPEN"},
+    {"id":"RD-02","name":"Madikeri Ridge Road","latitude":12.318,"longitude":76.647,"status":"BLOCKED"},
+    {"id":"RD-03","name":"Waterfront Access Road","latitude":12.334,"longitude":76.665,"status":"OPEN"}
+  ],
+  "environment": {
+    "timestamp":"2026-09-13T06:07:00Z",
+    "source":"OPERATOR_DASHBOARD",
+    "confidence":0.9,
+    "general_weather":"Variable conditions",
+    "temperature_celsius":24,
+    "forecast_summary":"Operator dashboard is monitoring current field conditions.",
+    "rainfall_trend_mm_per_hour":12,
+    "water_level_trend_m_per_hour":0.3
+  }
+}

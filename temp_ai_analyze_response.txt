@@ -1,0 +1,1 @@
+{"error":"VALIDATION_ERROR","message":"Request validation failed. Check the 'details' field for specifics.","details":[{"field":"body -> 1","message":"JSON decode error","type":"json_invalid"}]}

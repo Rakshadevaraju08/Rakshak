@@ -1,0 +1,32 @@
+{
+  "incident": {
+    "id": "INC-TEST-001",
+    "type": "FLOOD",
+    "latitude": 12.2958,
+    "longitude": 76.6394,
+    "victim_count": 6,
+    "elderly_count": 2,
+    "children_count": 2,
+    "disabled_count": 0,
+    "water_level": 2.5,
+    "rainfall": 120.0,
+    "road_access": "OPEN"
+  },
+  "resources": [
+    { "id": "RES-AMB-1", "type": "AMBULANCE", "status": "AVAILABLE", "latitude": 12.3010, "longitude": 76.6450, "capacity": 2 },
+    { "id": "RES-BOAT-1", "type": "RESCUE_BOAT", "status": "AVAILABLE", "latitude": 12.2900, "longitude": 76.6300, "capacity": 4 },
+    { "id": "RES-TEAM-1", "type": "RESCUE_TEAM", "status": "AVAILABLE", "latitude": 12.2850, "longitude": 76.6500, "capacity": 8 }
+  ],
+  "hospitals": [
+    { "id": "HOSP-1", "name": "Mercy General Hospital", "latitude": 12.3000, "longitude": 76.6400, "total_beds": 120, "available_beds": 18 }
+  ],
+  "roads": [
+    { "id": "ROAD-1", "name": "Ring Road", "status": "OPEN" },
+    { "id": "ROAD-2", "name": "River Causeway", "status": "BLOCKED" }
+  ],
+  "environment": {
+    "general_weather": "Heavy rain and rising river levels",
+    "rainfall_trend_mm_per_hour": 12.0,
+    "water_level_trend_m_per_hour": 0.7
+  }
+}
