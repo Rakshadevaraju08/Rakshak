@@ -86,7 +86,7 @@ class RoutingService:
 
         # --- OSRM call ---
         # OSRM expects coordinates in lon,lat format
-        url = f"{self.osrm_base_url}/route/v1/driving/{origin_lon},{origin_lat};{dest_lon},{dest_lat}?overview=false"
+        url = f"{self.osrm_base_url}/route/v1/driving/{origin_lon},{origin_lat};{dest_lon},{dest_lat}?overview=simplified&steps=true"
 
         try:
             response = requests.get(url, timeout=self.timeout_sec)
@@ -98,11 +98,31 @@ class RoutingService:
                 distance_km = route["distance"] / 1000.0
                 time_mins = route["duration"] / 60.0
                 
+                route_names = []
+                waypoints = [(origin_lat, origin_lon)]
+                
+                if "legs" in route and len(route["legs"]) > 0:
+                    for step in route["legs"][0].get("steps", []):
+                        # Extract street name
+                        name = step.get("name")
+                        if name and (not route_names or route_names[-1] != name):
+                            route_names.append(name)
+                        # Extract waypoint
+                        if "maneuver" in step and "location" in step["maneuver"]:
+                            loc = step["maneuver"]["location"] # [lon, lat]
+                            waypoints.append((loc[1], loc[0]))
+                            
+                waypoints.append((dest_lat, dest_lon))
+                
+                if not route_names:
+                    route_names = ["OSRM route (detailed street names unavailable)"]
+                
                 return {
                     "success": True,
                     "distance_km": round(distance_km, 2),
                     "time_mins": round(time_mins, 2),
-                    "waypoints": [(origin_lat, origin_lon), (dest_lat, dest_lon)],  # simplified
+                    "waypoints": waypoints,
+                    "route_names": route_names,
                     "explanation": "Successfully retrieved driving route from OSRM.",
                     "warnings": warnings,
                 }
@@ -149,6 +169,7 @@ class RoutingService:
             "distance_km": dist,
             "time_mins": time,
             "waypoints": [(origin_lat, origin_lon), (dest_lat, dest_lon)],
+            "route_names": ["FALLBACK (straight-line distance)"],
             "explanation": "WARNING: Route unavailable. Using straight-line distance estimate for demo purposes. Not a real road route.",
             "warnings": warnings,
         }

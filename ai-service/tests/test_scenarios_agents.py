@@ -679,7 +679,7 @@ class TestRouteAgent:
         assert result.route_status == RoadAccessStatus.OPEN
         assert result.distance_km == 8.2
         assert result.estimated_time_mins == 12.0
-        assert "Route selected because" in result.explanation
+        assert "Reason: Shortest currently valid route" in result.explanation
 
     # --- Scenario 6: OSRM unavailable → graceful fallback ---
     @patch('app.services.routing_service.requests.get')
@@ -697,7 +697,7 @@ class TestRouteAgent:
 
         assert result.route_status == RoadAccessStatus.ROUTE_UNAVAILABLE
         assert result.distance_km > 0  # straight-line fallback
-        assert "WARNING" in result.explanation
+        assert "FALLBACK" in result.explanation
 
         warnings = getattr(result, '_pipeline_warnings', [])
         assert any(w.code == WarningCode.OSRM_UNAVAILABLE for w in warnings)
