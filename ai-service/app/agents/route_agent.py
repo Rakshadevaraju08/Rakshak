@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple, Optional
 
-from app.schemas.domain import RouteResult, RoadAccessStatus, DecisionProvenance
+from app.schemas.domain import RouteResult, RoadAccessStatus, DecisionProvenance, Road
 from app.services.routing_service import RoutingService
 from app.errors import PipelineWarning, WarningCode
 
@@ -24,7 +24,7 @@ class RouteAgent:
         origin_lon: float, 
         dest_lat: float, 
         dest_lon: float,
-        blocked_roads: Optional[List[Tuple[float, float]]] = None
+        blocked_roads: Optional[List[Road]] = None
     ) -> RouteResult:
         pipeline_warnings: List[PipelineWarning] = []
 
@@ -89,10 +89,6 @@ class RouteAgent:
             result._pipeline_warnings = pipeline_warnings
             return result
 
-        # Note: Standard OSRM HTTP API does not natively support dynamic avoidance 
-        # of specific coordinate polygons without custom graph preprocessing. 
-        # If blocked roads are provided, we log them but still rely on OSRM's primary graph.
-        
         route_data = self.routing_service.get_route(
             origin_lat=origin_lat,
             origin_lon=origin_lon,
@@ -104,21 +100,64 @@ class RouteAgent:
         route_warnings = route_data.get("warnings", [])
         pipeline_warnings.extend(route_warnings)
 
+        # Check against blocked roads
+        is_blocked = False
+        blocked_reason = ""
+        if blocked_roads and route_data["success"]:
+            for br in blocked_roads:
+                if br.latitude is None or br.longitude is None:
+                    continue
+                # Simple distance check between blocked road and waypoints
+                # If any waypoint is within 0.5km of the blocked road, mark blocked
+                for wp in route_data.get("waypoints", []):
+                    dist, _ = self.routing_service._calculate_straight_line(br.latitude, br.longitude, wp[0], wp[1])
+                    if dist < 0.5:
+                        is_blocked = True
+                        blocked_reason = f"Route intersects known blocked road: {br.name}"
+                        break
+                if is_blocked:
+                    break
+
         status = RoadAccessStatus.OPEN if route_data["success"] else RoadAccessStatus.ROUTE_UNAVAILABLE
+        if is_blocked:
+            status = RoadAccessStatus.BLOCKED
+            w = PipelineWarning(
+                code=WarningCode.ROUTE_FAILURE,
+                source="RouteAgent",
+                message=f"Route for '{resource_id}' traverses a blocked road ({blocked_reason}).",
+            )
+            w.log()
+            pipeline_warnings.append(w)
+            
+        # Format textual explanation
+        route_source = "OSRM" if route_data["success"] else "FALLBACK"
+        route_str = " \u2192 ".join([resource_id] + route_data.get("route_names", []) + ["Incident Zone"])
         
-        explanation = route_data["explanation"]
-        if route_data["success"]:
+        if is_blocked:
             explanation = (
-                "Route selected because:\n"
-                "- road available\n"
-                f"- shortest available ETA ({route_data['time_mins']} mins)"
+                f"Recommended Resource: {resource_id}\n"
+                f"Recommended Route: {route_str}\n"
+                f"Distance: {route_data['distance_km']} km\n"
+                f"Estimated Time: {route_data['time_mins']} min\n"
+                f"Route Source: {route_source}\n"
+                f"Reason: {blocked_reason}"
+            )
+        else:
+            reason = "Shortest currently valid route with the assigned resource." if route_data["success"] else "Road-network route unavailable; ETA is approximate."
+            explanation = (
+                f"Recommended Resource: {resource_id}\n"
+                f"Recommended Route: {route_str}\n"
+                f"Distance: {route_data['distance_km']} km\n"
+                f"Estimated Time: {route_data['time_mins']} min\n"
+                f"Route Source: {route_source}\n"
+                f"Reason: {reason}"
             )
         
         provenance = DecisionProvenance(
             agent="RouteAgent",
             method="osrm" if route_data["success"] else "fallback_straight_line",
-            confidence=1.0,
-            inputs=["origin", "destination"],
+            confidence=1.0 if not is_blocked and route_data["success"] else 0.5,
+            inputs=["origin", "destination", "blocked_roads"],
             reasons=[explanation],
             warnings=[w.message for w in pipeline_warnings],
             fallback_used=not route_data["success"]

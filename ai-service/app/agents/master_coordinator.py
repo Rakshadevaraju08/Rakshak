@@ -187,6 +187,7 @@ class MasterCoordinator:
         # 5. Run Route Agent for selected resources (Optional/Graceful)
         with self._trace_step(trace, "Route Analysis", "RouteAgent") as step:
             if assignments:
+                blocked_roads = [r for r in request.roads if r.status.value == "BLOCKED"]
                 for assignment in assignments:
                     try:
                         # Find the resource object from the request
@@ -198,7 +199,8 @@ class MasterCoordinator:
                                 origin_lat=res_obj.latitude,
                                 origin_lon=res_obj.longitude,
                                 dest_lat=request.incident.latitude,
-                                dest_lon=request.incident.longitude
+                                dest_lon=request.incident.longitude,
+                                blocked_roads=blocked_roads
                             )
                             
                             validated_routes, validation_warnings = validate_routes([route], state)
