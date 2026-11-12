@@ -688,9 +688,9 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
         </div>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[360px_minmax(0,1fr)_420px]">
-        <aside className="rounded-2xl border border-slate-700 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/30">
-          <div className="mb-4 flex items-center justify-between">
+      <div className="grid min-w-0 grid-cols-1 items-start gap-5 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] 2xl:grid-cols-[minmax(240px,0.8fr)_minmax(0,1.7fr)_minmax(280px,0.9fr)]">
+        <aside className="min-w-0 rounded-2xl border border-slate-700 bg-slate-900/60 p-4 shadow-2xl shadow-slate-950/30">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-bold uppercase tracking-[0.18em] text-slate-200">Active Incidents</h2>
             <span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-cyan-200">{incidents.length}</span>
           </div>
@@ -715,11 +715,11 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
           </div>
         </aside>
 
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5">
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}>
             <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-3 shadow-2xl shadow-slate-950/40">
               <div className="mb-3 flex items-center justify-between"><h3 className="text-lg font-bold text-white">LIVE MAP</h3><span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-300">LIVE</span></div>
-              <div className="h-[520px] overflow-hidden rounded-xl border border-slate-700">
+              <div className="h-[clamp(360px,60vh,520px)] overflow-hidden rounded-xl border border-slate-700">
                 <MapContainer center={[selectedIncident.latitude, selectedIncident.longitude]} zoom={11} scrollWheelZoom className="h-full w-full">
                   <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                   {roads.map((road) => (
@@ -749,8 +749,8 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
             </div>
           </motion.div>
 
-          <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-            <section className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 shadow-2xl shadow-slate-950/30">
+          <div className="grid min-w-0 gap-5">
+            <section className="min-w-0 rounded-2xl border border-slate-700 bg-slate-900/60 p-5 shadow-2xl shadow-slate-950/30">
               <div className="mb-4 flex items-center justify-between">
                 <div>
                   <div className="text-[11px] uppercase tracking-[0.22em] text-cyan-300">AI Response Plan</div>
@@ -759,7 +759,7 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
                 <div className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-amber-200">{plan.priority}</div>
               </div>
 
-              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-4">
                 <InfoCard label="Victims" value={String(plan.victims)} />
                 <InfoCard label="Vulnerable" value={String(plan.vulnerable)} />
                 <InfoCard label="Resource" value={plan.resource} />
@@ -793,7 +793,7 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
               </div>
             </section>
 
-            <div className="space-y-5">
+            <div className="min-w-0 space-y-5">
               <section className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 shadow-2xl shadow-slate-950/30">
                 <div className="mb-4 text-[10px] uppercase tracking-[0.22em] text-cyan-300">Prediction</div>
                 <div className="space-y-4">
@@ -819,10 +819,10 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
           </div>
         </div>
 
-        <div className="space-y-5">
+        <div className="min-w-0 space-y-5 md:col-span-2 2xl:col-span-1">
           <section className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 shadow-2xl shadow-slate-950/30">
             <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold uppercase tracking-[0.18em] text-slate-200">Resources</h3><span className="rounded-full border border-violet-500/40 bg-violet-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-violet-200">LIVE</span></div>
-            <div className="grid gap-4 xl:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-1">
               <div>
                 <div className="mb-2 text-[10px] uppercase tracking-[0.22em] text-slate-400">Ambulances</div>
                 <div className="space-y-2">{resources.filter((resource) => resource.type === 'AMBULANCE').map((resource) => <button type="button" key={resource.id} onClick={() => onSelectResource(resource.id)} className={`flex w-full items-center justify-between rounded-xl border px-3 py-2 text-left transition ${selectedResourceId === resource.id ? 'border-cyan-500 bg-cyan-500/10' : 'border-slate-700 bg-slate-950/40 hover:border-slate-500'}`}><div><div className="font-semibold text-white">{resource.id}</div><div className="text-[10px] uppercase tracking-[0.16em] text-slate-400">{resource.label}</div></div><span className={`rounded-full px-2 py-1 text-[9px] font-bold uppercase tracking-[0.18em] ${resource.status === 'AVAILABLE' ? 'bg-emerald-500/15 text-emerald-200' : resource.status === 'BUSY' ? 'bg-amber-500/15 text-amber-200' : 'bg-red-500/15 text-red-200'}`}>{resource.status}</span></button>)}</div>
@@ -841,7 +841,7 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
           </section>
 
           <section className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 shadow-2xl shadow-slate-950/30">
-            <div className="mb-4 flex items-center justify-between"><h3 className="text-lg font-bold uppercase tracking-[0.18em] text-slate-200">Text SOS</h3><span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200">{locationStatus === 'detected' ? 'Location detected' : 'Location unavailable'}</span></div>
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><h3 className="text-lg font-bold uppercase tracking-[0.18em] text-slate-200">Text SOS</h3><span className="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-200">{locationStatus === 'detected' ? 'Location detected' : 'Location unavailable'}</span></div>
             <SOSForm onSubmit={onSOSSubmit} locationStatus={locationStatus} detectedLocation={detectedLocation} />
           </section>
 
@@ -851,11 +851,8 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
             <div className="mb-4 text-[10px] uppercase tracking-[0.22em] text-cyan-300">Alerts</div>
             <div className="space-y-3">{notifications.map((notification) => <div key={notification.id} className="rounded-xl border border-slate-700 bg-slate-950/50 p-3"><div className="text-sm text-slate-200">{notification.text}</div><div className="mt-2 text-[10px] uppercase tracking-[0.18em] text-slate-400">{notification.time}</div></div>)}</div>
           </section>
-        </div>
-      </div>
-
-      <aside className="mt-6 hidden w-[360px] shrink-0 lg:block">
-        <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 shadow-2xl shadow-slate-950/30">
+          <aside className="min-w-0">
+            <div className="rounded-2xl border border-slate-700 bg-slate-900/60 p-5 shadow-2xl shadow-slate-950/30">
           <div className="mb-4 flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase tracking-[0.2em] text-cyan-300">Incident detail</div>
@@ -897,8 +894,10 @@ function OverviewPage({ incidents, selectedIncidentId, onIncidentSelect, selecte
               <li className="flex items-start gap-2"><span className="mt-1 h-2 w-2 rounded-full bg-cyan-400" /><span>Notify tertiary medical support on alert</span></li>
             </ul>
           </div>
+            </div>
+          </aside>
         </div>
-      </aside>
+      </div>
 
       {dispatchModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
