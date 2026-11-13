@@ -109,7 +109,7 @@ def test_validate_risk_out_of_bounds_score(base_state):
     assert any(w.code == WarningCode.RISK_FAILURE for w in warnings)
 
 
-def test_validate_prediction_empty_forecast(base_state):
+def test_validate_prediction_empty_forecast_remains_unavailable(base_state):
     result = PredictiveAgentResult(
         current_risk=RiskLevel.HIGH,
         forecast=[],
@@ -120,9 +120,10 @@ def test_validate_prediction_empty_forecast(base_state):
     
     val_result, warnings = validate_prediction(result, base_state)
     
-    assert len(val_result.forecast) == 1
-    assert val_result.forecast[0].horizon_minutes == 60
+    assert val_result.forecast == []
+    assert val_result.prediction_available is False
     assert val_result.escalation_detected is False
+    assert val_result.confidence == 0.0
     assert any(w.code == WarningCode.PREDICTION_FAILURE for w in warnings)
 
 

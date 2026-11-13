@@ -30,9 +30,19 @@ class FloodPredictionService:
     def is_available(self) -> bool:
         return self.model is not None
 
+    def is_operational(self) -> bool:
+        return (
+            self.is_available()
+            and self.metadata is not None
+            and not self.metadata.is_demo_model
+            and self.metadata.dataset_type.upper() != "SYNTHETIC"
+        )
+
     def predict_flood_risk(self, features: dict) -> dict:
         if not self.is_available():
             raise RuntimeError("Flood Prediction Model is not available.")
+        if not self.is_operational():
+            raise RuntimeError("Synthetic demo prediction models are not eligible for operational predictions.")
             
         from app.ml.features import extract_predictive_features
         # Extract features using the shared extractor

@@ -9,12 +9,18 @@ export interface SOSRequest {
   timestamp: number;
 }
 
+export interface QueueSyncResult {
+  acceptedIds: string[];
+  error: string | null;
+}
+
 const queueStore = localforage.createInstance({
   name: 'DisasterLinkMobile',
   storeName: 'sos_queue'
 });
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/+$/, '');
+let isSyncing = false;
 
 export async function enqueueSOS(request: Omit<SOSRequest, 'id' | 'timestamp'>) {
   const sos: SOSRequest = {
@@ -32,50 +38,72 @@ export async function getQueueCount() {
   return keys.length;
 }
 
-export async function syncQueue() {
-  if (!navigator.onLine) return;
+function getCoordinates(location: string) {
+  const parts = location.split(',');
+  if (parts.length !== 2) return null;
 
-  const keys = await queueStore.keys();
-  if (keys.length === 0) return;
+  const latitude = Number(parts[0].trim());
+  const longitude = Number(parts[1].trim());
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+      latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+    return null;
+  }
 
-  for (const key of keys) {
-    const sos = await queueStore.getItem<SOSRequest>(key);
-    if (!sos) continue;
+  return { locationLat: latitude, locationLng: longitude };
+}
 
-    try {
-      // Split location string "lat, lng" into coords if possible
-      let lat = 12.2958, lng = 76.6394;
-      if (sos.location.includes(',')) {
-        const parts = sos.location.split(',');
-        lat = parseFloat(parts[0]);
-        lng = parseFloat(parts[1]);
+export async function syncQueue(): Promise<QueueSyncResult> {
+  const acceptedIds: string[] = [];
+  if (!navigator.onLine || isSyncing) return { acceptedIds, error: null };
+
+  isSyncing = true;
+  try {
+    const keys = await queueStore.keys();
+    for (const key of keys) {
+      const sos = await queueStore.getItem<SOSRequest>(key);
+      if (!sos) continue;
+
+      const coordinates = getCoordinates(sos.location);
+      const description = [
+        `Category: ${sos.category}`,
+        `People needing help: ${sos.people}`,
+        sos.details.trim() ? `Additional details: ${sos.details.trim()}` : null,
+        `Submitted from mobile at ${new Date(sos.timestamp).toISOString()}`,
+        coordinates ? null : 'GPS coordinates unavailable; confirm the location from the additional details.'
+      ].filter((part): part is string => part !== null).join('\n');
+
+      let response: Response;
+      try {
+        response = await fetch(`${API_URL}/sos`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title: `SOS: ${sos.category} Emergency`,
+            description,
+            ...(coordinates ?? {})
+          })
+        });
+      } catch (error) {
+        console.error('Failed to sync SOS:', error);
+        const reason = error instanceof Error ? ` ${error.message}` : '';
+        return { acceptedIds, error: `SOS sync failed; the request remains queued for retry.${reason}` };
       }
 
-      const response = await fetch(`${API_URL}/incidents`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer mesh-gateway-device-token' // Placeholder if auth needed
-        },
-        body: JSON.stringify({
-          title: `SOS: ${sos.category} Emergency`,
-          description: `Victims: ${sos.people}. ${sos.details}`,
-          status: 'NEW',
-          priority: 'P1',
-          source: 'MOBILE_APP',
-          locationLat: lat,
-          locationLng: lng,
-          meshNodeId: 'mobile-client'
-        })
-      });
+      if (!response.ok) {
+        console.error(`Failed to sync SOS: backend returned HTTP ${response.status}`);
+        return { acceptedIds, error: `SOS sync failed (HTTP ${response.status}); the request remains queued for retry.` };
+      }
 
-      if (response.ok) {
+      acceptedIds.push(sos.id);
+      try {
         await queueStore.removeItem(key);
+      } catch (error) {
+        console.error('Backend accepted SOS, but removing the local queue item failed:', error);
+        return { acceptedIds, error: 'The backend accepted the SOS, but this device could not clear its saved copy. It may be sent again.' };
       }
-    } catch (error) {
-      console.error('Failed to sync SOS:', error);
-      // Stop syncing if we hit a network error to avoid failing repeatedly
-      break;
     }
+    return { acceptedIds, error: null };
+  } finally {
+    isSyncing = false;
   }
 }

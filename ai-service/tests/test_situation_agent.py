@@ -32,7 +32,8 @@ def test_flood_missing_data(agent):
     assert "water_level" not in result.missing_information
     assert "rainfall" not in result.missing_information
     assert "road_access" in result.missing_information
-    assert result.confidence_score == 0.9  # 1.0 - 0.1
+    assert result.confidence_score < 0.9
+    assert "critical_victim_count" in result.missing_information
     assert result.severity_assessment == "HIGH"
 
 def test_inconsistent_victims(agent):
@@ -65,6 +66,10 @@ def test_high_severity_weather(agent):
             latitude=10.0,
             longitude=20.0,
             victim_count=2,
+            critical_victim_count=0,
+            elderly_count=0,
+            children_count=0,
+            disabled_count=0,
             water_level=Observation(value=2.0),
             rainfall=Observation(value=150.0),
             road_access=RoadAccessStatus.BLOCKED
@@ -90,6 +95,10 @@ def test_structural_collapse(agent):
             latitude=35.0,
             longitude=-120.0,
             victim_count=15, # > 10 triggers CRITICAL
+            critical_victim_count=0,
+            elderly_count=0,
+            children_count=0,
+            disabled_count=0,
             road_access=RoadAccessStatus.BLOCKED
         )
     )

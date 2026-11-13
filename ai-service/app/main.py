@@ -202,14 +202,27 @@ def reanalyze_disaster(request: ReplanRequest):
 @app.post("/api/ai/predict-flood-risk", response_model=FloodPredictionResponse)
 def predict_flood_risk(request: FloodPredictionRequest):
     """
-    Standalone endpoint for predicting flood risk based on environmental factors
-    using the trained Random Forest model.
+    Standalone endpoint for predicting flood risk using a non-demo model and
+    complete measured environmental inputs.
     """
     try:
-        if not flood_service.is_available():
+        missing = [
+            field
+            for field, value in (
+                ("rainfall24h", request.rainfall24h),
+                ("rainfallTrend", request.rainfallTrend),
+            )
+            if value is None
+        ]
+        if missing:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Measured prediction inputs are required: {', '.join(missing)}.",
+            )
+        if not flood_service.is_operational():
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Flood prediction model is currently unavailable."
+                detail="No non-demo flood prediction model is available for operational use."
             )
             
         features = {
@@ -217,16 +230,14 @@ def predict_flood_risk(request: FloodPredictionRequest):
             'rainfall_1h': request.rainfall1h,
             'rainfall_3h': request.rainfall3h,
             'rainfall_6h': request.rainfall6h,
-            'rainfall_24h': (request.rainfallCurrent) * 24, # Fallback, ideally provided
-            'rainfall_trend': 0, # Approximation for now
+            'rainfall_24h': request.rainfall24h,
+            'rainfall_trend': request.rainfallTrend,
             'elevation_m': request.elevation
         }
-        
-        # Override approximations if client provided 24h via a hypothetical extension 
-        # (keeping API contract strictly per prompt for now)
-        
         result = flood_service.predict_flood_risk(features)
         return result
+    except HTTPException:
+        raise
     except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

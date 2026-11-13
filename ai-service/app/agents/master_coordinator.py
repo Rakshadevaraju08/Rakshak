@@ -244,6 +244,8 @@ class MasterCoordinator:
             action = RecommendedAction.MONITOR
 
         action_reasons = [f"risk level is {risk_lvl.value}"]
+        if risk_lvl == RiskLevel.UNDETERMINED:
+            action_reasons.append("risk evidence is incomplete; monitoring is not a LOW-risk determination")
         if escalating:
             action_reasons.append("predicted escalation detected")
         if risk and risk.reasons and "vulnerable" in risk.reasons[0]:
@@ -278,6 +280,7 @@ class MasterCoordinator:
             WarningCode.OPTIMIZATION_FAILURE,
             WarningCode.OSRM_UNAVAILABLE,
             WarningCode.MODEL_FILE_MISSING,
+            WarningCode.MODEL_NOT_VALIDATED,
             WarningCode.MODEL_PREDICTION_FAILED,
             WarningCode.STALE_DATA,
             WarningCode.DATA_CONFLICT,
@@ -336,13 +339,13 @@ class MasterCoordinator:
 
         # ── Populate top-level convenience fields ──────────────────────────────────
 
-        # overall_confidence: minimum agent confidence (weakest-link heuristic)
+        # Exclude an unavailable prediction from confidence in the analyses that were returned.
         agent_confidences = []
         if situation:
             agent_confidences.append(situation.confidence_score)
         if risk:
             agent_confidences.append(risk.confidence)
-        if prediction:
+        if prediction and prediction.prediction_available:
             agent_confidences.append(prediction.confidence)
         if state.data_quality:
             agent_confidences.append(state.data_quality.confidence)

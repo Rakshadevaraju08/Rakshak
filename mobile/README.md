@@ -1,25 +1,85 @@
-# DisasterLink mobile web app
+# Mobile app
 
-A standalone, mobile-first Citizen SOS website. It uses device geolocation when permission is granted and offers an intentional hold-to-send SOS control.
+The mobile app is a lightweight citizen-facing SOS experience for reporting emergencies and sharing location data quickly. It is designed to work both online and offline, retaining queued SOS requests when connectivity is unavailable.
 
-## Run
+## Functional overview
+
+The app includes:
+
+- Geolocation capture with a fallback message when GPS is unavailable
+- Category-based incident reporting such as Medical, Flood, Fire, and Trapped
+- Hold-to-send SOS interaction to reduce accidental alerts
+- Local queueing of unsent SOS messages
+- Automatic sync when the device reconnects to the internet
+
+## Application structure
+
+```text
+mobile/
+├── index.html
+├── package.json
+├── tsconfig.json
+├── vite.config.ts
+├── src/
+│   ├── App.tsx
+│   ├── main.tsx
+│   ├── services/
+│   └── styles.css
+└── README.md
+```
+
+## SOS workflow
+
+The main workflow lives in `mobile/src/App.tsx`:
+
+1. The app requests browser geolocation.
+2. The user selects an emergency category and writes summary details.
+3. The user presses and holds the SOS button until the threshold is met.
+4. The app stores the message in a local queue and attempts to sync with the backend when online.
+5. The queue remains stored locally until a successful backend sync is confirmed.
+
+## Offline queue and retry behavior
+
+The queue logic is implemented in `mobile/src/services/queue.ts`.
+
+Behavior:
+
+- `enqueueSOS` stores the request locally when the device is offline or while awaiting delivery.
+- `syncQueue` sends pending messages to the backend when connectivity is restored.
+- `getQueueCount` reports how many queued requests remain.
+- The UI updates the status text to reflect saved and accepted messages.
+
+This is an offline-first safety mechanism rather than a full mesh relay implementation.
+
+## Backend communication
+
+The app targets the backend incident API and expects the backend to be running on the local API host.
+
+Typical endpoints used by the client flow:
+
+- `POST /api/sos` for emergency reports
+- `GET /api/incidents` for incident listing
+- `POST /api/mesh/sync` for offline queue reconciliation
+
+## Local development
 
 ```bash
+cd mobile
 npm install
 npm run dev
 ```
 
-Build it for production with `npm run build`.
+The app is a mobile-first web app; use a browser emulator or mobile viewport for functional testing.
 
-The UI currently keeps an SOS request in the client flow; connect the dispatch function in `src/App.tsx` to the backend incident endpoint when that API is available.
+## Production build
 
-## Purpose
-The mobile app allows citizens to submit SOS requests, capture their location, and send them to the disaster response system.
+```bash
+cd mobile
+npm run build
+```
 
-## Offline Mesh (Planned)
-During disasters, infrastructure may fail. This app will eventually support storing messages locally in SQLite and passing them through nearby devices using Bluetooth Low Energy (BLE) until it reaches a device with internet access.
+## Operational notes
 
-## Next Steps for Mobile Developer
-Before initializing the project (Expo Go vs. Bare React Native), investigate the BLE library requirements. Some BLE implementations require native build access which Expo Go does not support out of the box without a custom dev client.
-
-Document your findings in `../docs/TEAM_TASKS.md` before starting.
+- The mobile app should remain resilient when cellular or Wi-Fi connectivity fluctuates.
+- The queue is a practical offline fallback and may be extended to true mesh-based relay behavior when the architecture evolves.
+- Do not treat the current app as a production-grade native mobile app; it is a browser-based citizen SOS prototype.

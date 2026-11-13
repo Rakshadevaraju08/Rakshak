@@ -82,6 +82,32 @@ class DataQualityAgent:
         
         # Validate rainfall
         check_observation(incident.rainfall, "rainfall", self.RAINFALL_MIN, self.RAINFALL_MAX)
+
+        if incident.victim_count is None:
+            missing_fields.append("victim_count")
+            confidence -= 0.2
+            warnings.append("Victim count was not reported; no value was inferred.")
+            pipeline_warnings.append(PipelineWarning(
+                code=WarningCode.INCOMPLETE_INCIDENT,
+                source="DataQualityAgent",
+                message="Victim count was not reported; no value was inferred."
+            ))
+
+        for field_name in (
+            "critical_victim_count",
+            "elderly_count",
+            "children_count",
+            "disabled_count",
+        ):
+            if getattr(incident, field_name) is None:
+                missing_fields.append(field_name)
+                confidence -= 0.05
+                warnings.append(f"{field_name} was not reported; no value was inferred.")
+                pipeline_warnings.append(PipelineWarning(
+                    code=WarningCode.INCOMPLETE_INCIDENT,
+                    source="DataQualityAgent",
+                    message=f"{field_name} was not reported; no value was inferred."
+                ))
         
         # Missing data detection for FLOOD
         if incident.type == IncidentType.FLOOD:
