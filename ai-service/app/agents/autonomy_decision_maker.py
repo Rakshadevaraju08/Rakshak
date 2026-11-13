@@ -38,6 +38,8 @@ class AutonomyDecisionMaker:
             blocking_factors.append(f"Safety check failed with status: {safety_result.status.value}")
         if risk_lvl in [RiskLevel.CRITICAL, RiskLevel.HIGH]:
             blocking_factors.append(f"Incident risk level is too high ({risk_lvl.value}) for autonomy.")
+        if risk_lvl == RiskLevel.UNDETERMINED:
+            blocking_factors.append("Risk classification is undetermined; operator review is required.")
         if avg_confidence < self.MIN_ASSISTED_CONFIDENCE:
             blocking_factors.append(f"Confidence ({avg_confidence}) is below the acceptable threshold ({self.MIN_ASSISTED_CONFIDENCE}).")
         if degraded:

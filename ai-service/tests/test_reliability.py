@@ -149,7 +149,8 @@ class TestR01NormalFlood:
         assert plan.prediction is not None
         assert plan.safety_check is not None
         assert plan.autonomy_decision is not None
-        assert plan.degraded is False
+        assert plan.degraded is True
+        assert plan.prediction.prediction_available is False
 
     @patch("app.services.routing_service.requests.get")
     def test_no_crash(self, mock_get):
@@ -550,7 +551,7 @@ class TestR08MLModelUnavailable:
     def test_model_missing_warning(self, mock_ml, mock_get):
         mock_get.return_value = _osrm_ok()
         plan = MasterCoordinator(use_ml_risk=True).analyze(_base_flood_request())
-        assert any(w.code in (WarningCode.MODEL_FILE_MISSING, WarningCode.MODEL_PREDICTION_FAILED)
+        assert any(w.code in (WarningCode.MODEL_FILE_MISSING, WarningCode.MODEL_PREDICTION_FAILED, WarningCode.MODEL_NOT_VALIDATED)
                    for w in plan.warnings)
 
 
@@ -971,6 +972,10 @@ class TestR17AutoDispatch:
                 type=IncidentType.FLOOD,
                 latitude=12.97, longitude=77.59,
                 victim_count=1,
+                critical_victim_count=0,
+                elderly_count=0,
+                children_count=0,
+                disabled_count=0,
                 water_level=Observation(value=0.3),
                 rainfall=Observation(value=5.0),
                 road_access=RoadAccessStatus.OPEN,
@@ -985,6 +990,10 @@ class TestR17AutoDispatch:
                          latitude=12.99, longitude=77.61,
                          total_beds=100, available_beds=80)
             ],
+            environment=Environment(
+                rainfall_trend_mm_per_hour=0.0,
+                water_level_trend_m_per_hour=0.0,
+            ),
         )
 
     @patch("app.services.routing_service.requests.get")

@@ -1,41 +1,118 @@
-# AI Disaster Response Service
+# AI service
 
-The AI Service is the central intelligence hub of the Disaster Response ecosystem. It receives normalized incident data from the Node Backend, enriches it, predicts risks, and orchestrates an actionable **Full Response Plan** using an ecosystem of specialized AI Agents.
+The AI service is the reasoning layer for Rakshak. It consumes incident context from the backend, validates data quality, scores risk, predicts worsening conditions, and generates a human-readable response plan that can be reviewed before dispatch.
 
-## 1. Human-in-the-Loop Philosophy
+## Responsibilities
 
-The AI Service operates strictly under a **Human-in-the-Loop** model to ensure safety and accountability:
+The service is organized around a multi-agent pipeline:
 
-1. **AI Recommends**: The AI Service aggregates complex, multi-modal data and proposes a comprehensive response plan.
-2. **Human Approves**: Emergency dispatchers and operators review the plan, explanations, and risk assessments through the Command Center UI.
-3. **Backend Executes**: Once a human authorizes the plan, the central Node Backend executes the dispatch instructions.
+- `situation_agent.py` validates the incident and identifies missing or risky context
+- `data_quality_agent.py` checks completeness and reliability of incoming data
+- `risk_agent.py` scores urgency and severity
+- `predictive_agent.py` forecasts escalation or worsening conditions
+- `resource_agent.py` matches response units to the incident
+- `route_agent.py` estimates travel or routing viability
+- `safety_checker.py` and `autonomy_decision_maker.py` validate whether the plan is safe to recommend
+- `master_coordinator.py` orchestrates the full pipeline and assembles the final plan
 
-The AI cannot self-dispatch emergency resources without human authorization.
+## Application structure
 
-## 2. Explainability
+```text
+ai-service/
+├── app/
+│   ├── agents/
+│   ├── config/
+│   ├── errors.py
+│   ├── logging_config.py
+│   ├── main.py
+│   ├── ml/
+│   ├── models/
+│   ├── schemas/
+│   ├── services/
+│   └── utils/
+├── config/
+├── data/
+├── demo/
+├── docs/
+├── scripts/
+├── tests/
+├── requirements.txt
+├── pytest.ini
+├── README.md
+└── .env.example
+```
 
-Trust is critical in emergency response. Every AI decision is fully explainable.
-- The `RiskResult` contains a `reasons` list detailing exactly why a priority score was assigned.
-- The `ResourceAssignment` contains a `reasons` list detailing why a specific resource was chosen.
-- The final `FullResponsePlan` generates a human-readable `explanation` aggregating all agent conclusions.
-Operators are never presented with a "black box" recommendation; they always see the exact logic that led to the plan.
+## Entrypoint and API
 
-## 3. Technology Stack
+The FastAPI application starts from `ai-service/app/main.py`.
 
-We deliberately selected a modern, robust, and lightweight Python stack tailored for specialized AI integration, rather than relying exclusively on LLMs.
+Core endpoints:
 
-- **Python**: The industry standard for Data Science, ML, and AI integration. Provides the richest ecosystem for routing, optimization, and machine learning.
-- **FastAPI**: A high-performance async web framework. We chose FastAPI for its native Pydantic integration, auto-generated OpenAPI docs, and asynchronous capabilities, which are crucial for concurrent event handling.
-- **Pydantic**: Provides robust, type-safe data validation. Ensures that incoming JSON payloads from the Node backend perfectly match our strongly-typed domain models before any agent processing occurs.
-- **scikit-learn**: Used for our predictive ML baseline models. It's lightweight, predictable, and doesn't require massive GPU clusters like deep learning models.
-- **Pandas / NumPy**: The foundational libraries for data manipulation and numerical feature processing during model inference.
-- **Google OR-Tools**: A powerful optimization solver. Used by the Resource Agent to solve complex, multi-variable assignment problems (e.g., matching the closest capable ambulances to incidents while minimizing overall travel distance).
-- **OSRM (Open Source Routing Machine)**: Used by the Route Agent to provide highly accurate, road-network-aware ETAs and driving directions, rather than relying on inaccurate straight-line distances.
-- **Joblib**: Used for efficient serialization and deserialization of scikit-learn models and their associated metadata.
-- **pytest**: The standard for Python testing. We maintain a comprehensive test suite (110+ tests) to guarantee the reliability of critical path operations.
+- `GET /health` returns service health
+- `POST /api/ai/analyze` runs the full analysis pipeline
+- `POST /api/ai/reanalyze` compares the latest state to an earlier plan
+- `POST /api/ai/predict-flood-risk` runs the standalone flood-risk model
 
-## 4. Documentation Map
+The service exposes its interactive docs at `http://localhost:8000/docs`.
 
-- [AI Architecture](docs/AI_ARCHITECTURE.md) - Pipeline flow and failure handling.
-- [AI Agents & ML](docs/AI_AGENTS.md) - Detailed breakdown of each specialized agent and Machine Learning models.
-- [AI API](docs/AI_API.md) - Endpoints and JSON payload examples.
+## Workflow
+
+1. The backend sends a disaster analysis context to the AI service.
+2. The pipeline validates data quality and missing fields.
+3. Risk and predictive agents assess urgency and escalation.
+4. Resource and route agents identify available teams and likely routing constraints.
+5. Safety and autonomy checks validate the plan before handoff.
+6. The `MasterCoordinator` builds a final response plan with trace data and warnings.
+
+## Local setup
+
+From a fresh clone:
+
+```bash
+cd ai-service
+python -m venv .venv
+# Windows PowerShell
+.\.venv\Scripts\Activate.ps1
+# macOS/Linux
+# source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+Start the API:
+
+```bash
+uvicorn app.main:app --reload --port 8000
+```
+
+## Dependencies
+
+The service relies on:
+
+- FastAPI
+- Uvicorn
+- Pydantic / Pydantic Settings
+- scikit-learn
+- pandas
+- numpy
+- OR-Tools
+- joblib
+- requests
+- PyYAML
+- httpx
+
+## Testing
+
+Run the Python test suite:
+
+```bash
+cd ai-service
+pytest
+```
+
+The project also includes focused tests for risk, predictive, fallback, and re-planning behavior in `ai-service/tests/`.
+
+## Notes
+
+- The service is intentionally human-in-the-loop: it produces recommendations, not autonomous dispatch decisions.
+- AI outputs include structured reasoning, warnings, and trace metadata to support explainability.
+- The model behavior is partly demonstrative and should be replaced with real incident data before production deployment.

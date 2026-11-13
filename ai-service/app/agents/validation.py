@@ -25,9 +25,14 @@ def validate_situation(result: SituationResult, state: DisasterAnalysisState) ->
     
     # 1. Victim counts >= 0
     total_victims = state.request.incident.victim_count
-    vulnerable = state.request.incident.elderly_count + state.request.incident.children_count + state.request.incident.disabled_count
+    vulnerable_counts = (
+        state.request.incident.elderly_count,
+        state.request.incident.children_count,
+        state.request.incident.disabled_count,
+    )
+    vulnerable = sum(count for count in vulnerable_counts if count is not None)
     
-    if total_victims < 0:
+    if total_victims is not None and total_victims < 0:
         warnings.append(PipelineWarning(
             code=WarningCode.MALFORMED_INPUT,
             source="SituationValidation",
@@ -47,7 +52,7 @@ def validate_situation(result: SituationResult, state: DisasterAnalysisState) ->
         vulnerable = 0
 
     # 2. Vulnerable <= Total
-    if vulnerable > total_victims:
+    if total_victims is not None and vulnerable > total_victims:
         warnings.append(PipelineWarning(
             code=WarningCode.MALFORMED_INPUT,
             source="SituationValidation",
@@ -78,7 +83,7 @@ def validate_risk(result: RiskResult, state: DisasterAnalysisState) -> Tuple[Ris
     warnings = []
     
     # Priority enum should inherently limit priority choices, but let's ensure score is bounded
-    if not (0.0 <= result.score <= 100.0):
+    if result.score is not None and not (0.0 <= result.score <= 100.0):
         warnings.append(PipelineWarning(
             code=WarningCode.RISK_FAILURE,
             source="RiskValidation",
@@ -103,14 +108,15 @@ def validate_prediction(result: PredictiveAgentResult, state: DisasterAnalysisSt
     warnings = []
     
     if not result.forecast:
-        warnings.append(PipelineWarning(
-            code=WarningCode.PREDICTION_FAILURE,
-            source="PredictiveValidation",
-            message="No forecast items returned. Injecting default stable forecast."
-        ))
-        result.forecast.append(ForecastItem(horizon_minutes=60, risk_level=result.current_risk))
+        if result.prediction_available:
+            warnings.append(PipelineWarning(
+                code=WarningCode.PREDICTION_FAILURE,
+                source="PredictiveValidation",
+                message="No forecast items returned. Prediction is unavailable; no forecast was fabricated."
+            ))
+        result.prediction_available = False
         result.escalation_detected = False
-        result.confidence -= 0.5
+        result.confidence = 0.0
         
     for item in result.forecast:
         if item.horizon_minutes <= 0:

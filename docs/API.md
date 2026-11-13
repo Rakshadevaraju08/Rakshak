@@ -1,88 +1,58 @@
-# API Documentation
+# API overview
 
-### Authentication
+This document is a quick map of the backend API exposed by Rakshak. Use it alongside the live service endpoints and the FastAPI docs for the AI service.
+
+## Service endpoints
+
+- Backend API base: `http://localhost:3001/api`
+- AI docs: `http://localhost:8000/docs`
+- Backend health: `GET /api/health`
+
+## Auth
+
 - `POST /api/auth/register`
-  - **Request body:** `{ "email", "password", "name" }`; creates a citizen user.
 - `POST /api/auth/login`
-  - **Request body:** `{ "email", "password" }`; returns a signed token when `JWT_SECRET` is configured.
 
-## PLANNED ENDPOINTS
+These endpoints create or validate a user account and return a signed JWT when configured.
 
-### Incidents
-- `POST /api/sos`
-  - **Purpose:** Submit a new incident/SOS.
-  - **Request Body:** `{ "title", "description", "locationLat", "locationLng" }`
-  - **Response:** `{ "id", "status" }`
-  - **Consumer:** Frontend, Mobile
+## Incident operations
 
-- `GET /api/incidents`
-  - **Purpose:** List all active incidents.
-  - **Response:** `[ { "id", "title", "status", ... } ]`
-  - **Consumer:** Frontend (Operator Dashboard)
+- `POST /api/sos` — create a new incident from an emergency report
+- `GET /api/incidents` — list incidents in reverse chronological order
+- `GET /api/incidents/:id` — get incident details, reports, predictions, and dispatch plans
+- `PATCH /api/incidents/:id` — update incident metadata
+- `POST /api/incidents/:id/reports` — add a follow-up report
+- `POST /api/incidents/:id/outcomes` — resolve an incident
+- `POST /api/incidents/:id/analyze` — trigger the AI pipeline for a specific incident
 
-- `GET /api/incidents/:id`
-  - **Purpose:** Get incident details.
+## Resource and infrastructure data
 
-- `PATCH /api/incidents/:id`
-  - **Purpose:** Update incident status.
-- `POST /api/incidents/:id/reports`
-  - **Purpose:** Add a citizen or operator update to an incident.
-- `POST /api/incidents/:id/outcomes`
-  - **Purpose:** Resolve an incident and record the outcome.
-
-### Resources
 - `GET /api/resources`
-  - **Purpose:** List available resources.
 - `POST /api/resources`
-  - **Purpose:** Add a new resource.
 - `PATCH /api/resources/:id`
-  - **Purpose:** Update resource status.
-
-### Hospitals
 - `GET /api/hospitals`
-  - **Purpose:** List hospitals and capacity.
 - `POST /api/hospitals`
-  - **Purpose:** Create a hospital, optionally with its initial bed capacity.
 - `PATCH /api/hospitals/:id/capacity`
-  - **Purpose:** Update hospital capacity.
-
-### Roads
 - `GET /api/roads`
-  - **Purpose:** List road statuses.
 - `POST /api/roads`
-  - **Purpose:** Create a road for live route monitoring.
 - `PATCH /api/roads/:id`
-  - **Purpose:** Update road status (e.g., OPEN, BLOCKED).
 
-### Dispatch & Planning
-- `POST /api/dispatch/plan`
-  - **Purpose:** Request AI to generate a dispatch plan for an incident.
-  - **Request Body:** `{ "incidentId" }`
-  - **Response:** `{ "planId", "details" }`
-  - **Consumer:** Frontend (Operator Dashboard)
+## Dispatch and prediction
 
-- `POST /api/dispatch/execute`
-  - **Purpose:** Approve and execute a generated dispatch plan.
-
-### Offline Mesh
-- `POST /api/mesh/sync`
-  - **Purpose:** Sync batched offline messages from a gateway device.
-  - **Request Body:** `[ { "payload", "senderId", "receivedAt" } ]`
-  - **Consumer:** Mobile
-
-### Predictions
+- `POST /api/dispatch/plan` — create a dispatch recommendation
+- `POST /api/dispatch/execute` — execute an approved plan
 - `GET /api/predictions`
-  - **Purpose:** Retrieve predictions for map visualization.
 - `POST /api/predictions`
-  - **Purpose:** Store an AI prediction and notify live dashboards.
-
-### Environmental observations
 - `POST /api/observations/weather`
-  - **Purpose:** Store a weather measurement and publish `WEATHER_CHANGED`.
 - `POST /api/observations/water-levels`
-  - **Purpose:** Store a water-level reading and publish `WATER_LEVEL_CHANGED`.
 
-### Live updates
-- `GET /api/events`
-  - **Purpose:** Server-Sent Events stream for SOS, road, hospital, resource,
-    prediction, and dispatch changes.
+## Event stream and mesh sync
+
+- `GET /api/events` — live events surfaced through Redis-backed subscriptions
+- `POST /api/mesh/sync` — save queued mobile messages after reconnect
+
+## Related docs
+
+- [docs/architecture/system-architecture.md](architecture/system-architecture.md)
+- [docs/setup/local-development.md](setup/local-development.md)
+- [ai-service/docs/AI_API.md](../ai-service/docs/AI_API.md)

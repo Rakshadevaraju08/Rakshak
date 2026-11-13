@@ -61,6 +61,10 @@ def _base_state():
             latitude=12.97,
             longitude=77.59,
             victim_count=2,
+            critical_victim_count=0,
+            elderly_count=0,
+            children_count=0,
+            disabled_count=0,
             water_level=Observation(value=1.0),
             rainfall=Observation(value=20.0),
             road_access=RoadAccessStatus.OPEN

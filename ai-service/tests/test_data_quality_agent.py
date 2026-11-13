@@ -8,7 +8,8 @@ from app.schemas.domain import (
     Observation,
     QualityStatus,
     Environment,
-    DisasterAnalysisState
+    DisasterAnalysisState,
+    RoadAccessStatus
 )
 
 @pytest.fixture
@@ -24,8 +25,14 @@ def _make_state(water_level_val=1.0, rainfall_val=10.0, env_trend=None, obs_time
         type=IncidentType.FLOOD,
         latitude=10.0,
         longitude=10.0,
+        victim_count=0,
+        critical_victim_count=0,
+        elderly_count=0,
+        children_count=0,
+        disabled_count=0,
         water_level=Observation(value=water_level_val, timestamp=obs_time) if water_level_val is not None else None,
         rainfall=Observation(value=rainfall_val, timestamp=obs_time) if rainfall_val is not None else None,
+        road_access=RoadAccessStatus.OPEN,
     )
     
     env = None

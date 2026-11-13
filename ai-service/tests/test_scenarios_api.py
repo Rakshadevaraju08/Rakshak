@@ -92,8 +92,9 @@ class TestAPIScenario1:
         assert data["prediction"] is not None
         assert len(data["assignments"]) == 1
         assert data["assignments"][0]["resource_id"] == "AMB_A1"
-        assert data["autonomy_decision"]["mode"] == "AUTO"
-        assert data["autonomy_decision"]["human_review_required"] is False
+        assert data["autonomy_decision"]["mode"] == "HUMAN_REQUIRED"
+        assert data["autonomy_decision"]["human_review_required"] is True
+        assert data["prediction"]["prediction_available"] is False
 
     @patch("app.services.routing_service.requests.get")
     def test_response_has_security_headers(self, mock_get, client):
@@ -119,7 +120,10 @@ class TestAPIScenario2:
             "latitude": 12.97,
             "longitude": 77.59,
             "victim_count": 5,
+            "critical_victim_count": 0,
             "elderly_count": 3,
+            "children_count": 0,
+            "disabled_count": 0,
             "water_level": {"value": 2.8},
             "rainfall": {"value": 140.0},
             "road_access": "BLOCKED",
@@ -179,11 +183,11 @@ class TestAPIScenario2:
         response = client.post("/api/ai/analyze", json=self.PAYLOAD)
         data = response.json()
 
-        # ML model assigns CRITICAL, which is already the ceiling —
-        # so escalation_detected may be False (can’t go higher).
-        # What matters is that prediction data is returned.
+        # A rule-based estimate is available because the relevant trends were supplied.
         assert data["prediction"] is not None
+        assert data["prediction"]["prediction_available"] is True
         assert data["prediction"]["confidence"] == 1.0
+        assert "not forecast probability" in " ".join(data["prediction"]["explanation"]).lower()
         assert len(data["prediction"]["forecast"]) > 0
 
 
@@ -496,8 +500,13 @@ class TestAPIScenario8:
             "latitude": 12.97,
             "longitude": 77.59,
             "victim_count": 3,
+            "critical_victim_count": 0,
+            "elderly_count": 0,
+            "children_count": 0,
+            "disabled_count": 0,
             "water_level": {"value": 1.5},
             "rainfall": {"value": 65.0},
+            "road_access": "OPEN",
         },
         "resources": [
             {
@@ -539,7 +548,7 @@ class TestAPIScenario8:
         data = response.json()
         # Check pipeline warnings in explanation
         explanations = " ".join(data["explanation"]).lower()
-        assert "heavily increasing" in explanations or "rising rapidly" in explanations
+        assert "rainfall trend rising" in explanations or "water level rising" in explanations
 
 
 # ============================================================================

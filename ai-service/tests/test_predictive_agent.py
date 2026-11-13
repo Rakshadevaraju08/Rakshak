@@ -60,8 +60,8 @@ def test_de_escalating_risk(agent):
     # Should de-escalate to MEDIUM or LOW over the horizon
     assert result.forecast[-1].risk_level in [RiskLevel.MEDIUM, RiskLevel.LOW]
 
-def test_stable_risk(agent):
-    """Test that 0 trends maintain the current risk level."""
+def test_fire_prediction_is_unavailable_without_a_validated_mapping(agent):
+    """Rainfall trends are not applied to fire risk without a validated rule."""
     request = DisasterAnalysisRequest(
         incident=Incident(id="INC_1", type=IncidentType.FIRE, latitude=0.0, longitude=0.0),
         environment=Environment(water_level_trend_m_per_hour=0.0, rainfall_trend_mm_per_hour=0.0)
@@ -73,12 +73,13 @@ def test_stable_risk(agent):
     
     result = agent.analyze(state).prediction
     
+    assert result.prediction_available is False
     assert result.escalation_detected is False
-    for item in result.forecast:
-        assert item.risk_level == RiskLevel.MEDIUM
+    assert result.forecast == []
+    assert any("no validated mapping" in item.lower() for item in result.explanation)
 
-def test_missing_data_fallback(agent):
-    """Test that missing environmental data reduces confidence significantly."""
+def test_missing_data_makes_prediction_unavailable(agent):
+    """Missing trends must not be presented as a stable forecast."""
     request = DisasterAnalysisRequest(
         incident=Incident(id="INC_1", type=IncidentType.FLOOD, latitude=0.0, longitude=0.0),
         # No environment block provided
@@ -91,6 +92,7 @@ def test_missing_data_fallback(agent):
     result = agent.analyze(state).prediction
     
     assert result.escalation_detected is False
-    # Missing completely -> drops confidence by 0.5
-    assert result.confidence == 0.5
-    assert "no environmental data provided" in result.explanation[0].lower()
+    assert result.prediction_available is False
+    assert result.forecast == []
+    assert result.confidence == 0.0
+    assert "unavailable" in result.explanation[0].lower()

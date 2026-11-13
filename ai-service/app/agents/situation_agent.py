@@ -35,16 +35,41 @@ class SituationAgent:
         explanations.append(f"Incident identified as {normalized_type}.")
 
         # 2. Victim Info Collection
-        total_vulnerable = incident.elderly_count + incident.children_count + incident.disabled_count
+        vulnerable_counts = {
+            "elderly_count": incident.elderly_count,
+            "children_count": incident.children_count,
+            "disabled_count": incident.disabled_count,
+        }
+        total_vulnerable = sum(count or 0 for count in vulnerable_counts.values())
+        missing_vulnerable_counts = [name for name, count in vulnerable_counts.items() if count is None]
         
-        if incident.victim_count > 0:
-            if incident.critical_victim_count > 0:
+        if incident.victim_count is None:
+            missing_info.append("victim_count")
+            confidence -= 0.2
+            explanations.append("Victim count was not reported and was not inferred.")
+        elif incident.victim_count > 0:
+            if incident.critical_victim_count is not None and incident.critical_victim_count > 0:
                 explanations.append(f"Verified {incident.victim_count} total victims, including {incident.critical_victim_count} critical.")
             else:
                 explanations.append(f"Verified {incident.victim_count} total victims.")
 
+        if incident.critical_victim_count is None:
+            missing_info.append("critical_victim_count")
+            confidence -= 0.05
+            explanations.append("Critical-victim count was not reported.")
+
+        for field_name in missing_vulnerable_counts:
+            missing_info.append(field_name)
+            confidence -= 0.05
+        if missing_vulnerable_counts:
+            explanations.append(
+                f"Vulnerable subgroup counts were not reported: {', '.join(missing_vulnerable_counts)}."
+            )
+
         if total_vulnerable > 0:
             vulnerable_impact = f"High impact on vulnerable populations: {total_vulnerable} individuals at risk."
+        elif missing_vulnerable_counts:
+            vulnerable_impact = "Vulnerable-population counts are unreported."
         else:
             vulnerable_impact = "No specific vulnerable populations identified."
 
@@ -71,10 +96,14 @@ class SituationAgent:
             ))
 
         # Calculate severity baseline based purely on situation
-        severity = "LOW"
-        if incident.critical_victim_count > 0 or incident.victim_count > 10 or total_vulnerable > 5:
+        severity = "UNDETERMINED" if incident.victim_count is None else "LOW"
+        if (
+            (incident.critical_victim_count or 0) > 0
+            or (incident.victim_count is not None and incident.victim_count > 10)
+            or total_vulnerable > 5
+        ):
             severity = "CRITICAL"
-        elif incident.victim_count > 0:
+        elif incident.victim_count is not None and incident.victim_count > 0:
             severity = "HIGH"
         
         # Weather / Environment impact
@@ -85,8 +114,13 @@ class SituationAgent:
                 severity = "CRITICAL" if severity == "HIGH" else severity
 
         # Final Summary formulation
-        crit_str = f" (with {incident.critical_victim_count} critical)" if incident.critical_victim_count > 0 else ""
-        summary = f"A {normalized_type} incident reported at coordinates ({incident.latitude}, {incident.longitude}) with {incident.victim_count} victims{crit_str}.{weather_context}"
+        crit_str = f" (with {incident.critical_victim_count} critical)" if (incident.critical_victim_count or 0) > 0 else ""
+        victim_summary = (
+            f"with {incident.victim_count} victims"
+            if incident.victim_count is not None
+            else "with an unreported victim count"
+        )
+        summary = f"A {normalized_type} incident reported at coordinates ({incident.latitude}, {incident.longitude}) {victim_summary}{crit_str}.{weather_context}"
 
         # Ensure confidence boundaries
         confidence = max(0.0, min(1.0, confidence))

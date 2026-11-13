@@ -83,6 +83,11 @@ class _Scenario1:
                 latitude=INCIDENT_LAT,
                 longitude=INCIDENT_LON,
                 victim_count=1,
+                critical_victim_count=0,
+                elderly_count=0,
+                children_count=0,
+                disabled_count=0,
+                rainfall=Observation(value=0.0),
                 road_access=RoadAccessStatus.OPEN,
             ),
             resources=[
@@ -125,8 +130,10 @@ class _Scenario2:
                 latitude=INCIDENT_LAT,
                 longitude=INCIDENT_LON,
                 victim_count=4,
+                critical_victim_count=0,
                 elderly_count=2,
                 children_count=1,
+                disabled_count=0,
                 water_level=Observation(value=2.5),
                 rainfall=Observation(value=130.0),
                 road_access=RoadAccessStatus.BLOCKED,
@@ -178,6 +185,7 @@ class _Scenario3:
                 latitude=INCIDENT_LAT,
                 longitude=INCIDENT_LON,
                 victim_count=15,
+                critical_victim_count=0,
                 elderly_count=3,
                 children_count=4,
                 disabled_count=1,
@@ -371,7 +379,8 @@ class TestSituationAgent:
         assert "water_level" not in result.missing_information
         assert "rainfall" not in result.missing_information
         assert "road_access" in result.missing_information
-        assert result.confidence_score == 0.9
+        assert result.confidence_score < 0.9
+        assert "critical_victim_count" in result.missing_information
 
         # Check structured warnings were attached
         warnings = getattr(result, '_pipeline_warnings', [])
@@ -433,19 +442,19 @@ class TestRiskAgent:
         state = DisasterAnalysisState(request=_Scenario4.request())
         result = agent.analyze(state).risk
 
-        # 2 victims × 5 = 10, 1 elderly × 10 = 10 → total 20
-        # rainfall None → -0.1 confidence
-        assert result.score == 20.0
-        assert result.priority == Priority.P4_LOW
-        assert result.confidence == 0.9
+        # A 20-point subtotal cannot support a LOW classification while key fields are missing.
+        assert result.score is None
+        assert result.priority == Priority.P5_MONITOR
+        assert result.risk_level == RiskLevel.UNDETERMINED
+        assert "Rule-point subtotal: 20/100" in result.reasons[0]
 
     # --- Scenario 7: Missing data reduces confidence ---
     def test_s7_missing_data_confidence(self, agent):
         state = DisasterAnalysisState(request=_Scenario7.request())
         result = agent.analyze(state).risk
 
-        # FLOOD with no water_level → -0.2, no rainfall → -0.1
-        assert result.confidence == 0.7
+        assert result.confidence == 0.12
+        assert result.risk_level == RiskLevel.UNDETERMINED
 
 
 # ============================================================================
@@ -500,7 +509,7 @@ class TestPredictiveAgent:
         for item in result.forecast:
             assert item.risk_level == RiskLevel.CRITICAL
 
-    # --- Scenario 7: No environment → low confidence ---
+    # --- Scenario 7: No environment → unavailable prediction ---
     def test_s7_no_environment(self, agent):
         req = _Scenario7.request()
         risk = self._risk(RiskLevel.MEDIUM)
@@ -509,8 +518,10 @@ class TestPredictiveAgent:
         state.risk = risk
         result = agent.analyze(state).prediction
 
-        assert result.confidence == 0.5
+        assert result.confidence == 0.0
         assert result.escalation_detected is False
+        assert result.prediction_available is False
+        assert result.forecast == []
         assert "no environmental data" in result.explanation[0].lower()
 
         # Warning attached
@@ -530,8 +541,8 @@ class TestPredictiveAgent:
         # At 60 min: 2 + 2.5*1.0 = 4.5 → capped 4 → CRITICAL
         assert result.escalation_detected is True
         assert result.forecast[-1].risk_level == RiskLevel.CRITICAL
-        assert any("heavily increasing" in e.lower() for e in result.explanation)
-        assert any("rising rapidly" in e.lower() for e in result.explanation)
+        assert any("rainfall trend rising" in e.lower() for e in result.explanation)
+        assert any("water level rising" in e.lower() for e in result.explanation)
         assert result.confidence == 1.0
 
 
@@ -765,7 +776,8 @@ class TestMasterCoordinator:
         assert plan.assignments[0].resource_id == "AMB_101"
         assert plan.assignments[0].route.route_status == RoadAccessStatus.OPEN
         assert plan.recommended_action == RecommendedAction.MONITOR
-        assert plan.degraded is False
+        assert plan.degraded is True
+        assert plan.prediction.prediction_available is False
 
     # --- Scenario 2: High-priority flood → IMMEDIATE_DISPATCH ---
     @patch('app.services.routing_service.requests.get')

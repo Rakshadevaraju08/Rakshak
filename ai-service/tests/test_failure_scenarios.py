@@ -19,7 +19,8 @@ from app.schemas.domain import (
     Environment,
     RecommendedAction,
     RoadAccessStatus,
-    DisasterAnalysisState
+    DisasterAnalysisState,
+    Observation
 )
 from app.agents.master_coordinator import MasterCoordinator
 from app.agents.situation_agent import SituationAgent
@@ -81,8 +82,8 @@ class TestMissingEnvironmentalData:
         assert plan.risk is not None
         assert _has_warning_code(plan, WarningCode.MISSING_ENVIRONMENT_DATA)
 
-    def test_predictive_agent_reduced_confidence(self):
-        """PredictiveAgent reduces confidence when environment is missing."""
+    def test_predictive_agent_marks_prediction_unavailable_without_environment(self):
+        """PredictiveAgent does not fabricate a stable forecast without trends."""
         from app.schemas.domain import RiskLevel, Priority, DisasterAnalysisState
         agent = PredictiveAgent()
         request = _make_request(environment=None)
@@ -92,8 +93,10 @@ class TestMissingEnvironmentalData:
         state.risk = risk
         result = agent.analyze(state).prediction
 
-        assert result.confidence == 0.5
-        assert "no environmental data provided" in result.explanation[0].lower()
+        assert result.prediction_available is False
+        assert result.forecast == []
+        assert result.confidence == 0.0
+        assert "no environmental data was provided" in result.explanation[0].lower()
 
 
 # ===========================================================================
@@ -265,6 +268,13 @@ class TestModelFileMissing:
             agent = RiskAgent(use_ml=True)
 
         request = _make_request()
+        request.incident.critical_victim_count = 0
+        request.incident.elderly_count = 0
+        request.incident.children_count = 0
+        request.incident.disabled_count = 0
+        request.incident.water_level = Observation(value=0.0)
+        request.incident.rainfall = Observation(value=0.0)
+        request.incident.road_access = RoadAccessStatus.OPEN
         state = DisasterAnalysisState(request=request)
         result = agent.analyze(state).risk
 
@@ -296,6 +306,13 @@ class TestModelPredictionFailure:
         agent.ml_service = mock_ml
 
         request = _make_request()
+        request.incident.critical_victim_count = 0
+        request.incident.elderly_count = 0
+        request.incident.children_count = 0
+        request.incident.disabled_count = 0
+        request.incident.water_level = Observation(value=0.0)
+        request.incident.rainfall = Observation(value=0.0)
+        request.incident.road_access = RoadAccessStatus.OPEN
         state = DisasterAnalysisState(request=request)
         result = agent.analyze(state).risk
 

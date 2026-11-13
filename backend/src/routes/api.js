@@ -3,6 +3,8 @@ const prisma = require('../utils/prisma');
 const { publish, subscribe } = require('../services/events');
 const { createPlan } = require('../services/dispatch');
 const { requestAIAnalysis } = require('../services/ai');
+const { AnalysisInputError, buildDisasterAnalysisContext } = require('../services/aiContext');
+const { buildSOSIncidentFields } = require('../services/incidentIntake');
 const { requireRole, signToken } = require('../middleware/auth');
 const crypto = require('crypto');
 
@@ -25,7 +27,15 @@ router.get('/events', subscribe);
 router.post('/sos', async (req, res, next) => {
   try {
     const { title = 'Emergency SOS', description, locationLat, locationLng, reporterId } = req.body;
-    const incident = await prisma.incident.create({ data: { title, description, locationLat, locationLng, reporterId } });
+    const data = {
+      title,
+      description,
+      locationLat,
+      locationLng,
+      reporterId,
+      ...buildSOSIncidentFields(req.body)
+    };
+    const incident = await prisma.incident.create({ data });
     await publish('SOS_RECEIVED', incident);
     res.status(201).json(incident);
   } catch (error) { next(error); }
@@ -63,55 +73,42 @@ router.post('/incidents/:id/analyze', ops, async (req, res, next) => {
   try {
     const incident = await prisma.incident.findUnique({ where: { id: req.params.id } });
     if (!incident) return res.status(404).json({ error: 'Incident not found' });
+    if (
+      !Number.isFinite(incident.locationLat) ||
+      incident.locationLat < -90 ||
+      incident.locationLat > 90 ||
+      !Number.isFinite(incident.locationLng) ||
+      incident.locationLng < -180 ||
+      incident.locationLng > 180
+    ) {
+      throw new AnalysisInputError('Valid incident latitude and longitude are required by the AI service.');
+    }
     
-    const [resources, hospitals, roads, weatherObv, waterObv] = await Promise.all([
+    const [resources, hospitals, roads, weatherObservations, waterLevelObservations] = await Promise.all([
       prisma.resource.findMany({ where: { status: 'AVAILABLE' } }),
       prisma.hospital.findMany({ include: { capacities: { orderBy: { updatedAt: 'desc' }, take: 1 } } }),
       prisma.road.findMany(),
-      prisma.weatherObservation.findFirst({ orderBy: { timestamp: 'desc' } }),
-      prisma.waterLevel.findFirst({ orderBy: { timestamp: 'desc' } })
+      prisma.weatherObservation.findMany({
+        where: { locationLat: incident.locationLat, locationLng: incident.locationLng },
+        orderBy: { timestamp: 'desc' },
+        take: 2
+      }),
+      prisma.waterLevel.findMany({
+        where: { locationLat: incident.locationLat, locationLng: incident.locationLng },
+        orderBy: { timestamp: 'desc' },
+        take: 2
+      })
     ]);
 
-    const context = {
-      incident: {
-        id: incident.id,
-        type: incident.type || "OTHER",
-        latitude: incident.locationLat || 0,
-        longitude: incident.locationLng || 0,
-        victim_count: incident.victimCount || 0,
-        elderly_count: incident.elderlyCount || 0,
-        children_count: incident.childrenCount || 0,
-        disabled_count: incident.disabledCount || 0,
-        water_level: incident.waterLevel !== null ? incident.waterLevel : null,
-        rainfall: incident.rainfall !== null ? incident.rainfall : null,
-        road_access: incident.roadAccess || "OPEN"
-      },
-      resources: resources.map(r => ({
-        id: r.id,
-        type: r.type,
-        status: r.status,
-        latitude: r.locationLat || 0,
-        longitude: r.locationLng || 0
-      })),
-      hospitals: hospitals.map(h => ({
-        id: h.id,
-        name: h.name,
-        latitude: h.locationLat || 0,
-        longitude: h.locationLng || 0,
-        available_beds: h.capacities?.[0]?.available || 0
-      })),
-      roads: roads.map(r => ({
-        id: r.id,
-        name: r.name,
-        status: r.status
-      })),
-      environment: {}
-    };
-
-    if (weatherObv || waterObv) {
-      if (weatherObv) context.environment.rainfall_trend_mm_per_hour = weatherObv.rainfallMm;
-      if (waterObv) context.environment.water_level_trend_m_per_hour = waterObv.levelMeters;
-    }
+    const { context, warnings } = buildDisasterAnalysisContext({
+      incident,
+      resources,
+      hospitals,
+      roads,
+      weatherObservations,
+      waterLevelObservations
+    });
+    warnings.forEach(warning => console.warn(`[AI analysis] ${warning}`));
 
     const aiRecommendation = await requestAIAnalysis(context);
 
@@ -127,10 +124,24 @@ router.post('/incidents/:id/analyze', ops, async (req, res, next) => {
     res.status(201).json(aiRecommendation);
 
   } catch (error) {
+    if (error instanceof AnalysisInputError) {
+      return res.status(400).json({ error: error.code, message: error.message });
+    }
     if (error.code === 'AI_SERVICE_TIMEOUT' || error.code === 'AI_SERVICE_UNAVAILABLE') {
       return res.status(error.status).json({
         error: error.code,
         message: error.message
+      });
+    }
+    if (error.code === 'AI_SERVICE_INVALID_RESPONSE') {
+      return res.status(error.status).json({ error: error.code, message: error.message });
+    }
+    if (error.code === 'AI_SERVICE_UPSTREAM_ERROR') {
+      return res.status(error.status).json({
+        error: error.code,
+        message: error.message,
+        details: error.details,
+        upstreamStatus: error.upstreamStatus
       });
     }
     if (error.status === 422 || error.status === 400) {

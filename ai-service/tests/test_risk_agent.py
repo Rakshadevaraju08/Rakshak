@@ -25,6 +25,11 @@ def test_low_risk_incident(agent):
             type=IncidentType.OTHER,
             latitude=10.0,
             longitude=20.0,
+            victim_count=0,
+            critical_victim_count=0,
+            elderly_count=0,
+            children_count=0,
+            disabled_count=0,
             water_level=Observation(value=0.5),
             rainfall=Observation(value=10.0),
             road_access=RoadAccessStatus.OPEN
@@ -57,7 +62,7 @@ def test_medium_risk_incident(agent):
     assert result.priority == Priority.P3_MEDIUM
     assert result.risk_level == RiskLevel.MEDIUM
     assert result.score == 30.0
-    assert any("multiple victims (6)" in r.lower() for r in result.reasons)
+    assert any("people reported needing help: 6" in r.lower() for r in result.reasons)
 
 def test_critical_flood(agent):
     """Test a flood with high water levels and blocked roads."""
@@ -92,8 +97,12 @@ def test_vulnerable_victim(agent):
             latitude=10.0,
             longitude=20.0,
             victim_count=2,       # 2 * 5 = 10 points
+            critical_victim_count=0,
             elderly_count=2,      # 2 * 10 = 20 points
-            rainfall=Observation(value=0.0)
+            children_count=0,
+            disabled_count=0,
+            rainfall=Observation(value=0.0),
+            road_access=RoadAccessStatus.OPEN
         )
     )
     state = DisasterAnalysisState(request=request)
@@ -102,7 +111,7 @@ def test_vulnerable_victim(agent):
     # 10 + 20 = 30 points -> P3_MEDIUM
     assert result.priority == Priority.P3_MEDIUM
     assert result.score == 30.0
-    assert any("vulnerable individuals present (2)" in r.lower() for r in result.reasons)
+    assert any("vulnerable individuals reported: 2" in r.lower() for r in result.reasons)
 
 def test_missing_environmental_data(agent):
     """Test that missing environmental data reduces confidence in flood incidents."""
@@ -118,7 +127,7 @@ def test_missing_environmental_data(agent):
     state = DisasterAnalysisState(request=request)
     result = agent.analyze(state).risk
     
-    # Missing water_level + rainfall for a flood incident reduces confidence
-    assert result.confidence == 0.7
-    assert result.score == 0.0 # No victims, no data to add points
+    assert result.confidence < 1.0
+    assert result.score is None
+    assert result.risk_level == RiskLevel.UNDETERMINED
     assert result.priority == Priority.P5_MONITOR

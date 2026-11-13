@@ -14,7 +14,7 @@ from app.agents.risk_agent import RiskAgent
 from app.agents.predictive_agent import PredictiveAgent
 from app.agents.route_agent import RouteAgent
 from app.agents.data_quality_agent import DataQualityAgent
-from app.errors import PipelineWarning
+from app.errors import PipelineWarning, WarningCode
 
 
 @pytest.fixture
@@ -25,6 +25,13 @@ def base_state():
         latitude=10.0,
         longitude=20.0,
         victim_count=5,
+        critical_victim_count=0,
+        elderly_count=0,
+        children_count=0,
+        disabled_count=0,
+        water_level=Observation(value=0.0),
+        rainfall=Observation(value=0.0),
+        road_access=RoadAccessStatus.OPEN,
     )
     request = DisasterAnalysisRequest(
         incident=incident,
@@ -49,11 +56,14 @@ def test_risk_ml_fallback_observability(base_state):
     # Validation
     assert result.used_fallback is True
     assert result.degraded_mode is True
-    assert "ML prediction failed" in result.fallback_reason
+    assert "synthetic" in result.fallback_reason.lower() or "unavailable" in result.fallback_reason.lower()
     
     # Ensure warnings captured this
     warnings = getattr(result, '_pipeline_warnings', [])
-    assert any("ML prediction failed" in w.message for w in warnings)
+    assert any(
+        w.code in (WarningCode.MODEL_NOT_VALIDATED, WarningCode.MODEL_FILE_MISSING)
+        for w in warnings
+    )
 
 
 def test_predictive_ml_fallback_observability(base_state):

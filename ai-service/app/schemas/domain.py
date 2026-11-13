@@ -13,6 +13,7 @@ class IncidentType(str, Enum):
     FLOOD = "FLOOD"
     EARTHQUAKE = "EARTHQUAKE"
     FIRE = "FIRE"
+    LANDSLIDE = "LANDSLIDE"
     MEDICAL = "MEDICAL"
     LOCALIZED_ACCIDENT = "LOCALIZED_ACCIDENT"
     OTHER = "OTHER"
@@ -40,6 +41,7 @@ class RiskLevel(str, Enum):
     MEDIUM = "MEDIUM"
     HIGH = "HIGH"
     CRITICAL = "CRITICAL"
+    UNDETERMINED = "UNDETERMINED"
 
 class Priority(int, Enum):
     P1_CRITICAL = 1
@@ -83,11 +85,11 @@ class Incident(BaseModel):
     confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Raw input confidence")
     latitude: float = Field(..., ge=-90.0, le=90.0, description="Latitude coordinate")
     longitude: float = Field(..., ge=-180.0, le=180.0, description="Longitude coordinate")
-    victim_count: int = Field(default=0, ge=0, description="Total number of victims")
-    critical_victim_count: int = Field(default=0, ge=0, description="Number of critically injured victims")
-    elderly_count: int = Field(default=0, ge=0, description="Number of elderly victims")
-    children_count: int = Field(default=0, ge=0, description="Number of child victims")
-    disabled_count: int = Field(default=0, ge=0, description="Number of disabled victims")
+    victim_count: Optional[int] = Field(default=None, ge=0, description="Total number of victims, when reported")
+    critical_victim_count: Optional[int] = Field(default=None, ge=0, description="Number of critically injured victims, when reported")
+    elderly_count: Optional[int] = Field(default=None, ge=0, description="Number of elderly victims, when reported")
+    children_count: Optional[int] = Field(default=None, ge=0, description="Number of child victims, when reported")
+    disabled_count: Optional[int] = Field(default=None, ge=0, description="Number of disabled victims, when reported")
     water_level: Optional[Observation] = Field(default=None, description="Water level observation")
     rainfall: Optional[Observation] = Field(default=None, description="Rainfall observation")
     road_access: Optional[RoadAccessStatus] = None
@@ -125,6 +127,12 @@ class Environment(BaseModel):
     general_weather: Optional[str] = None
     temperature_celsius: Optional[float] = None
     forecast_summary: Optional[str] = None
+    rainfall_current_mm: Optional[float] = Field(default=None, ge=0.0)
+    rainfall_1h_mm: Optional[float] = Field(default=None, ge=0.0)
+    rainfall_3h_mm: Optional[float] = Field(default=None, ge=0.0)
+    rainfall_6h_mm: Optional[float] = Field(default=None, ge=0.0)
+    rainfall_24h_mm: Optional[float] = Field(default=None, ge=0.0)
+    elevation_m: Optional[float] = None
     rainfall_trend_mm_per_hour: Optional[float] = None
     water_level_trend_m_per_hour: Optional[float] = None
 
@@ -192,9 +200,19 @@ class RiskResult(AgentResultBase):
     priority: Priority
     risk_level: RiskLevel
     severity: str
-    score: float = Field(..., ge=0.0, le=100.0, description="Calculated risk score out of 100")
+    score: Optional[float] = Field(
+        default=None,
+        ge=0.0,
+        le=100.0,
+        description="Uncalibrated rule-point subtotal; null when no comparable score is available."
+    )
     reasons: List[str] = Field(..., description="Explainability factors for why this risk was assigned")
-    confidence: float = Field(..., ge=0.0, le=1.0)
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Risk-input/data-quality coverage, not a probability of classification correctness."
+    )
 
 class PredictionResult(AgentResultBase):
     horizon_hours: int = Field(..., ge=1, description="How far into the future this prediction looks")
@@ -210,8 +228,14 @@ class PredictiveAgentResult(AgentResultBase):
     current_risk: RiskLevel
     forecast: List[ForecastItem]
     escalation_detected: bool
+    prediction_available: bool = True
     explanation: List[str]
-    confidence: float = Field(..., ge=0.0, le=1.0)
+    confidence: float = Field(
+        ...,
+        ge=0.0,
+        le=1.0,
+        description="Input coverage for rule estimates; not a calibrated forecast probability."
+    )
 
 class RouteResult(AgentResultBase):
     resource_id: str
@@ -321,7 +345,7 @@ class FullResponsePlan(BaseModel):
     # ── Top-level convenience fields for frontend display ─────────────────
     overall_confidence: float = Field(
         default=0.0, ge=0.0, le=1.0,
-        description="Minimum confidence across all non-None agents; indicates weakest link in the pipeline"
+        description="Minimum confidence across available agent outputs; agent-specific semantics, not an overall probability."
     )
     trace_id: Optional[str] = Field(
         default=None,
@@ -389,6 +413,8 @@ class FloodPredictionRequest(BaseModel):
     rainfall1h: float
     rainfall3h: float
     rainfall6h: float
+    rainfall24h: Optional[float] = None
+    rainfallTrend: Optional[float] = None
     waterLevel: Optional[float] = None
     waterLevelChange: Optional[float] = None
     aboveDangerLevel: Optional[bool] = None

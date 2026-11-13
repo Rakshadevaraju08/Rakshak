@@ -73,7 +73,8 @@ def test_decision_provenance_integration(mock_get):
     assert plan.prediction is not None
     assert plan.prediction.decision_provenance is not None
     assert plan.prediction.decision_provenance.agent == "PredictiveAgent"
-    assert plan.prediction.decision_provenance.method == "baseline_heuristic"
+    assert plan.prediction.decision_provenance.method == "unavailable"
+    assert plan.prediction.prediction_available is False
     
     # Check Resource Provenance
     assert plan.resource_agent_result is not None
