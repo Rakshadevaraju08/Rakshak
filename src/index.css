@@ -2447,6 +2447,32 @@ a:focus-visible {
   overflow-wrap: anywhere;
 }
 
+.intel-confidence-note {
+  margin: 8px 0 0;
+  color: #8794a0;
+  font-size: 8px;
+  line-height: 1.5;
+}
+
+.intel-situation-summary {
+  margin: 0;
+  color: #647a8b;
+  font-size: 9px;
+  line-height: 1.6;
+}
+
+.intel-prediction-unavailable {
+  padding: 9px;
+  border: 1px solid #eee6d8;
+  border-radius: 7px;
+  color: #876e48;
+  background: #fffbf5;
+}
+
+.intel-prediction-unavailable > strong {
+  font-size: 9px;
+}
+
 .intel-prediction-state {
   display: grid;
   grid-template-columns: 1fr auto;
