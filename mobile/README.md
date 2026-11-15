@@ -57,7 +57,9 @@ This is an offline-first safety mechanism rather than a full mesh relay implemen
 
 ## Backend communication
 
-The app targets the backend incident API and expects the backend to be running on the local API host.
+The app targets the backend incident API and expects the backend to be reachable from the device running the app. The API URL can be set with `VITE_API_URL` in `mobile/.env.local`; `VITE_API_BASE_URL` remains supported for existing setups. Restart the mobile dev server after changing the value.
+
+When opening the app on a physical phone, `localhost` refers to the phone itself, not the development computer. Set `VITE_API_URL` to the development computer's LAN address (for example, `http://192.168.1.20:3001/api`) and allow the phone's frontend origin in the backend `CORS_ORIGIN` setting. Keep the backend reachable on the same network.
 
 Typical endpoints used by the client flow:
 

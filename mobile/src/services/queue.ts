@@ -19,7 +19,11 @@ const queueStore = localforage.createInstance({
   storeName: 'sos_queue'
 });
 
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3001/api').replace(/\/+$/, '');
+const API_URL = (
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  'http://localhost:3001/api'
+).replace(/\/+$/, '');
 let isSyncing = false;
 
 export async function enqueueSOS(request: Omit<SOSRequest, 'id' | 'timestamp'>) {
@@ -86,7 +90,10 @@ export async function syncQueue(): Promise<QueueSyncResult> {
       } catch (error) {
         console.error('Failed to sync SOS:', error);
         const reason = error instanceof Error ? ` ${error.message}` : '';
-        return { acceptedIds, error: `SOS sync failed; the request remains queued for retry.${reason}` };
+        return {
+          acceptedIds,
+          error: `SOS sync failed; the request remains queued for retry. Check the mobile API URL, backend availability, and CORS settings.${reason}`
+        };
       }
 
       if (!response.ok) {
