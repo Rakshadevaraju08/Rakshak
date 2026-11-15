@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   Activity,
   AlertTriangle,
@@ -10,7 +10,6 @@ import {
   Hospital,
   LayoutDashboard,
   LoaderCircle,
-  MapPin,
   Menu,
   Radio,
   RefreshCw,
@@ -34,8 +33,9 @@ import IncidentsPage from './pages/IncidentsPage';
 import AiIntelligencePage from './pages/AiIntelligencePage';
 import SearchRoutingPage from './pages/SearchRoutingPage';
 import { AnalysisProvider } from './contexts/AnalysisContext';
-import { fetchIncidents, type Incident } from './services/api';
 import OverviewIncidentMap from './components/OverviewIncidentMap';
+import { useIncidents } from './hooks/useIncidents';
+import { formatRelativeTime, formatStatusLabel } from './utils/incidentFilters';
 
 type Section = {
   path: string;
@@ -226,29 +226,12 @@ function Workspace() {
 
 function OverviewPage() {
   const featuredSections = sections.slice(2, 6);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
-  const [refreshVersion, setRefreshVersion] = useState(0);
-
-  useEffect(() => {
-    const controller = new AbortController();
-    setIsLoading(true);
-    setLoadError(null);
-
-    fetchIncidents(controller.signal)
-      .then(setIncidents)
-      .catch(error => {
-        if (!controller.signal.aborted) {
-          setLoadError(error instanceof Error ? error.message : 'An unexpected error occurred.');
-        }
-      })
-      .finally(() => {
-        if (!controller.signal.aborted) setIsLoading(false);
-      });
-
-    return () => controller.abort();
-  }, [refreshVersion]);
+  const {
+    data: incidents,
+    loading: isLoading,
+    error: loadError,
+    refetch,
+  } = useIncidents();
 
   const incidentCounts = new Map<string, number>();
   incidents.forEach(incident => {
@@ -257,8 +240,10 @@ function OverviewPage() {
   });
   const recentIncidents = [...incidents]
     .sort((left, right) => {
-      const leftTime = left.createdAt ? Date.parse(left.createdAt) : Number.NaN;
-      const rightTime = right.createdAt ? Date.parse(right.createdAt) : Number.NaN;
+      const leftTimestamp = left.timestamp || left.createdAt;
+      const rightTimestamp = right.timestamp || right.createdAt;
+      const leftTime = leftTimestamp ? Date.parse(leftTimestamp) : Number.NaN;
+      const rightTime = rightTimestamp ? Date.parse(rightTimestamp) : Number.NaN;
       if (Number.isNaN(leftTime)) return Number.isNaN(rightTime) ? 0 : 1;
       if (Number.isNaN(rightTime)) return -1;
       return rightTime - leftTime;
@@ -355,7 +340,7 @@ function OverviewPage() {
           <button
             type="button"
             className="secondary-button"
-            onClick={() => setRefreshVersion(version => version + 1)}
+            onClick={() => void refetch()}
           >
             <RefreshCw size={14} /> Try again
           </button>
@@ -396,17 +381,22 @@ function OverviewPage() {
                   <span>No incidents have been returned.</span>
                 </div>
               ) : (
-                <div className="overview-recent-list">
+                <div className="activity-list overview-recent-list">
                   {recentIncidents.map(incident => (
-                    <Link className="overview-recent-item" to="/incidents" key={incident.id}>
-                      <span className="overview-recent-icon"><MapPin size={16} /></span>
-                      <span className="overview-recent-copy">
+                    <Link
+                      className="activity-item overview-recent-item"
+                      to={`/incidents?selected=${encodeURIComponent(incident.id)}`}
+                      key={incident.id}
+                    >
+                      <span className="activity-icon overview-recent-icon"><ClipboardList size={16} /></span>
+                      <span className="activity-copy overview-recent-copy">
                         <strong>{incident.title}</strong>
-                        <span>{incident.type || 'Type not provided'} · {formatIncidentTime(incident.createdAt)}</span>
+                        <span>
+                          {incident.type || 'Incident'} · {formatStatusLabel(incident.status)} ·{' '}
+                          {formatRelativeTime(incident.timestamp || incident.createdAt)}
+                        </span>
                       </span>
-                      <span className={`incident-status status-${statusSlug(incident.status)}`}>
-                        {incident.status || 'Status not provided'}
-                      </span>
+                      <ArrowRight size={13} className="activity-arrow" />
                     </Link>
                   ))}
                 </div>
@@ -464,13 +454,6 @@ function OverviewPage() {
 
 function statusSlug(status?: string | null): string {
   return status?.toLowerCase().replace(/[^a-z0-9-]/g, '-') || 'unknown';
-}
-
-function formatIncidentTime(value?: string | null): string {
-  if (!value) return 'Time not provided';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(date);
 }
 
 function PlaceholderPage({ section }: { section: Section }) {

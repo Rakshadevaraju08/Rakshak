@@ -96,7 +96,9 @@ export default function OverviewIncidentMap({ incidents }: { incidents: Incident
                   <strong>{incident.title}</strong>
                   <span>{incident.type || 'Type not provided'}</span>
                   <span>{incident.status || 'Status not provided'}</span>
-                  <Link to="/incidents">View in Incident Management</Link>
+                  <Link to={`/incidents?selected=${encodeURIComponent(incident.id)}`}>
+                    View in Incident Management
+                  </Link>
                 </div>
               </Popup>
             </CircleMarker>

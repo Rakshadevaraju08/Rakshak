@@ -182,14 +182,12 @@ Use the example files as templates and create local `.env` files without committ
 
 Backend environment variables include:
 
-```env
 PORT=3001
-DATABASE_URL="mysql://disaster_user:disaster_password@localhost:3307/disaster_db"
+DATABASE_URL="mysql://<DB_USER>:<DB_PASSWORD>@localhost:3307/<DB_NAME>"
 REDIS_URL="redis://localhost:6379"
 AI_SERVICE_URL=http://localhost:8000
-JWT_SECRET=
+JWT_SECRET=replace_with_a_local_development_secret
 CORS_ORIGIN=http://localhost:5173
-```
 
 Do not commit real JWT secrets, Twilio credentials, or production database URLs.
 
@@ -320,7 +318,3 @@ Important project references:
 - [backend/README.md](backend/README.md)
 - [ai-service/README.md](ai-service/README.md)
 - [mobile/README.md](mobile/README.md)
-
-## License
-
-This project is currently a collaborative internal repository without a repository-level license file in the root tree. Confirm the intended license before production or public distribution.
