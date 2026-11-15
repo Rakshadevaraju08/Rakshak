@@ -5087,3 +5087,575 @@ a:focus-visible {
   font-size: 9px;
   font-weight: 700;
 }
+
+.hospitals-page {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.hospitals-page-heading {
+  margin-bottom: 0;
+}
+
+.hospital-data-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 15px;
+  border: 1px solid #e1ebf0;
+  border-radius: 10px;
+  color: #61798b;
+  background: #f7fbfd;
+}
+
+.hospital-data-note svg {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: #558ba5;
+}
+
+.hospital-data-note p {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.65;
+}
+
+.hospital-capacity-section,
+.hospital-resource-section {
+  min-width: 0;
+}
+
+.hospitals-section-heading {
+  margin-bottom: 13px;
+}
+
+.hospitals-section-heading h2 {
+  margin: 0;
+  color: #344a60;
+  font-family: Manrope, 'Segoe UI', sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.hospitals-section-heading p {
+  margin: 5px 0 0;
+  color: #8190a0;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.hospital-capacity-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+  margin-bottom: 13px;
+}
+
+.hospital-capacity-summary article {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  padding: 14px 16px;
+  border: 1px solid #e5ebf1;
+  border-radius: 11px;
+  background: #fff;
+}
+
+.hospital-capacity-summary article > span {
+  color: #78889a;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.hospital-capacity-summary strong {
+  margin-top: 5px;
+  color: #30475d;
+  font-family: Manrope, 'Segoe UI', sans-serif;
+  font-size: 23px;
+  font-weight: 700;
+}
+
+.hospital-capacity-summary small {
+  margin-top: 4px;
+  color: #98a3ae;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.hospital-toolbar,
+.resource-toolbar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.hospital-search {
+  display: flex;
+  width: min(100%, 430px);
+  min-height: 38px;
+  align-items: center;
+  gap: 9px;
+  padding: 0 11px;
+  border: 1px solid #e1e8ee;
+  border-radius: 8px;
+  color: #8b9aaa;
+  background: #fff;
+}
+
+.hospital-search:focus-within {
+  border-color: #8db9cb;
+  box-shadow: 0 0 0 3px rgb(143 201 223 / 18%);
+}
+
+.hospital-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  outline: 0;
+  color: #334960;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+}
+
+.hospital-search input::placeholder {
+  color: #a0aab5;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.hospital-clear-button {
+  flex: 0 0 auto;
+}
+
+.hospital-card-grid,
+.resource-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.hospital-card,
+.resource-card {
+  min-width: 0;
+  padding: 15px;
+  border: 1px solid #e5ebf1;
+  border-radius: 11px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgb(46 73 97 / 3%);
+}
+
+.hospital-card-heading,
+.resource-card-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.hospital-card-icon,
+.resource-card-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 10px;
+  color: #4885a2;
+  background: #edf6fa;
+}
+
+.hospital-card-title,
+.resource-card-heading > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.hospital-card-title h3,
+.resource-card-heading h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: #34495e;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.hospital-status-unavailable {
+  display: inline-block;
+  margin-top: 5px;
+  color: #8a929a;
+  font-size: 9px;
+}
+
+.hospital-location {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 12px 0;
+  color: #7d8c9a;
+  font-size: 10px;
+  overflow-wrap: anywhere;
+}
+
+.hospital-location svg {
+  flex: 0 0 auto;
+  color: #7e9cae;
+}
+
+.hospital-bed-details {
+  padding-top: 12px;
+  border-top: 1px solid #edf1f4;
+}
+
+.hospital-bed-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.hospital-bed-metrics > span {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 4px;
+  color: #8794a1;
+  font-size: 9px;
+}
+
+.hospital-bed-metrics strong {
+  color: #3c5267;
+  font-family: Manrope, 'Segoe UI', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.hospital-occupancy {
+  margin-top: 11px;
+}
+
+.hospital-occupancy > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 5px;
+  color: #7d8b99;
+  font-size: 9px;
+}
+
+.hospital-occupancy strong {
+  color: #4a7890;
+  font-size: 10px;
+}
+
+.hospital-occupancy progress {
+  display: block;
+  width: 100%;
+  height: 7px;
+  overflow: hidden;
+  border: 0;
+  border-radius: 99px;
+  appearance: none;
+  background: #edf2f5;
+}
+
+.hospital-occupancy progress::-webkit-progress-bar {
+  border-radius: 99px;
+  background: #edf2f5;
+}
+
+.hospital-occupancy progress::-webkit-progress-value {
+  border-radius: 99px;
+  background: linear-gradient(90deg, #72bdc4, #478cab);
+}
+
+.hospital-occupancy progress::-moz-progress-bar {
+  border-radius: 99px;
+  background: #478cab;
+}
+
+.hospital-capacity-note,
+.hospital-capacity-missing {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 10px 0 0;
+  color: #8b9299;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.hospital-capacity-missing {
+  margin-top: 0;
+}
+
+.capacity-updated {
+  display: block;
+  margin-top: 9px;
+  color: #9aa4ae;
+  font-size: 8px;
+}
+
+.hospital-derived-note {
+  margin: 9px 0 0;
+  color: #98a2ad;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.resource-toolbar {
+  flex-wrap: wrap;
+}
+
+.resource-toolbar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #718295;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.resource-toolbar select {
+  min-height: 34px;
+  padding: 0 27px 0 9px;
+  border: 1px solid #e1e8ee;
+  border-radius: 7px;
+  color: #455e72;
+  background: #fff;
+  font: inherit;
+  font-size: 10px;
+}
+
+.resource-card-heading > div > span {
+  display: block;
+  margin-top: 4px;
+  color: #8996a3;
+  font-size: 9px;
+}
+
+.resource-status {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.resource-status > span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.resource-status.is-available {
+  color: #3f8a6c;
+  background: #edf8f2;
+}
+
+.resource-status.is-other {
+  color: #9a7040;
+  background: #fbf5eb;
+}
+
+.resource-status.is-unknown {
+  color: #788694;
+  background: #f1f4f6;
+}
+
+.resource-card-details {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid #edf1f4;
+}
+
+.resource-card-details > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 5px 7px;
+  border-radius: 6px;
+  color: #718397;
+  background: #f6f8fa;
+  font-size: 9px;
+  overflow-wrap: anywhere;
+}
+
+.resource-card-details > .resource-detail-missing {
+  padding-left: 0;
+  color: #9aa4ae;
+  background: transparent;
+}
+
+.hospital-state,
+.hospital-empty-state,
+.hospital-error {
+  display: flex;
+  min-height: 88px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 17px;
+  border: 1px solid #e5ebf1;
+  border-radius: 10px;
+  color: #7d8b99;
+  background: #fff;
+  font-size: 10px;
+}
+
+.hospital-state > svg,
+.hospital-empty-state > svg {
+  flex: 0 0 auto;
+  color: #7199ad;
+}
+
+.hospital-empty-state {
+  flex-direction: column;
+  gap: 6px;
+  text-align: center;
+}
+
+.hospital-empty-state strong {
+  color: #52677b;
+  font-size: 11px;
+}
+
+.hospital-empty-state span {
+  color: #8996a3;
+  font-size: 10px;
+}
+
+.hospital-empty-state .text-button {
+  margin-top: 2px;
+}
+
+.hospital-error {
+  justify-content: flex-start;
+  color: #8a6c3e;
+  background: #fffdf9;
+}
+
+.hospital-error > svg {
+  flex: 0 0 auto;
+  color: #bc9050;
+}
+
+.hospital-error > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.hospital-error strong {
+  font-size: 10px;
+}
+
+.hospital-error p {
+  margin: 4px 0 0;
+  color: #907951;
+  font-size: 9px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 920px) {
+  .hospital-card-grid,
+  .resource-card-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .hospitals-page {
+    gap: 20px;
+  }
+
+  .hospitals-page-heading .secondary-button {
+    align-self: flex-start;
+  }
+
+  .hospital-capacity-summary {
+    gap: 8px;
+  }
+
+  .hospital-capacity-summary article {
+    padding: 12px;
+  }
+
+  .hospital-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .hospital-search {
+    width: 100%;
+  }
+
+  .hospital-clear-button {
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .hospital-capacity-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .hospital-capacity-summary article {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    column-gap: 12px;
+  }
+
+  .hospital-capacity-summary article > span,
+  .hospital-capacity-summary small {
+    grid-column: 1;
+  }
+
+  .hospital-capacity-summary strong {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+    align-self: center;
+    margin: 0;
+  }
+
+  .hospital-card,
+  .resource-card {
+    padding: 13px;
+  }
+
+  .resource-card-heading {
+    flex-wrap: wrap;
+  }
+
+  .resource-status {
+    margin-left: 46px;
+  }
+
+  .hospital-error {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}

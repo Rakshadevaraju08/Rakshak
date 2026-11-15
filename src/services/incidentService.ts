@@ -113,6 +113,31 @@ export interface Incident {
   updates: IncidentUpdate[];
 }
 
+export interface HospitalCapacitySnapshot {
+  totalBeds: number | null;
+  available: number | null;
+  updatedAt: string | null;
+}
+
+export interface Hospital {
+  id: string;
+  name: string;
+  locationLat: number | null;
+  locationLng: number | null;
+  capacity: HospitalCapacitySnapshot | null;
+}
+
+export interface Resource {
+  id: string;
+  name: string;
+  type: string | null;
+  status: string | null;
+  locationLat: number | null;
+  locationLng: number | null;
+  ambulancePlateNumbers: string[];
+  rescuePersonnel: number[];
+}
+
 export interface IncidentPatchPayload {
   title?: string;
   description?: string;
@@ -658,7 +683,7 @@ async function requestApi<T>(
     } else if (response.status === 403) {
       message = `${message}. Permission denied: An OPERATOR or ADMIN role is required.`;
     } else if (response.status === 404) {
-      message = `${message}. The requested incident resource was not found.`;
+      message = `${message}. The requested API resource was not found.`;
     } else if (response.status >= 500) {
       message = `Server error (${response.status}): The backend service encountered an internal error.`;
     }
@@ -667,6 +692,110 @@ async function requestApi<T>(
   }
 
   return payload as T;
+}
+
+function getOptionalString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim() ? value.trim() : null;
+}
+
+function getOptionalCoordinate(value: unknown, min: number, max: number): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max
+    ? value
+    : null;
+}
+
+function getNonNegativeInteger(value: unknown): number | null {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0 ? value : null;
+}
+
+export function normalizeHospitalList(payload: unknown): Hospital[] {
+  if (!Array.isArray(payload)) {
+    throw new ApiRequestError('The hospital endpoint returned an unexpected response.', 502, payload);
+  }
+
+  return payload.flatMap((item): Hospital[] => {
+    if (!isJsonRecord(item)) {
+      console.warn('Skipping a hospital record with an invalid shape.');
+      return [];
+    }
+
+    const id = getOptionalString(item.id);
+    const name = getOptionalString(item.name);
+    if (!id || !name) {
+      console.warn('Skipping a hospital record without an ID or name.');
+      return [];
+    }
+
+    const capacityRecord = Array.isArray(item.capacities) && isJsonRecord(item.capacities[0])
+      ? item.capacities[0]
+      : null;
+    const capacity = capacityRecord
+      ? {
+          totalBeds: getNonNegativeInteger(capacityRecord.totalBeds),
+          available: getNonNegativeInteger(capacityRecord.available),
+          updatedAt: parseTimestamp(capacityRecord.updatedAt),
+        }
+      : null;
+
+    return [{
+      id,
+      name,
+      locationLat: getOptionalCoordinate(item.locationLat, -90, 90),
+      locationLng: getOptionalCoordinate(item.locationLng, -180, 180),
+      capacity,
+    }];
+  });
+}
+
+export function normalizeResourceList(payload: unknown): Resource[] {
+  if (!Array.isArray(payload)) {
+    throw new ApiRequestError('The resource endpoint returned an unexpected response.', 502, payload);
+  }
+
+  return payload.flatMap((item): Resource[] => {
+    if (!isJsonRecord(item)) {
+      console.warn('Skipping a resource record with an invalid shape.');
+      return [];
+    }
+
+    const id = getOptionalString(item.id);
+    const name = getOptionalString(item.name);
+    if (!id || !name) {
+      console.warn('Skipping a resource record without an ID or name.');
+      return [];
+    }
+
+    const ambulances = Array.isArray(item.ambulances) ? item.ambulances : [];
+    const rescueTeams = Array.isArray(item.rescueTeams) ? item.rescueTeams : [];
+    return [{
+      id,
+      name,
+      type: getOptionalString(item.type),
+      status: getOptionalString(item.status)?.toUpperCase() ?? null,
+      locationLat: getOptionalCoordinate(item.locationLat, -90, 90),
+      locationLng: getOptionalCoordinate(item.locationLng, -180, 180),
+      ambulancePlateNumbers: ambulances.flatMap((ambulance) => {
+        if (!isJsonRecord(ambulance)) return [];
+        const plateNumber = getOptionalString(ambulance.plateNumber);
+        return plateNumber ? [plateNumber] : [];
+      }),
+      rescuePersonnel: rescueTeams.flatMap((team) => {
+        if (!isJsonRecord(team)) return [];
+        const personnel = getNonNegativeInteger(team.personnel);
+        return personnel === null ? [] : [personnel];
+      }),
+    }];
+  });
+}
+
+export async function fetchHospitals(options: { signal?: AbortSignal; timeoutMs?: number } = {}): Promise<Hospital[]> {
+  const payload = await requestApi<unknown>('/hospitals', { method: 'GET', ...options });
+  return normalizeHospitalList(payload);
+}
+
+export async function fetchResources(options: { signal?: AbortSignal; timeoutMs?: number } = {}): Promise<Resource[]> {
+  const payload = await requestApi<unknown>('/resources', { method: 'GET', ...options });
+  return normalizeResourceList(payload);
 }
 
 /**
