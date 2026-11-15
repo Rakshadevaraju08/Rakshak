@@ -9,8 +9,10 @@ The app includes:
 - Geolocation capture with a fallback message when GPS is unavailable
 - Category-based incident reporting such as Medical, Flood, Fire, and Trapped
 - Hold-to-send SOS interaction to reduce accidental alerts
+- Keyboard-accessible SOS interaction and duplicate-submission protection
 - Local queueing of unsent SOS messages
-- Automatic sync when the device reconnects to the internet
+- Automatic sync when the device reconnects to the internet, with a manual retry action
+- Clear feedback for requests saved locally, accepted by the backend, or still pending
 
 ## Application structure
 
@@ -48,6 +50,8 @@ Behavior:
 - `syncQueue` sends pending messages to the backend when connectivity is restored.
 - `getQueueCount` reports how many queued requests remain.
 - The UI updates the status text to reflect saved and accepted messages.
+- Concurrent sync attempts are guarded, and the SOS action is disabled while a new request is being saved or acknowledged.
+- The online/offline indicator reflects browser connectivity; offline requests remain in the existing local queue.
 
 This is an offline-first safety mechanism rather than a full mesh relay implementation.
 
