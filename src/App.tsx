@@ -13,7 +13,6 @@ import {
   Menu,
   Radio,
   RefreshCw,
-  Route as RouteIcon,
   ShieldCheck,
   SlidersHorizontal,
   Truck,
@@ -31,7 +30,6 @@ import {
 } from 'react-router-dom';
 import IncidentsPage from './pages/IncidentsPage';
 import AiIntelligencePage from './pages/AiIntelligencePage';
-import SearchRoutingPage from './pages/SearchRoutingPage';
 import HospitalsPage from './pages/HospitalsPage';
 import { AnalysisProvider } from './contexts/AnalysisContext';
 import OverviewIncidentMap from './components/OverviewIncidentMap';
@@ -71,14 +69,6 @@ const sections: Section[] = [
     icon: BrainCircuit,
     emptyTitle: 'AI analysis is not available yet',
     emptyMessage: 'Connect incident data and the AI service to surface analysis in this workspace.',
-  },
-  {
-    path: '/routing',
-    title: 'Search & Routing',
-    description: 'Compare BFS, DFS, Greedy Best-First, and A* on a simulated disaster-area grid.',
-    icon: RouteIcon,
-    emptyTitle: 'Route data not connected',
-    emptyMessage: 'Connect road and routing data to review accessible response routes here.',
   },
   {
     path: '/decisions',
@@ -211,11 +201,10 @@ function Workspace() {
               <Route path="/" element={<OverviewPage />} />
               <Route path="/incidents" element={<IncidentsPage />} />
               <Route path="/intelligence" element={<AiIntelligencePage />} />
-              <Route path="/routing" element={<SearchRoutingPage />} />
-              <Route path="/decisions" element={<PlaceholderPage section={sections[4]} />} />
-              <Route path="/dispatch" element={<PlaceholderPage section={sections[5]} />} />
+              <Route path="/decisions" element={<PlaceholderPage section={sections[3]} />} />
+              <Route path="/dispatch" element={<PlaceholderPage section={sections[4]} />} />
               <Route path="/hospitals" element={<HospitalsPage />} />
-              <Route path="/reports" element={<PlaceholderPage section={sections[7]} />} />
+              <Route path="/reports" element={<PlaceholderPage section={sections[6]} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AnalysisProvider>
@@ -226,7 +215,7 @@ function Workspace() {
 }
 
 function OverviewPage() {
-  const featuredSections = sections.slice(2, 6);
+  const featuredSections = sections.slice(2, 5);
   const {
     data: incidents,
     loading: isLoading,
@@ -272,8 +261,8 @@ function OverviewPage() {
           <div className="hero-label"><Activity size={15} /> AI-ASSISTED RESPONSE FRAMEWORK</div>
           <h2 id="overview-hero-title">From first report to coordinated response.</h2>
           <p>
-            Rakshak brings incident understanding, route intelligence, decision support, and
-            resource planning into a single operational workspace.
+            Rakshak brings incident understanding, decision support, and resource planning into a
+            single operational workspace.
           </p>
           <Link className="primary-button" to="/incidents">
             Explore incidents <ArrowRight size={16} />
@@ -288,8 +277,7 @@ function OverviewPage() {
             {[
               { number: '01', label: 'Understand', detail: 'Incident context', icon: ClipboardList },
               { number: '02', label: 'Analyze', detail: 'AI intelligence', icon: BrainCircuit },
-              { number: '03', label: 'Navigate', detail: 'Route search', icon: RouteIcon },
-              { number: '04', label: 'Coordinate', detail: 'Plan & dispatch', icon: Truck },
+              { number: '03', label: 'Coordinate', detail: 'Plan & dispatch', icon: Truck },
             ].map(step => {
               const Icon = step.icon;
               return (

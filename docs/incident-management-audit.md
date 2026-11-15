@@ -25,10 +25,9 @@ The Rakshak platform coordinates disaster response across a citizen mobile SOS c
 | `/` | `OverviewPage` (inline in `App.tsx`) | Active | High-level operations overview, response workflow diagram, and link to `/incidents`. |
 | `/incidents` | `IncidentsPage` (`src/pages/IncidentsPage.tsx`) | Active | Queue of incoming emergency incidents, selection, and AI analysis trigger. |
 | `/intelligence` | `AiIntelligencePage` (`src/pages/AiIntelligencePage.tsx`) | Active | Inspection of 9 AI agents, execution traces, data quality, risk, and safety decisions. |
-| `/routing` | `SearchRoutingPage` (`src/pages/SearchRoutingPage.tsx`) | Active | Standalone grid search simulation (BFS, DFS, Greedy, A*); does not consume incident data. |
 | `/decisions` | `PlaceholderPage` | Placeholder | Future decision engine workspace. |
 | `/dispatch` | `PlaceholderPage` | Placeholder | Future dispatch coordination workspace. |
-| `/hospitals` | `PlaceholderPage` | Placeholder | Future hospital capacity coordination workspace. |
+| `/hospitals` | `HospitalsPage` (`src/pages/HospitalsPage.tsx`) | Active | Hospital capacity and emergency resource availability. |
 | `/reports` | `PlaceholderPage` | Placeholder | Future operational reporting workspace. |
 
 ### Component Hierarchy (`src/pages/IncidentsPage.tsx`)
