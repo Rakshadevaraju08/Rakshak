@@ -7,6 +7,9 @@
  */
 
 export type {
+  Hospital,
+  HospitalCapacitySnapshot,
+  Resource,
   FullResponsePlan,
   Incident,
   IncidentDispatchPlan,
@@ -26,6 +29,10 @@ export type {
 } from './incidentService';
 
 export {
+  fetchHospitals,
+  fetchResources,
+  normalizeHospitalList,
+  normalizeResourceList,
   analyzeIncident,
   ApiRequestError,
   fetchIncidentById,

@@ -32,6 +32,7 @@ import {
 import IncidentsPage from './pages/IncidentsPage';
 import AiIntelligencePage from './pages/AiIntelligencePage';
 import SearchRoutingPage from './pages/SearchRoutingPage';
+import HospitalsPage from './pages/HospitalsPage';
 import { AnalysisProvider } from './contexts/AnalysisContext';
 import OverviewIncidentMap from './components/OverviewIncidentMap';
 import { useIncidents } from './hooks/useIncidents';
@@ -213,7 +214,7 @@ function Workspace() {
               <Route path="/routing" element={<SearchRoutingPage />} />
               <Route path="/decisions" element={<PlaceholderPage section={sections[4]} />} />
               <Route path="/dispatch" element={<PlaceholderPage section={sections[5]} />} />
-              <Route path="/hospitals" element={<PlaceholderPage section={sections[6]} />} />
+              <Route path="/hospitals" element={<HospitalsPage />} />
               <Route path="/reports" element={<PlaceholderPage section={sections[7]} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>

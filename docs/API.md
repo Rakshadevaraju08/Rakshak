@@ -37,6 +37,14 @@ These endpoints create or validate a user account and return a signed JWT when c
 - `POST /api/roads`
 - `PATCH /api/roads/:id`
 
+### Hospital and resource data currently available
+
+- `GET /api/hospitals` returns each hospital's `id`, `name`, optional latitude/longitude, and its latest capacity snapshot (`totalBeds`, `available`, `updatedAt`).
+- `GET /api/resources` returns individual resource records with `name`, `type`, `status`, optional coordinates, and ambulance plate or rescue-team personnel details when present.
+- The current API/schema does not provide hospital street addresses, contact details, or operational status; it does not associate resources with hospitals or operational units.
+- Capacity responses do not include occupied beds. The frontend derives occupied beds and occupancy only when both bed counts are valid and available beds do not exceed total beds. Missing or inconsistent values are not estimated.
+- Resource records have no quantity field; the frontend reports counts of returned records by their actual status rather than inventing quantities.
+
 ## Dispatch and prediction
 
 - `POST /api/dispatch/plan` — create a dispatch recommendation
