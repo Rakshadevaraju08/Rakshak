@@ -30,6 +30,8 @@ import IncidentsPage from './pages/IncidentsPage';
 import AiIntelligencePage from './pages/AiIntelligencePage';
 import SearchRoutingPage from './pages/SearchRoutingPage';
 import { AnalysisProvider } from './contexts/AnalysisContext';
+import { useIncidents } from './hooks/useIncidents';
+import { formatRelativeTime, formatStatusLabel } from './utils/incidentFilters';
 
 type Section = {
   path: string;
@@ -119,6 +121,10 @@ function Workspace() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { pathname } = useLocation();
   const activeSection = sections.find(section => section.path === pathname) ?? sections[0];
+  const { data: incidents } = useIncidents();
+  const activeIncidentCount = incidents.filter(
+    i => i.status === 'NEW' || i.status === 'ACTIVE'
+  ).length;
 
   return (
     <div className="app-shell">
@@ -153,6 +159,11 @@ function Workspace() {
               >
                 <Icon size={18} strokeWidth={1.9} />
                 <span>{section.title}</span>
+                {section.path === '/incidents' && activeIncidentCount > 0 && (
+                  <span className="nav-badge" aria-label={`${activeIncidentCount} active incidents`}>
+                    {activeIncidentCount}
+                  </span>
+                )}
                 {section.path === '/intelligence' && <span className="nav-accent" aria-hidden="true" />}
               </NavLink>
             );
@@ -219,6 +230,8 @@ function Workspace() {
 
 function OverviewPage() {
   const featuredSections = sections.slice(2, 6);
+  const { data: incidents } = useIncidents();
+  const recentIncidents = incidents.slice(0, 3);
 
   return (
     <>
@@ -300,15 +313,36 @@ function OverviewPage() {
             <h2 id="activity-title">Recent activity</h2>
             <p>Updates from connected operational services.</p>
           </div>
-          <span className="quiet-badge">Waiting for connection</span>
+          {incidents.length > 0 ? (
+            <span className="quiet-badge"><span className="status-dot" /> Live ({incidents.length} total)</span>
+          ) : (
+            <span className="quiet-badge">Waiting for connection</span>
+          )}
         </div>
-        <div className="activity-empty">
-          <span className="empty-icon"><Radio size={19} /></span>
-          <div>
-            <strong>No activity to show yet</strong>
-            <p>Connect backend services to see incident and response updates here.</p>
+        {recentIncidents.length > 0 ? (
+          <div className="activity-list">
+            {recentIncidents.map(inc => (
+              <Link to={`/incidents?selected=${inc.id}`} key={inc.id} className="activity-item">
+                <span className="activity-icon"><ClipboardList size={16} /></span>
+                <div className="activity-copy">
+                  <strong>{inc.title}</strong>
+                  <span>
+                    {inc.type || 'Incident'} · {formatStatusLabel(inc.status)} · {formatRelativeTime(inc.timestamp || inc.createdAt)}
+                  </span>
+                </div>
+                <ArrowRight size={13} className="activity-arrow" />
+              </Link>
+            ))}
           </div>
-        </div>
+        ) : (
+          <div className="activity-empty">
+            <span className="empty-icon"><Radio size={19} /></span>
+            <div>
+              <strong>No activity to show yet</strong>
+              <p>Connect backend services to see incident and response updates here.</p>
+            </div>
+          </div>
+        )}
       </section>
     </>
   );
