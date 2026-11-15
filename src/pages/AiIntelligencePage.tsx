@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAnalysisContext } from '../contexts/AnalysisContext';
+import { formatPriority, isPredictionAvailable } from '../services/analysisPresentation';
 import { isJsonRecord, type FullResponsePlan, type JsonRecord } from '../services/api';
 
 type AgentDefinition = {
@@ -161,9 +162,16 @@ function traceSteps(response: FullResponsePlan | null): JsonRecord[] {
   return getRecords(trace?.steps);
 }
 
+function planAssignments(response: FullResponsePlan): JsonRecord[] {
+  const assignments = getRecords(response.assignments);
+  return assignments.length > 0
+    ? assignments
+    : getRecords(getRecord(response.resource_agent_result)?.assignments);
+}
+
 function outputAvailable(agent: AgentDefinition, response: FullResponsePlan): boolean {
   if (agent.outputKey === 'route') {
-    return getRecords(response.assignments).some(assignment => getRecord(assignment.route) !== null);
+    return planAssignments(response).some(assignment => getRecord(assignment.route) !== null);
   }
   if (agent.outputKey === 'coordinator') return true;
   return getRecord(response[agent.outputKey]) !== null;
@@ -188,6 +196,10 @@ function summarizeAgent(agent: AgentDefinition, response: FullResponsePlan): str
         || 'Risk result returned';
     }
     case 'prediction': {
+      if (!isPredictionAvailable(output)) {
+        const explanation = getStrings(output?.explanation)[0];
+        return explanation ? `Unavailable · ${explanation}` : 'Prediction unavailable';
+      }
       const escalation = getBoolean(output, 'escalation_detected');
       return escalation === null
         ? 'Prediction result returned'
@@ -199,7 +211,7 @@ function summarizeAgent(agent: AgentDefinition, response: FullResponsePlan): str
       return `${assignmentCount} assignment${assignmentCount === 1 ? '' : 's'} · ${unmetCount} unfulfilled requirement${unmetCount === 1 ? '' : 's'}`;
     }
     case 'route': {
-      const routes = getRecords(response.assignments)
+      const routes = planAssignments(response)
         .filter(assignment => getRecord(assignment.route) !== null).length;
       return routes ? `${routes} route result${routes === 1 ? '' : 's'} in assignments` : 'No route result returned';
     }
@@ -258,10 +270,17 @@ function AiIntelligencePage() {
   const situation = getRecord(response?.situation);
   const risk = getRecord(response?.risk);
   const prediction = getRecord(response?.prediction);
+  const predictionAvailable = isPredictionAvailable(prediction);
+  const forecasts = predictionAvailable
+    ? getRecords(prediction?.forecast).filter(forecast =>
+      getNumber(forecast, 'horizon_minutes') !== null
+      && getString(forecast, 'risk_level') !== null)
+    : [];
   const dataQuality = getRecord(response?.data_quality);
+  const resourceResult = getRecord(response?.resource_agent_result);
   const safety = getRecord(response?.safety_check);
   const autonomy = getRecord(response?.autonomy_decision);
-  const assignments = getRecords(response?.assignments);
+  const assignments = response ? planAssignments(response) : [];
   const steps = traceSteps(response);
   const trace = getRecord(response?.trace);
   const missingInputs = [...new Set([
@@ -425,17 +444,23 @@ function AiIntelligencePage() {
                 </div>
               )}
               <div className="intel-metric-pair">
-                <div><span>Priority</span><strong>{getString(risk, 'priority') || 'Not returned'}</strong></div>
+                <div><span>Priority</span><strong>{formatPriority(risk?.priority)}</strong></div>
+                <div><span>Severity</span><strong>{getString(risk, 'severity') || 'Not returned'}</strong></div>
                 <div><span>Risk confidence</span><strong>{percent(getNumber(risk, 'confidence'))}</strong></div>
                 <div><span>Pipeline confidence</span><strong>{percent(getNumber(response, 'overall_confidence'))}</strong></div>
-                <div><span>Prediction confidence</span><strong>{percent(getNumber(prediction, 'confidence'))}</strong></div>
+                {predictionAvailable && (
+                  <div><span>Prediction confidence</span><strong>{percent(getNumber(prediction, 'confidence'))}</strong></div>
+                )}
               </div>
+              <p className="intel-confidence-note">
+                Confidence values describe input coverage or agent confidence, not calibrated probabilities.
+              </p>
               <StringList title="Risk reasons" items={getStrings(risk?.reasons)} emptyText="No risk reasons were returned." />
             </article>
 
             <article className="intel-card">
               <div className="intel-card-heading"><div><Activity size={17} /><h3>Prediction</h3></div></div>
-              {prediction ? (
+              {predictionAvailable ? (
                 <>
                   <div className="intel-prediction-state">
                     <span>Current risk</span><strong>{getString(prediction, 'current_risk') || 'Not returned'}</strong>
@@ -444,13 +469,13 @@ function AiIntelligencePage() {
                       ? 'Not returned'
                       : getBoolean(prediction, 'escalation_detected') ? 'Detected' : 'Not detected'}</strong>
                   </div>
-                  {getRecords(prediction.forecast).length > 0 && (
+                  {forecasts.length > 0 && (
                     <div className="intel-forecast">
-                      {getRecords(prediction.forecast).map((forecast, index) => (
-                        <div key={`${getNumber(forecast, 'horizon_minutes') ?? index}-${index}`}>
-                          <span>{getNumber(forecast, 'horizon_minutes') ?? '—'} minute horizon</span>
+                      {forecasts.map((forecast, index) => (
+                        <div key={`${getNumber(forecast, 'horizon_minutes')}-${index}`}>
+                          <span>{getNumber(forecast, 'horizon_minutes')} minute horizon</span>
                           <strong className={`risk-badge risk-${slug(getString(forecast, 'risk_level'))}`}>
-                            {getString(forecast, 'risk_level') || 'Not returned'}
+                            {getString(forecast, 'risk_level')}
                           </strong>
                         </div>
                       ))}
@@ -458,7 +483,41 @@ function AiIntelligencePage() {
                   )}
                   <StringList title="Prediction explanation" items={getStrings(prediction.explanation)} emptyText="No prediction explanation was returned." />
                 </>
+              ) : prediction ? (
+                <div className="intel-prediction-unavailable">
+                  <strong>Prediction unavailable</strong>
+                  <StringList
+                    title="Reason returned by PredictiveAgent"
+                    items={getStrings(prediction.explanation)}
+                    emptyText="No reason was returned."
+                  />
+                </div>
               ) : <p className="intel-muted">No prediction object was returned.</p>}
+            </article>
+
+            <article className="intel-card intel-situation-card">
+              <div className="intel-card-heading"><div><FileSearch size={17} /><h3>Situation assessment</h3></div></div>
+              {situation ? (
+                <>
+                  <p className="intel-situation-summary">{getString(situation, 'summary') || 'No situation summary was returned.'}</p>
+                  <div className="intel-metric-pair">
+                    <div><span>Situation severity</span><strong>{getString(situation, 'severity_assessment') || 'Not returned'}</strong></div>
+                    <div><span>Assessment validity</span><strong>{getBoolean(situation, 'is_valid') === null
+                      ? 'Not returned'
+                      : getBoolean(situation, 'is_valid') ? 'Valid' : 'Invalid'}</strong></div>
+                    <div><span>Situation confidence</span><strong>{percent(getNumber(situation, 'confidence_score'))}</strong></div>
+                    <div className="intel-situation-impact">
+                      <span>Vulnerable population impact</span>
+                      <strong>{getString(situation, 'vulnerable_population_impact') || 'Not returned'}</strong>
+                    </div>
+                  </div>
+                  <StringList
+                    title="Identified conditions and explanations"
+                    items={getStrings(situation.explanations)}
+                    emptyText="No situation explanations were returned."
+                  />
+                </>
+              ) : <p className="intel-muted">No situation assessment was returned.</p>}
             </article>
 
             <article className="intel-card intel-input-card">
@@ -472,10 +531,21 @@ function AiIntelligencePage() {
                 ))}
               </div>
               <div className="intel-missing-fields">
-                <strong>Missing fields reported by analysis</strong>
-                {missingInputs.length > 0
-                  ? <div>{missingInputs.map(field => <span key={field}>{field}</span>)}</div>
-                  : <p>No missing fields were listed by the returned data-quality and situation results.</p>}
+                <StringList
+                  title="Missing fields reported by analysis"
+                  items={missingInputs}
+                  emptyText={dataQuality || situation
+                    ? 'No missing fields were listed by the returned results.'
+                    : 'No data-quality or situation result was returned.'}
+                />
+                {dataQuality && (
+                  <>
+                    <StringList title="Invalid fields" items={getStrings(dataQuality.invalid_fields)} emptyText="No invalid fields were listed." />
+                    <StringList title="Conflicting fields" items={getStrings(dataQuality.conflicting_fields)} emptyText="No conflicting fields were listed." />
+                    <StringList title="Stale fields" items={getStrings(dataQuality.stale_fields)} emptyText="No stale fields were listed." />
+                    <StringList title="Data-quality warnings" items={getStrings(dataQuality.warnings)} emptyText="No data-quality warnings were returned." />
+                  </>
+                )}
               </div>
               {dataQuality && (
                 <div className="intel-quality-meta">
@@ -503,14 +573,17 @@ function AiIntelligencePage() {
               <span className="intel-recommended-action">{getString(response, 'recommended_action') || 'Not returned'}</span>
               <StringList title="Explanation" items={getStrings(response.explanation)} emptyText="No overall explanation was returned." />
               <StringList title="Risk factors" items={getStrings(risk?.reasons)} emptyText="" />
-              {assignments.length > 0 && (
+              {(assignments.length > 0
+                || getStrings(resourceResult?.unfulfilled_requirements).length > 0
+                || getStrings(resourceResult?.reasons).length > 0) && (
                 <div className="intel-assignment-summary">
-                  <strong>Proposed resource assignments</strong>
+                  <strong>Resource and route recommendations</strong>
                   {assignments.map((assignment, index) => {
                     const route = getRecord(assignment.route);
                     const routeDetails = [
                       getString(route, 'route_status'),
                       getNumber(route, 'distance_km') === null ? null : `${getNumber(route, 'distance_km')} km`,
+                      getNumber(route, 'estimated_time_mins') === null ? null : `Route estimate ${getNumber(route, 'estimated_time_mins')} min`,
                       getNumber(assignment, 'estimated_arrival_time_mins') === null
                         ? null
                         : `ETA ${getNumber(assignment, 'estimated_arrival_time_mins')} min`,
@@ -520,28 +593,48 @@ function AiIntelligencePage() {
                         <span>
                           {getString(assignment, 'resource_id') || 'Resource ID not returned'}
                           {routeDetails.length > 0 && <small>{routeDetails.join(' · ')}</small>}
+                          {getString(route, 'explanation') && <small>{getString(route, 'explanation')}</small>}
                         </span>
                         <small>{getString(assignment, 'action') || 'Action not returned'}</small>
                       </div>
                     );
                   })}
+                  <StringList
+                    title="Unfulfilled requirements"
+                    items={getStrings(resourceResult?.unfulfilled_requirements)}
+                    emptyText=""
+                  />
+                  <StringList
+                    title="Resource planning reasons"
+                    items={getStrings(resourceResult?.reasons)}
+                    emptyText=""
+                  />
                 </div>
               )}
             </article>
 
             <article className="intel-card intel-safety-card">
               <div className="intel-card-heading"><div><ShieldCheck size={17} /><h3>Safety checks</h3></div></div>
-              <div className="intel-safety-summary">
-                <span className={`safety-badge safety-${slug(getString(safety, 'status'))}`}>
-                  {getString(safety, 'status') || 'Status not returned'}
-                </span>
-                <span>{getNumber(safety, 'checks_performed') === null
-                  ? 'Check count not returned'
-                  : `${getNumber(safety, 'checks_performed')} checks reported`}
-                </span>
-              </div>
-              <StringList title="Blocking issues" items={getStrings(safety?.blocking_issues)} emptyText="No blocking issues were returned." />
-              <StringList title="Safety warnings" items={getStrings(safety?.warnings)} emptyText="No safety warnings were returned." />
+              {safety ? (
+                <div className="intel-safety-summary">
+                  <span className={`safety-badge safety-${slug(getString(safety, 'status'))}`}>
+                    {getString(safety, 'status') || 'Status not returned'}
+                  </span>
+                  <span>{getNumber(safety, 'checks_performed') === null
+                    ? 'Check count not returned'
+                    : `${getNumber(safety, 'checks_performed')} checks reported`}
+                  </span>
+                  {getNumber(safety, 'confidence') !== null && (
+                    <span>Safety confidence {percent(getNumber(safety, 'confidence'))}</span>
+                  )}
+                </div>
+              ) : <p className="intel-muted">No safety-check result was returned.</p>}
+              {safety && (
+                <>
+                  <StringList title="Blocking issues" items={getStrings(safety.blocking_issues)} emptyText="No blocking issues were returned." />
+                  <StringList title="Safety warnings" items={getStrings(safety.warnings)} emptyText="No safety warnings were returned." />
+                </>
+              )}
               <div className="intel-review-box">
                 {humanReview
                   ? <AlertTriangle size={17} />
@@ -607,7 +700,13 @@ function AiIntelligencePage() {
                 return (
                   <li className="intel-trace-item" key={`${getString(step, 'step_name') || 'step'}-${index}`}>
                     <span className={`intel-trace-marker trace-${slug(status)}`}>
-                      {status?.toUpperCase() === 'FAILED' ? <XCircle size={15} /> : <CheckCircle2 size={15} />}
+                      {status?.toUpperCase() === 'FAILED'
+                        ? <XCircle size={15} />
+                        : status?.toUpperCase() === 'COMPLETED'
+                          ? <CheckCircle2 size={15} />
+                          : status?.toUpperCase() === 'STARTED'
+                            ? <Clock3 size={15} />
+                            : <Activity size={15} />}
                     </span>
                     <div className="intel-trace-content">
                       <div className="intel-trace-heading">
