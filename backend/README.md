@@ -87,6 +87,27 @@ Production-style start:
 npm start
 ```
 
+## Local demonstration data
+
+`prisma/seed.js` upserts clearly labeled demonstration hospitals, capacity snapshots, ambulances, and rescue teams. Coordinates are approximate city coordinates for UI demonstration only; the names and bed/resource availability are not verified real-world operational data. The seed uses only fields and relationships present in `schema.prisma` and does not create hospital contacts, operational statuses, or hospital-to-resource associations.
+
+The script requires an explicit opt-in and refuses `NODE_ENV=production` or a non-local MySQL host. From the repository root, start the local MySQL service and run the seed from PowerShell:
+
+```powershell
+docker compose up -d db
+Set-Location backend
+# Run this only when initializing an empty local database:
+npm run db:push
+$env:RAKSHAK_ALLOW_DEMO_SEED = "1"
+try {
+  npm run db:seed:demo
+} finally {
+  Remove-Item Env:RAKSHAK_ALLOW_DEMO_SEED -ErrorAction SilentlyContinue
+}
+```
+
+For an already initialized local database, skip `npm run db:push`. The seed command is `npm run db:seed:demo` from `backend/`; it can safely be rerun and does not add duplicate demonstration records. The existing `GET /api/hospitals` and `GET /api/resources` endpoints return the seeded records.
+
 ## Testing
 
 ```bash

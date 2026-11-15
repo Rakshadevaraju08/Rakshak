@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   Activity,
+  AlertTriangle,
   ArrowRight,
   BrainCircuit,
   ChevronDown,
@@ -8,8 +9,10 @@ import {
   FileText,
   Hospital,
   LayoutDashboard,
+  LoaderCircle,
   Menu,
   Radio,
+  RefreshCw,
   Route as RouteIcon,
   ShieldCheck,
   SlidersHorizontal,
@@ -29,7 +32,9 @@ import {
 import IncidentsPage from './pages/IncidentsPage';
 import AiIntelligencePage from './pages/AiIntelligencePage';
 import SearchRoutingPage from './pages/SearchRoutingPage';
+import HospitalsPage from './pages/HospitalsPage';
 import { AnalysisProvider } from './contexts/AnalysisContext';
+import OverviewIncidentMap from './components/OverviewIncidentMap';
 import { useIncidents } from './hooks/useIncidents';
 import { formatRelativeTime, formatStatusLabel } from './utils/incidentFilters';
 
@@ -120,11 +125,8 @@ function App() {
 function Workspace() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { pathname } = useLocation();
-  const activeSection = sections.find(section => section.path === pathname) ?? sections[0];
-  const { data: incidents } = useIncidents();
-  const activeIncidentCount = incidents.filter(
-    i => i.status === 'NEW' || i.status === 'ACTIVE'
-  ).length;
+  const normalizedPath = pathname === '/' ? pathname : pathname.replace(/\/+$/, '');
+  const activeSection = sections.find(section => section.path === normalizedPath) ?? sections[0];
 
   return (
     <div className="app-shell">
@@ -159,11 +161,6 @@ function Workspace() {
               >
                 <Icon size={18} strokeWidth={1.9} />
                 <span>{section.title}</span>
-                {section.path === '/incidents' && activeIncidentCount > 0 && (
-                  <span className="nav-badge" aria-label={`${activeIncidentCount} active incidents`}>
-                    {activeIncidentCount}
-                  </span>
-                )}
                 {section.path === '/intelligence' && <span className="nav-accent" aria-hidden="true" />}
               </NavLink>
             );
@@ -217,7 +214,7 @@ function Workspace() {
               <Route path="/routing" element={<SearchRoutingPage />} />
               <Route path="/decisions" element={<PlaceholderPage section={sections[4]} />} />
               <Route path="/dispatch" element={<PlaceholderPage section={sections[5]} />} />
-              <Route path="/hospitals" element={<PlaceholderPage section={sections[6]} />} />
+              <Route path="/hospitals" element={<HospitalsPage />} />
               <Route path="/reports" element={<PlaceholderPage section={sections[7]} />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
@@ -230,8 +227,35 @@ function Workspace() {
 
 function OverviewPage() {
   const featuredSections = sections.slice(2, 6);
-  const { data: incidents } = useIncidents();
-  const recentIncidents = incidents.slice(0, 3);
+  const {
+    data: incidents,
+    loading: isLoading,
+    error: loadError,
+    refetch,
+  } = useIncidents();
+
+  const incidentCounts = new Map<string, number>();
+  incidents.forEach(incident => {
+    const status = incident.status?.trim() || 'Status not provided';
+    incidentCounts.set(status, (incidentCounts.get(status) ?? 0) + 1);
+  });
+  const recentIncidents = [...incidents]
+    .sort((left, right) => {
+      const leftTimestamp = left.timestamp || left.createdAt;
+      const rightTimestamp = right.timestamp || right.createdAt;
+      const leftTime = leftTimestamp ? Date.parse(leftTimestamp) : Number.NaN;
+      const rightTime = rightTimestamp ? Date.parse(rightTimestamp) : Number.NaN;
+      if (Number.isNaN(leftTime)) return Number.isNaN(rightTime) ? 0 : 1;
+      if (Number.isNaN(rightTime)) return -1;
+      return rightTime - leftTime;
+    })
+    .slice(0, 5);
+  const statusCount = (status: string) => incidents.filter(
+    incident => incident.status?.trim().toUpperCase() === status,
+  ).length;
+  const activeCount = statusCount('ACTIVE');
+  const newCount = statusCount('NEW');
+  const resolvedCount = statusCount('RESOLVED');
 
   return (
     <>
@@ -290,7 +314,7 @@ function OverviewPage() {
             <h2 id="workspace-section-title">Response workspace</h2>
             <p>Tools to support informed, coordinated action.</p>
           </div>
-          <span className="section-note">Integrations not configured</span>
+          <Link className="section-note overview-incidents-link" to="/incidents">View incident management</Link>
         </div>
         <div className="module-grid">
           {featuredSections.map(section => {
@@ -307,45 +331,130 @@ function OverviewPage() {
         </div>
       </section>
 
-      <section className="activity-panel" aria-labelledby="activity-title">
-        <div className="activity-heading">
+      {loadError ? (
+        <section className="overview-data-error" role="alert">
+          <AlertTriangle size={18} />
           <div>
-            <h2 id="activity-title">Recent activity</h2>
-            <p>Updates from connected operational services.</p>
+            <strong>Could not load incident overview</strong>
+            <p>{loadError}</p>
           </div>
-          {incidents.length > 0 ? (
-            <span className="quiet-badge"><span className="status-dot" /> Live ({incidents.length} total)</span>
-          ) : (
-            <span className="quiet-badge">Waiting for connection</span>
-          )}
-        </div>
-        {recentIncidents.length > 0 ? (
-          <div className="activity-list">
-            {recentIncidents.map(inc => (
-              <Link to={`/incidents?selected=${inc.id}`} key={inc.id} className="activity-item">
-                <span className="activity-icon"><ClipboardList size={16} /></span>
-                <div className="activity-copy">
-                  <strong>{inc.title}</strong>
-                  <span>
-                    {inc.type || 'Incident'} · {formatStatusLabel(inc.status)} · {formatRelativeTime(inc.timestamp || inc.createdAt)}
-                  </span>
-                </div>
-                <ArrowRight size={13} className="activity-arrow" />
-              </Link>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => void refetch()}
+          >
+            <RefreshCw size={14} /> Try again
+          </button>
+        </section>
+      ) : (
+        <>
+          <section className="overview-stats" aria-label="Incident statistics" aria-busy={isLoading}>
+            {[
+              { label: 'Total incidents', count: incidents.length, tone: 'total' },
+              { label: 'New', count: newCount, tone: 'new' },
+              { label: 'Active', count: activeCount, tone: 'active' },
+              { label: 'Resolved', count: resolvedCount, tone: 'resolved' },
+            ].map(stat => (
+              <article className={`overview-stat overview-stat-${stat.tone}`} key={stat.label}>
+                <span>{stat.label}</span>
+                <strong>{isLoading ? '—' : stat.count}</strong>
+              </article>
             ))}
+          </section>
+
+          <div className="overview-data-grid">
+            <section className="overview-panel overview-recent" aria-labelledby="recent-incidents-title">
+              <div className="overview-panel-heading">
+                <div>
+                  <h2 id="recent-incidents-title">Recent incidents</h2>
+                  <p>Latest records from the incident service.</p>
+                </div>
+                <Link to="/incidents">All incidents <ArrowRight size={14} /></Link>
+              </div>
+
+              {isLoading ? (
+                <div className="overview-state" role="status">
+                  <LoaderCircle size={18} className="is-spinning" /> Loading incidents…
+                </div>
+              ) : recentIncidents.length === 0 ? (
+                <div className="overview-state">
+                  <Radio size={18} />
+                  <span>No incidents have been returned.</span>
+                </div>
+              ) : (
+                <div className="activity-list overview-recent-list">
+                  {recentIncidents.map(incident => (
+                    <Link
+                      className="activity-item overview-recent-item"
+                      to={`/incidents?selected=${encodeURIComponent(incident.id)}`}
+                      key={incident.id}
+                    >
+                      <span className="activity-icon overview-recent-icon"><ClipboardList size={16} /></span>
+                      <span className="activity-copy overview-recent-copy">
+                        <strong>{incident.title}</strong>
+                        <span>
+                          {incident.type || 'Incident'} · {formatStatusLabel(incident.status)} ·{' '}
+                          {formatRelativeTime(incident.timestamp || incident.createdAt)}
+                        </span>
+                      </span>
+                      <ArrowRight size={13} className="activity-arrow" />
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="overview-panel overview-status-panel" aria-labelledby="incident-status-title">
+              <div className="overview-panel-heading">
+                <div>
+                  <h2 id="incident-status-title">Status summary</h2>
+                  <p>Counts grouped by status returned by the backend.</p>
+                </div>
+              </div>
+              {isLoading ? (
+                <div className="overview-state" role="status">
+                  <LoaderCircle size={18} className="is-spinning" /> Calculating status totals…
+                </div>
+              ) : incidentCounts.size === 0 ? (
+                <div className="overview-state">No status data available.</div>
+              ) : (
+                <div className="overview-status-list">
+                  {[...incidentCounts.entries()].map(([status, count]) => (
+                    <div className="overview-status-row" key={status}>
+                      <span className={`status-indicator status-indicator-${statusSlug(status)}`} />
+                      <span>{status}</span>
+                      <strong>{count}</strong>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <section className="overview-panel overview-map-panel" aria-labelledby="incident-map-title">
+              <div className="overview-panel-heading">
+                <div>
+                  <h2 id="incident-map-title">Incident locations</h2>
+                  <p>Mapped from records with valid coordinates.</p>
+                </div>
+                <Link to="/incidents">Manage incidents <ArrowRight size={14} /></Link>
+              </div>
+              {isLoading ? (
+                <div className="overview-map-state" role="status">
+                  <LoaderCircle size={18} className="is-spinning" /> Loading incident locations…
+                </div>
+              ) : (
+                <OverviewIncidentMap incidents={incidents} />
+              )}
+            </section>
           </div>
-        ) : (
-          <div className="activity-empty">
-            <span className="empty-icon"><Radio size={19} /></span>
-            <div>
-              <strong>No activity to show yet</strong>
-              <p>Connect backend services to see incident and response updates here.</p>
-            </div>
-          </div>
-        )}
-      </section>
+        </>
+      )}
     </>
   );
+}
+
+function statusSlug(status?: string | null): string {
+  return status?.toLowerCase().replace(/[^a-z0-9-]/g, '-') || 'unknown';
 }
 
 function PlaceholderPage({ section }: { section: Section }) {
