@@ -31,6 +31,7 @@ import {
 } from 'react-router-dom';
 import IncidentsPage from './pages/IncidentsPage';
 import AiIntelligencePage from './pages/AiIntelligencePage';
+import DecisionEnginePage from './pages/DecisionEnginePage';
 import SearchRoutingPage from './pages/SearchRoutingPage';
 import HospitalsPage from './pages/HospitalsPage';
 import { AnalysisProvider } from './contexts/AnalysisContext';
@@ -212,7 +213,7 @@ function Workspace() {
               <Route path="/incidents" element={<IncidentsPage />} />
               <Route path="/intelligence" element={<AiIntelligencePage />} />
               <Route path="/routing" element={<SearchRoutingPage />} />
-              <Route path="/decisions" element={<PlaceholderPage section={sections[4]} />} />
+              <Route path="/decisions" element={<DecisionEnginePage />} />
               <Route path="/dispatch" element={<PlaceholderPage section={sections[5]} />} />
               <Route path="/hospitals" element={<HospitalsPage />} />
               <Route path="/reports" element={<PlaceholderPage section={sections[7]} />} />
