@@ -28,7 +28,7 @@ The Rakshak platform coordinates disaster response across a citizen mobile SOS c
 | `/routing` | `SearchRoutingPage` (`src/pages/SearchRoutingPage.tsx`) | Active | Standalone grid search simulation (BFS, DFS, Greedy, A*); does not consume incident data. |
 | `/decisions` | `PlaceholderPage` | Placeholder | Future decision engine workspace. |
 | `/dispatch` | `PlaceholderPage` | Placeholder | Future dispatch coordination workspace. |
-| `/hospitals` | `PlaceholderPage` | Placeholder | Future hospital capacity coordination workspace. |
+| `/hospitals` | `HospitalsPage` (`src/pages/HospitalsPage.tsx`) | Active | Hospital capacity and emergency resource availability. |
 | `/reports` | `PlaceholderPage` | Placeholder | Future operational reporting workspace. |
 
 ### Component Hierarchy (`src/pages/IncidentsPage.tsx`)
