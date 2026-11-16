@@ -24,6 +24,9 @@ export type {
   IncidentUpdate,
   JsonRecord,
   NormalizedIncidentListResult,
+  OperationalEvent,
+  OperationalEventConnection,
+  OperationalEventType,
   PipelineTraceStep,
   VictimInformation,
 } from './incidentService';
@@ -46,6 +49,7 @@ export {
   notifyIncidentChanges,
   resolveIncident,
   subscribeIncidentChanges,
+  subscribeOperationalEvents,
   updateCachedIncident,
   updateIncident,
   updateIncidentStatus,

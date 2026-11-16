@@ -35,6 +35,7 @@ import DecisionEnginePage from './pages/DecisionEnginePage';
 import SearchRoutingPage from './pages/SearchRoutingPage';
 import HospitalsPage from './pages/HospitalsPage';
 import DispatchPage from './pages/DispatchPage';
+import ReportsPage from './pages/ReportsPage';
 import { AnalysisProvider } from './contexts/AnalysisContext';
 import OverviewIncidentMap from './components/OverviewIncidentMap';
 import { useIncidents } from './hooks/useIncidents';
@@ -217,7 +218,7 @@ function Workspace() {
               <Route path="/decisions" element={<DecisionEnginePage />} />
               <Route path="/dispatch" element={<DispatchPage />} />
               <Route path="/hospitals" element={<HospitalsPage />} />
-              <Route path="/reports" element={<PlaceholderPage section={sections[7]} />} />
+              <Route path="/reports" element={<ReportsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AnalysisProvider>

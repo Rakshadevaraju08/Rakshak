@@ -25,7 +25,15 @@ const hospitals = normalizeHospitalList([
 ]);
 
 const resources = normalizeResourceList([
-  { id: 'resource-1', name: 'Ambulance A', type: 'AMBULANCE', status: 'AVAILABLE', ambulances: [{ plateNumber: 'AS-01' }] },
+  {
+    id: 'resource-1',
+    name: 'Ambulance A',
+    type: 'AMBULANCE',
+    status: 'AVAILABLE',
+    createdAt: '2026-11-14T10:00:00.000Z',
+    updatedAt: '2026-11-15T10:00:00.000Z',
+    ambulances: [{ plateNumber: 'AS-01' }],
+  },
   { id: 'resource-2', name: 'Team B', type: 'RESCUE_TEAM', status: 'DISPATCHED', rescueTeams: [{ personnel: 5 }] },
   { id: 'resource-3', name: 'Unknown resource', type: null, status: null },
 ]);
@@ -44,6 +52,8 @@ test('normalizes only hospital/resource fields returned by the API', () => {
   });
   assert.equal(hospitals[1].capacity, null);
   assert.equal(resources[0].ambulancePlateNumbers[0], 'AS-01');
+  assert.equal(resources[0].createdAt, '2026-11-14T10:00:00.000Z');
+  assert.equal(resources[0].updatedAt, '2026-11-15T10:00:00.000Z');
   assert.deepEqual(resources[1].rescuePersonnel, [5]);
   assert.equal(resources[2].status, null);
   assert.throws(() => normalizeHospitalList({ hospitals: [] }), ApiRequestError);

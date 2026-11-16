@@ -122,6 +122,8 @@ describe('Dispatch Service Normalization & Data Layer', () => {
           locationLng: 77.59,
           ambulancePlateNumbers: ['KA-01-E-1001'],
           rescuePersonnel: [],
+          createdAt: '2026-11-16T10:00:00.000Z',
+          updatedAt: '2026-11-16T10:00:00.000Z',
         },
       ],
     ]);
