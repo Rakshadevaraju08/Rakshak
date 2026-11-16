@@ -2,8 +2,8 @@
  * Unified API bridge for the Rakshak Admin Frontend.
  *
  * Re-exports the incident models, request methods, and error classes
- * from incidentService to preserve backwards compatibility across
- * AnalysisContext, AiIntelligencePage, and other consumers.
+ * from incidentService and dispatchService to preserve backwards
+ * compatibility across AnalysisContext, AiIntelligencePage, and other consumers.
  */
 
 export type {
@@ -51,3 +51,54 @@ export {
   updateIncidentStatus,
   addIncidentReport,
 } from './incidentService';
+
+// Dispatch Service Domain Models & Request Handlers
+export type {
+  AssignmentStatus,
+  CreateDispatchPlanPayload,
+  DispatchExecutionPayload,
+  DispatchExecutionResult,
+  DispatchPlan,
+  DispatchPlanStatus,
+  HospitalDestination,
+  ResourceAssignment,
+  RouteEta,
+} from './dispatchService';
+
+export {
+  createDispatchPlan,
+  executeDispatchPlan,
+  fetchDispatchContextData,
+  fetchDispatchPlanById,
+  fetchDispatchPlans,
+  normalizeAssignmentStatus,
+  normalizeDispatchPlan,
+  normalizeDispatchPlanList,
+  normalizeDispatchPlanStatus,
+  normalizeHospitalDestination,
+  normalizeResourceAssignment,
+  normalizeRouteEta,
+  useDispatchPlan,
+  useDispatchPlans,
+} from './dispatchService';
+
+export type {
+  DispatchFilterCriteria,
+  DispatchSortOrder,
+  PlanResourceBreakdown,
+} from './dispatchPresentation';
+
+export {
+  canExecuteDispatchPlan,
+  filterDispatchPlans,
+  formatAssignmentStatus,
+  formatDateTime,
+  formatDispatchPlanStatus,
+  formatDispatchSummary,
+  formatRouteDistance,
+  formatRouteDuration,
+  getExecutionStatusBadge,
+  getIncompletePlanItems,
+  getPlanResourceBreakdown,
+  sortDispatchPlans,
+} from './dispatchPresentation';
