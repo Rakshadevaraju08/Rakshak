@@ -22,8 +22,9 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAnalysisContext } from '../contexts/AnalysisContext';
-import { formatPriority, isPredictionAvailable } from '../services/analysisPresentation';
+import { getMissingIncidentDetails, formatPriority, isPredictionAvailable } from '../services/analysisPresentation';
 import { isJsonRecord, type FullResponsePlan, type JsonRecord } from '../services/api';
+import AnalysisWarningGroups from '../components/AnalysisWarningGroups';
 
 type AgentDefinition = {
   name: string;
@@ -287,6 +288,7 @@ function AiIntelligencePage() {
     ...getStrings(dataQuality?.missing_fields),
     ...getStrings(situation?.missing_information),
   ])];
+  const missingDetails = getMissingIncidentDetails(missingInputs);
   const evidence = incident ? incidentEvidence(incident) : [];
   const riskLevel = getString(risk, 'risk_level');
   const humanReview = response
@@ -531,20 +533,37 @@ function AiIntelligencePage() {
                 ))}
               </div>
               <div className="intel-missing-fields">
-                <StringList
-                  title="Missing fields reported by analysis"
-                  items={missingInputs}
-                  emptyText={dataQuality || situation
-                    ? 'No missing fields were listed by the returned results.'
-                    : 'No data-quality or situation result was returned.'}
-                />
+                <div className="intel-string-list">
+                  <h4>Information to confirm</h4>
+                  {missingDetails.length > 0 ? (
+                    <ul className="intel-missing-guidance">
+                      {missingDetails.map(detail => (
+                        <li key={detail.key}>
+                          <strong>{detail.label}</strong>
+                          <span>{detail.guidance}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="intel-muted">{dataQuality || situation
+                      ? 'No missing fields were listed by the returned results.'
+                      : 'No data-quality or situation result was returned.'}</p>
+                  )}
+                  {missingInputs.length > 0 && (
+                    <details className="intel-technical-details">
+                      <summary>Original missing-field details</summary>
+                      <ul>{missingInputs.map((field, index) => <li key={`${field}-${index}`}>{field}</li>)}</ul>
+                    </details>
+                  )}
+                </div>
                 {dataQuality && (
-                  <>
+                  <details className="intel-technical-details">
+                    <summary>Data-quality diagnostics</summary>
                     <StringList title="Invalid fields" items={getStrings(dataQuality.invalid_fields)} emptyText="No invalid fields were listed." />
                     <StringList title="Conflicting fields" items={getStrings(dataQuality.conflicting_fields)} emptyText="No conflicting fields were listed." />
                     <StringList title="Stale fields" items={getStrings(dataQuality.stale_fields)} emptyText="No stale fields were listed." />
                     <StringList title="Data-quality warnings" items={getStrings(dataQuality.warnings)} emptyText="No data-quality warnings were returned." />
-                  </>
+                  </details>
                 )}
               </div>
               {dataQuality && (
@@ -652,23 +671,7 @@ function AiIntelligencePage() {
 
             <article className="intel-card intel-warnings-card">
               <div className="intel-card-heading"><div><AlertTriangle size={17} /><h3>Pipeline warnings</h3></div></div>
-              {warnings.length > 0 ? (
-                <ul className="intel-warning-list">
-                  {warnings.map((warning, index) => {
-                    const item = getRecord(warning);
-                    return (
-                      <li key={`${getString(item, 'code') || 'warning'}-${index}`}>
-                        <AlertTriangle size={15} />
-                        <div>
-                          <strong>{getString(item, 'code') || 'Warning'}</strong>
-                          <span>{getString(item, 'source') || 'Source not returned'}</span>
-                          <p>{getString(item, 'message') || (typeof warning === 'string' ? warning : 'Warning detail not returned.')}</p>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              ) : <p className="intel-muted">No pipeline warnings were returned.</p>}
+              <AnalysisWarningGroups warnings={warnings} />
             </article>
           </div>
         ) : <EmptyAnalysisMessage />}

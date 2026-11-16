@@ -31,7 +31,7 @@ import {
 import {
   filterIncidentReports,
   getIncidentStatusCounts,
-  getIncidentTrend,
+  getIncidentTrendForRange,
   type IncidentReportFilters,
 } from '../utils/reporting';
 
@@ -56,6 +56,13 @@ interface OperationalAlert {
   incidentId: string | null;
 }
 
+type ActivityRange = '7d' | '30d' | 'custom';
+
+interface DateInputRange {
+  startDate: string;
+  endDate: string;
+}
+
 const EVENT_TITLES: Record<OperationalEventType, string> = {
   SOS_RECEIVED: 'Emergency SOS received',
   INCIDENT_UPDATED: 'Incident updated',
@@ -73,6 +80,8 @@ const EVENT_TITLES: Record<OperationalEventType, string> = {
   WEATHER_CHANGED: 'Weather observation received',
   WATER_LEVEL_CHANGED: 'Water-level observation received',
   MESH_MESSAGE_RECEIVED: 'Mesh message received',
+  DISPATCH_PLAN_UPDATED: 'Dispatch plan updated',
+  DISPATCH_EXECUTED: 'Dispatch executed',
 };
 
 function getString(record: Record<string, unknown> | null, key: string): string | null {
@@ -253,6 +262,20 @@ function makeActivityRecords(
     .slice(0, 10);
 }
 
+function dateInputValue(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function getActivityDateRange(range: Exclude<ActivityRange, 'custom'>, now = new Date()): DateInputRange {
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const numberOfDays = range === '7d' ? 7 : 30;
+  const start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - numberOfDays + 1);
+  return { startDate: dateInputValue(start), endDate: dateInputValue(end) };
+}
+
 function ReportsPage() {
   const {
     data: incidents,
@@ -273,6 +296,10 @@ function ReportsPage() {
     startDate: '',
     endDate: '',
   });
+  const [activityRange, setActivityRange] = useState<ActivityRange>('7d');
+  const [customActivityRange, setCustomActivityRange] = useState<DateInputRange>(
+    () => getActivityDateRange('7d'),
+  );
 
   useEffect(() => {
     let active = true;
@@ -320,7 +347,21 @@ function ReportsPage() {
     [incidents],
   );
   const statusCounts = useMemo(() => getIncidentStatusCounts(incidents), [incidents]);
-  const trend = useMemo(() => getIncidentTrend(incidents), [incidents]);
+  const activityDateRange = useMemo(
+    () => activityRange === 'custom' ? customActivityRange : getActivityDateRange(activityRange),
+    [activityRange, customActivityRange],
+  );
+  const isActivityRangeValid = Boolean(
+    activityDateRange.startDate &&
+    activityDateRange.endDate &&
+    activityDateRange.startDate <= activityDateRange.endDate,
+  );
+  const trend = useMemo(
+    () => isActivityRangeValid
+      ? getIncidentTrendForRange(incidents, activityDateRange.startDate, activityDateRange.endDate)
+      : [],
+    [activityDateRange, incidents, isActivityRangeValid],
+  );
   const trendMaximum = Math.max(1, ...trend.map(point => point.count));
   const activity = useMemo(
     () => makeActivityRecords(incidents, resources, events),
@@ -349,6 +390,9 @@ function ReportsPage() {
   };
   const clearFilters = () => setFilters({ status: '', category: '', startDate: '', endDate: '' });
   const hasFilters = Object.values(filters).some(Boolean);
+  const toggleStatusFilter = (status: string) => {
+    setFilters(current => ({ ...current, status: current.status === status ? '' : status }));
+  };
 
   return (
     <div className="reports-page">
@@ -398,26 +442,92 @@ function ReportsPage() {
           <div className="overview-panel-heading">
             <div>
               <h2 id="reports-trend-title">Incident activity</h2>
-              <p>Incident records created per day over the last 7 days.</p>
+              <p>Incident records created per day in the selected date range.</p>
             </div>
-            <CalendarDays size={17} aria-hidden="true" />
           </div>
+          <div className="reports-range-controls" role="group" aria-label="Incident activity date range">
+            <button type="button" aria-pressed={activityRange === '7d'} onClick={() => setActivityRange('7d')}>
+              Last 7 days
+            </button>
+            <button type="button" aria-pressed={activityRange === '30d'} onClick={() => setActivityRange('30d')}>
+              Last 30 days
+            </button>
+            <button
+              type="button"
+              aria-pressed={activityRange === 'custom'}
+              onClick={() => setActivityRange('custom')}
+            >
+              <CalendarDays size={14} aria-hidden="true" />
+              Custom range
+            </button>
+          </div>
+          {activityRange === 'custom' && (
+            <div className="reports-custom-range">
+              <label>
+                <span>From</span>
+                <input
+                  type="date"
+                  aria-label="Activity start date"
+                  max={customActivityRange.endDate || undefined}
+                  value={customActivityRange.startDate}
+                  onChange={event => setCustomActivityRange(current => ({
+                    ...current,
+                    startDate: event.target.value,
+                  }))}
+                />
+              </label>
+              <label>
+                <span>To</span>
+                <input
+                  type="date"
+                  aria-label="Activity end date"
+                  min={customActivityRange.startDate || undefined}
+                  value={customActivityRange.endDate}
+                  onChange={event => setCustomActivityRange(current => ({
+                    ...current,
+                    endDate: event.target.value,
+                  }))}
+                />
+              </label>
+            </div>
+          )}
           {incidentsLoading && incidents.length === 0 ? (
             <div className="reports-state" role="status"><LoaderCircle size={17} className="is-spinning" /> Loading trend data…</div>
           ) : incidentsError && incidents.length === 0 ? (
             <div className="reports-state">Trend data is unavailable until incident records load.</div>
+          ) : !isActivityRangeValid ? (
+            <div className="reports-state" role="status">Choose a valid start and end date to view activity.</div>
           ) : (
-            <div className="reports-trend" role="img" aria-label="Incident record counts for the last seven days">
-              {trend.map(point => (
-                <div className="reports-trend-day" key={point.date} aria-label={`${point.date}: ${point.count} incidents`}>
-                  <strong>{point.count}</strong>
-                  <div className="reports-trend-track">
-                    <span style={{ height: `${point.count ? Math.max(8, (point.count / trendMaximum) * 100) : 0}%` }} />
-                  </div>
-                  <span>{point.label}</span>
+            <>
+              <p className="reports-trend-scale">Daily incidents · scale 0–{trendMaximum}</p>
+              <div className="reports-trend-scroll">
+                <div
+                  className={`reports-trend${trend.length > 7 ? ' reports-trend-dense' : ''}`}
+                  role="list"
+                  aria-label={`Incident counts from ${activityDateRange.startDate} through ${activityDateRange.endDate}`}
+                  style={trend.length > 7 ? {
+                    gridTemplateColumns: `repeat(${trend.length}, minmax(44px, 1fr))`,
+                    minWidth: `${trend.length * 44 + (trend.length - 1) * 8}px`,
+                  } : undefined}
+                >
+                  {trend.map(point => (
+                    <div
+                      className="reports-trend-day"
+                      key={point.date}
+                      role="listitem"
+                      title={`${point.date}: ${point.count} incident${point.count === 1 ? '' : 's'}`}
+                      aria-label={`${point.date}: ${point.count} incident${point.count === 1 ? '' : 's'}`}
+                    >
+                      <strong>{point.count}</strong>
+                      <div className="reports-trend-track">
+                        <span style={{ height: `${point.count ? Math.max(6, (point.count / trendMaximum) * 100) : 0}%` }} />
+                      </div>
+                      <span>{point.label}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            </>
           )}
         </section>
 
@@ -425,7 +535,7 @@ function ReportsPage() {
           <div className="overview-panel-heading">
             <div>
               <h2 id="reports-status-title">Incidents by status</h2>
-              <p>Current status values in the incident API records.</p>
+              <p>Select a status to filter the incident reports below.</p>
             </div>
             <ClipboardList size={17} aria-hidden="true" />
           </div>
@@ -438,11 +548,17 @@ function ReportsPage() {
           ) : (
             <div className="overview-status-list">
               {[...statusCounts.entries()].map(([status, count]) => (
-                <div className="overview-status-row" key={status}>
+                <button
+                  className={`overview-status-row reports-status-row${filters.status === status ? ' is-selected' : ''}`}
+                  key={status}
+                  type="button"
+                  aria-pressed={filters.status === status}
+                  onClick={() => toggleStatusFilter(status)}
+                >
                   <span className={`status-indicator status-indicator-${statusSlug(status)}`} />
                   <span>{formatStatusLabel(status)}</span>
                   <strong>{count}</strong>
-                </div>
+                </button>
               ))}
             </div>
           )}

@@ -62,6 +62,11 @@ import {
   type DateRangeKey,
   type SortKey,
 } from '../utils/incidentFilters';
+import {
+  getMissingIncidentDetails,
+  groupAnalysisWarnings,
+  isPredictionAvailable,
+} from '../services/analysisPresentation';
 
 const ITEMS_PER_PAGE = 10;
 
@@ -1662,11 +1667,28 @@ function AnalysisDetails({ response }: { response: FullResponsePlan }) {
   const overallConfidence = getNumber(response, 'overall_confidence');
   const humanReview = getBoolean(response, 'human_review_required')
     ?? getBoolean(autonomy, 'human_review_required');
+  const predictionAvailable = isPredictionAvailable(prediction);
   const assignments = getRecords(response.assignments);
   const resourceAssignments = getRecords(resourceResult?.assignments);
   const assignmentsToDisplay = assignments.length ? assignments : resourceAssignments;
   const recommendedResources = resourceAssignments.length ? resourceAssignments : assignments;
-  const warnings = Array.isArray(response.warnings) ? response.warnings : [];
+  const pipelineWarnings = Array.isArray(response.warnings) ? response.warnings : [];
+  const pipelineWarningMessages = pipelineWarnings.flatMap(warning => {
+    const record = isJsonRecord(warning) ? warning : null;
+    const message = getString(record, 'message');
+    return message ? [message] : [];
+  });
+  const supplementalQualityWarnings = getStrings(dataQuality?.warnings)
+    .filter(message => !pipelineWarningMessages.includes(message));
+  const warnings = [...pipelineWarnings, ...supplementalQualityWarnings];
+  const warningGroups = groupAnalysisWarnings(warnings);
+  const blockingIssues = getStrings(safety?.blocking_issues);
+  const safetyWarnings = getStrings(safety?.warnings);
+  const missingFields = [
+    ...getStrings(dataQuality?.missing_fields),
+    ...getStrings(situation?.missing_information),
+  ];
+  const missingIncidentDetails = getMissingIncidentDetails(missingFields);
   const traceSteps = getRecords(trace?.steps);
 
   return (
@@ -1705,7 +1727,7 @@ function AnalysisDetails({ response }: { response: FullResponsePlan }) {
       </section>
 
       <AnalysisSection title="Prediction">
-        {prediction ? (
+        {prediction && predictionAvailable ? (
           <>
             <div className="prediction-overview">
               <span>Current risk <strong>{getString(prediction, 'current_risk') || 'Not returned'}</strong></span>
@@ -1728,7 +1750,15 @@ function AnalysisDetails({ response }: { response: FullResponsePlan }) {
             )}
             <StringList items={getStrings(prediction.explanation)} emptyText="No prediction explanation was returned." />
           </>
-        ) : <p className="analysis-muted">No prediction was returned.</p>}
+        ) : (
+          <div className="analysis-notice analysis-notice-info">
+            <Info size={16} aria-hidden="true" />
+            <span>
+              <strong>Trend prediction unavailable</strong>
+              <p>No usable forecast was returned for this incident. The other AI assessment results remain available below.</p>
+            </span>
+          </div>
+        )}
       </AnalysisSection>
 
       <AnalysisSection title="Recommended resources">
@@ -1798,41 +1828,125 @@ function AnalysisDetails({ response }: { response: FullResponsePlan }) {
               </span>
               <span>Confidence <strong>{formatConfidence(getNumber(dataQuality, 'confidence'))}</strong></span>
             </div>
-            <QualityField label="Missing fields" values={getStrings(dataQuality.missing_fields)} />
             <QualityField label="Stale fields" values={getStrings(dataQuality.stale_fields)} />
             <QualityField label="Invalid fields" values={getStrings(dataQuality.invalid_fields)} />
             <QualityField label="Conflicting fields" values={getStrings(dataQuality.conflicting_fields)} />
-            <StringList items={getStrings(dataQuality.warnings)} emptyText="" label="Quality warnings" />
           </>
         ) : <p className="analysis-muted">No data-quality assessment was returned.</p>}
       </AnalysisSection>
 
-      <AnalysisSection title="Warnings">
-        {warnings.length ? (
-          <ul className="warning-list">
-            {warnings.map((warning, index) => {
-              const item = isJsonRecord(warning) ? warning : null;
-              const message = getString(item, 'message')
-                || (typeof warning === 'string' ? warning : 'Warning details were not returned.');
-              return (
-                <li key={`${getString(item, 'code') ?? 'warning'}-${index}`}>
-                  <AlertTriangle size={15} />
-                  <span>
-                    <strong>{getString(item, 'code') || 'Pipeline warning'}</strong>
-                    <small>{getString(item, 'source') || 'AI service'}</small>
-                    <p>{message}</p>
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-        ) : <p className="analysis-muted">No warnings were returned.</p>}
+      <AnalysisSection title="Warnings & safety notices">
+        <div className="analysis-notice-list">
+          {(blockingIssues.length > 0 || getString(safety, 'status') === 'BLOCKED') && (
+            <div className="analysis-notice analysis-notice-critical" role="alert">
+              <ShieldCheck size={16} aria-hidden="true" />
+              <span>
+                <strong>Critical safety issue · Do not dispatch</strong>
+                <p>Resolve the safety issues below and review the plan before any dispatch is approved.</p>
+                {blockingIssues.length > 0 && (
+                  <ul className="analysis-notice-list-items">
+                    {blockingIssues.map((issue, index) => <li key={`${issue}-${index}`}>{issue}</li>)}
+                  </ul>
+                )}
+              </span>
+            </div>
+          )}
+
+          {warningGroups.map(group => (
+            <div
+              className={`analysis-notice analysis-notice-${group.severity}`}
+              key={group.key}
+              role={group.severity === 'critical' ? 'alert' : 'status'}
+            >
+              {group.severity === 'info' ? <Info size={16} aria-hidden="true" /> : <AlertTriangle size={16} aria-hidden="true" />}
+              <span>
+                <span className="analysis-notice-heading">
+                  <strong>{group.title}</strong>
+                  <span>{group.severity === 'info' ? 'Information' : group.severity === 'critical' ? 'Critical' : 'Warning'}</span>
+                </span>
+                <p>{group.description}</p>
+                {group.key === 'INCOMPLETE_INCIDENT' && missingIncidentDetails.length > 0 && (
+                  <>
+                    <ul className="analysis-missing-list">
+                      {missingIncidentDetails.map(detail => (
+                        <li key={detail.key}>
+                          <strong>{detail.label}</strong>
+                          <span>{detail.guidance}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    <details className="analysis-notice-details">
+                      <summary>Returned field names ({missingFields.length})</summary>
+                      <p>{missingFields.join(', ')}</p>
+                    </details>
+                  </>
+                )}
+                {group.details.length > 0 && (
+                  <details className="analysis-notice-details">
+                    <summary>Technical details ({group.details.length})</summary>
+                    <ul>
+                      {group.details.map((detail, index) => (
+                        <li key={`${detail.code}-${detail.source}-${index}`}>
+                          <code>{detail.code}</code>
+                          <span>{detail.source}</span>
+                          <p>{detail.message}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                )}
+              </span>
+            </div>
+          ))}
+
+          {missingIncidentDetails.length > 0 && !warningGroups.some(group => group.key === 'INCOMPLETE_INCIDENT') && (
+            <div className="analysis-notice analysis-notice-warning" role="status">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span>
+                <strong>Incident details need confirmation</strong>
+                <p>Confirm these details with the reporting source. No values have been inferred.</p>
+                <ul className="analysis-missing-list">
+                  {missingIncidentDetails.map(detail => (
+                    <li key={detail.key}>
+                      <strong>{detail.label}</strong>
+                      <span>{detail.guidance}</span>
+                    </li>
+                  ))}
+                </ul>
+                <details className="analysis-notice-details">
+                  <summary>Returned field names ({missingFields.length})</summary>
+                  <p>{missingFields.join(', ')}</p>
+                </details>
+              </span>
+            </div>
+          )}
+
+          {safetyWarnings.length > 0 && (
+            <div className="analysis-notice analysis-notice-warning" role="status">
+              <AlertTriangle size={16} aria-hidden="true" />
+              <span>
+                <strong>Safety warnings</strong>
+                <ul className="analysis-notice-list-items">
+                  {safetyWarnings.map((warning, index) => <li key={`${warning}-${index}`}>{warning}</li>)}
+                </ul>
+              </span>
+            </div>
+          )}
+
+          {blockingIssues.length === 0 &&
+            getString(safety, 'status') !== 'BLOCKED' &&
+            warningGroups.length === 0 &&
+            missingIncidentDetails.length === 0 &&
+            safetyWarnings.length === 0 && (
+              <p className="analysis-muted">No warnings or blocking safety issues were returned.</p>
+            )}
+        </div>
       </AnalysisSection>
 
       <AnalysisSection title="Human review & safety">
         <div className="safety-overview">
           <span className={`safety-badge safety-${slug(getString(safety, 'status'))}`}>
-            Safety: {getString(safety, 'status') || 'Not returned'}
+            Safety: {getString(safety, 'status')?.replace(/_/g, ' ') || 'Not returned'}
           </span>
           <span className="safety-badge">
             Human review: {humanReview === null ? 'Not returned' : humanReview ? 'Required' : 'Not required'}
@@ -1846,12 +1960,10 @@ function AnalysisDetails({ response }: { response: FullResponsePlan }) {
         )}
         {getString(autonomy, 'mode') && (
           <p className="autonomy-reason">
-            <strong>{getString(autonomy, 'mode')}</strong>
+            <strong>{getString(autonomy, 'mode')?.replace(/_/g, ' ')}</strong>
             {getString(autonomy, 'reason') && ` · ${getString(autonomy, 'reason')}`}
           </p>
         )}
-        <QualityField label="Blocking issues" values={getStrings(safety?.blocking_issues)} />
-        <QualityField label="Safety warnings" values={getStrings(safety?.warnings)} />
       </AnalysisSection>
 
       {(trace || getString(response, 'trace_id')) && (

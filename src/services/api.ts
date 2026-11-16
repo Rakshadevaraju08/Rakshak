@@ -60,6 +60,8 @@ export {
 export type {
   AssignmentStatus,
   CreateDispatchPlanPayload,
+  DispatchHospitalAssignmentPayload,
+  DispatchPlanApprovalPayload,
   DispatchExecutionPayload,
   DispatchExecutionResult,
   DispatchPlan,
@@ -71,10 +73,12 @@ export type {
 
 export {
   createDispatchPlan,
+  approveDispatchPlan,
   executeDispatchPlan,
   fetchDispatchContextData,
   fetchDispatchPlanById,
   fetchDispatchPlans,
+  setDispatchPlanHospital,
   normalizeAssignmentStatus,
   normalizeDispatchPlan,
   normalizeDispatchPlanList,
@@ -88,12 +92,14 @@ export {
 
 export type {
   DispatchFilterCriteria,
+  DispatchPlanVersionGroup,
   DispatchSortOrder,
   PlanResourceBreakdown,
 } from './dispatchPresentation';
 
 export {
   canExecuteDispatchPlan,
+  canApproveDispatchPlan,
   filterDispatchPlans,
   formatAssignmentStatus,
   formatDateTime,
@@ -102,6 +108,7 @@ export {
   formatRouteDistance,
   formatRouteDuration,
   getExecutionStatusBadge,
+  groupDispatchPlanVersions,
   getIncompletePlanItems,
   getPlanResourceBreakdown,
   sortDispatchPlans,

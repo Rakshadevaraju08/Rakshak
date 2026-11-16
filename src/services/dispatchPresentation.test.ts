@@ -1,6 +1,7 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  canApproveDispatchPlan,
   canExecuteDispatchPlan,
   filterDispatchPlans,
   formatAssignmentStatus,
@@ -12,10 +13,34 @@ import {
   getExecutionStatusBadge,
   getIncompletePlanItems,
   getPlanResourceBreakdown,
+  groupDispatchPlanVersions,
   sortDispatchPlans,
 } from './dispatchPresentation';
 import type { DispatchPlan, ResourceAssignment } from './dispatchService';
-import type { Incident, Resource } from './incidentService';
+import type { Hospital, Incident, Resource } from './incidentService';
+
+const availableResourcesForApproval: Resource = {
+  id: 'res-amb-1',
+  name: 'Alpha Ambulance',
+  type: 'AMBULANCE',
+  status: 'AVAILABLE',
+  createdAt: null,
+  updatedAt: null,
+  locationLat: null,
+  locationLng: null,
+  ambulancePlateNumbers: [],
+  rescuePersonnel: [],
+};
+const availableHospitalsForApproval = new Map<string, Hospital>([[
+  'hosp-1',
+  {
+    id: 'hosp-1',
+    name: 'City Care Hospital',
+    locationLat: 12.95,
+    locationLng: 77.58,
+    capacity: { totalBeds: 100, available: 15, updatedAt: null },
+  },
+]]);
 
 describe('Dispatch Presentation & Helper Utilities', () => {
   const dummyPlan1: DispatchPlan = {
@@ -199,10 +224,9 @@ describe('Dispatch Presentation & Helper Utilities', () => {
   });
 
   describe('getIncompletePlanItems', () => {
-    it('identifies missing hospital in plan2', () => {
+    it('does not require a receiving hospital for plans without a dispatch action', () => {
       const missing = getIncompletePlanItems(dummyPlan2);
-      assert.ok(missing.includes('No receiving hospital designated'));
-      assert.equal(missing.length, 1);
+      assert.deepEqual(missing, []);
     });
 
     it('identifies missing resources when resource list is empty', () => {
@@ -294,7 +318,8 @@ describe('Dispatch Presentation & Helper Utilities', () => {
   describe('formatDispatchPlanStatus & formatAssignmentStatus', () => {
     it('formats known plan statuses', () => {
       assert.equal(formatDispatchPlanStatus('PENDING').label, 'Pending Review');
-      assert.equal(formatDispatchPlanStatus('EXECUTED').label, 'Executed');
+      assert.equal(formatDispatchPlanStatus('EXECUTED').label, 'Execution recorded');
+      assert.match(formatDispatchPlanStatus('EXECUTED').description, /external unit communication is not confirmed/i);
       assert.equal(formatDispatchPlanStatus('CANCELLED').label, 'Cancelled');
       assert.equal(formatDispatchPlanStatus('UNKNOWN').label, 'Unknown Status');
     });
@@ -321,8 +346,41 @@ describe('Dispatch Presentation & Helper Utilities', () => {
   });
 
   describe('canExecuteDispatchPlan', () => {
-    it('allows execution for valid PENDING plan with available resources', () => {
-      const result = canExecuteDispatchPlan(dummyPlan1);
+    const availableResources = new Map<string, Resource>([[
+      'res-amb-1',
+      {
+        id: 'res-amb-1',
+        name: 'Alpha Ambulance',
+        type: 'AMBULANCE',
+        status: 'AVAILABLE',
+        createdAt: null,
+        updatedAt: null,
+        locationLat: null,
+        locationLng: null,
+        ambulancePlateNumbers: [],
+        rescuePersonnel: [],
+      },
+    ]]);
+    const availableHospitals = new Map([[
+      'hosp-1',
+      {
+        id: 'hosp-1',
+        name: 'City Care Hospital',
+        locationLat: 12.95,
+        locationLng: 77.58,
+        capacity: { totalBeds: 100, available: 15, updatedAt: null },
+      },
+    ]]);
+
+    it('requires explicit approval before dispatch execution', () => {
+      const result = canExecuteDispatchPlan(dummyPlan1, availableResources, availableHospitals);
+      assert.equal(result.canExecute, false);
+      assert.match(result.reason ?? '', /approve this plan/i);
+    });
+
+    it('allows execution for an approved plan with verified available resources', () => {
+      const approved = { ...dummyPlan1, status: 'APPROVED' as const };
+      const result = canExecuteDispatchPlan(approved, availableResources, availableHospitals);
       assert.equal(result.canExecute, true);
       assert.equal(result.reason, null);
     });
@@ -354,18 +412,51 @@ describe('Dispatch Presentation & Helper Utilities', () => {
     });
 
     it('blocks execution when an allocated resource is unavailable or in maintenance', () => {
-      const maintenancePlan: DispatchPlan = {
-        ...dummyPlan1,
-        suggestedResources: [
-          {
-            ...dummyPlan1.suggestedResources[0],
-            availability: 'MAINTENANCE',
-          },
-        ],
-      };
-      const res = canExecuteDispatchPlan(maintenancePlan);
+      const maintenanceResources = new Map(availableResources);
+      maintenanceResources.set('res-amb-1', {
+        ...availableResources.get('res-amb-1')!,
+        status: 'MAINTENANCE',
+      });
+      const res = canExecuteDispatchPlan(
+        { ...dummyPlan1, status: 'APPROVED' },
+        maintenanceResources,
+        availableHospitals
+      );
       assert.equal(res.canExecute, false);
-      assert.ok(res.reason?.includes('maintenance'));
+      assert.ok(res.reason?.includes('not currently available'));
+    });
+  });
+
+  describe('plan approval and version grouping', () => {
+    it('blocks approval without a safety result and permits a review-required safe-to-review plan', () => {
+      const incident = dummyIncidents.get('inc-1')!;
+      assert.equal(canApproveDispatchPlan(dummyPlan1, incident).canApprove, false);
+
+      const reviewablePlan: DispatchPlan = {
+        ...dummyPlan1,
+        rawDetails: { safety_check: { status: 'REVIEW_REQUIRED', blocking_issues: [] } },
+      };
+      assert.equal(canApproveDispatchPlan(
+        reviewablePlan,
+        incident,
+        new Map([['res-amb-1', availableResourcesForApproval]]),
+        availableHospitalsForApproval
+      ).canApprove, true);
+    });
+
+    it('groups plan versions by incident and marks the newest saved version', () => {
+      const earlier = { ...dummyPlan1, id: 'plan-earlier' };
+      const latest = {
+        ...dummyPlan1,
+        id: 'plan-latest',
+        createdAt: '2026-11-17T10:00:00.000Z',
+      };
+      const other = { ...dummyPlan2, id: 'plan-other' };
+      const groups = groupDispatchPlanVersions([earlier, latest, other], [earlier, latest, other]);
+      assert.equal(groups.length, 2);
+      const incidentGroup = groups.find(group => group.incidentId === 'inc-1');
+      assert.equal(incidentGroup?.latestPlanId, 'plan-latest');
+      assert.equal(incidentGroup?.versionCount, 2);
     });
   });
 
@@ -384,7 +475,7 @@ describe('Dispatch Presentation & Helper Utilities', () => {
 
     it('falls back to standard status metadata when idle', () => {
       const badge = getExecutionStatusBadge('EXECUTED', false, false);
-      assert.equal(badge.label, 'Executed');
+      assert.equal(badge.label, 'Execution recorded');
       assert.equal(badge.className, 'status-executed');
     });
   });
