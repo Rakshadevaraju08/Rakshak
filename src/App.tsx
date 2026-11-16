@@ -62,10 +62,10 @@ const sections: Section[] = [
   {
     path: '/incidents',
     title: 'Incidents',
-    description: 'Review and coordinate incoming emergency reports.',
+    description: 'Review incoming reports, update incident status, and start AI analysis.',
     icon: ClipboardList,
-    emptyTitle: 'Incident feed not connected',
-    emptyMessage: 'Connect the incident API to review incoming reports and coordinate response.',
+    emptyTitle: 'Incident feed unavailable',
+    emptyMessage: 'The incident service could not return records. Check the connection and retry.',
   },
   {
     path: '/intelligence',
@@ -73,39 +73,39 @@ const sections: Section[] = [
     description: 'Inspect real AI analysis outputs, safety checks, and execution traces.',
     icon: BrainCircuit,
     emptyTitle: 'AI analysis is not available yet',
-    emptyMessage: 'Connect incident data and the AI service to surface analysis in this workspace.',
+    emptyMessage: 'Select an incident and run AI analysis to see its results here.',
   },
   {
     path: '/routing',
     title: 'Search & Routing',
     description: 'Compare BFS, DFS, Greedy Best-First, and A* on a simulated disaster-area grid.',
     icon: RouteIcon,
-    emptyTitle: 'Route data not connected',
-    emptyMessage: 'Connect road and routing data to review accessible response routes here.',
+    emptyTitle: 'Routing simulation unavailable',
+    emptyMessage: 'The educational grid simulation could not be loaded.',
   },
   {
     path: '/decisions',
     title: 'Decision Engine',
-    description: 'Bring context and response priorities together for informed decisions.',
+    description: 'Review AI recommendations, evidence, and safety conditions before dispatch.',
     icon: SlidersHorizontal,
-    emptyTitle: 'Decision support is not configured',
-    emptyMessage: 'Recommendations will appear here when the required operational data is connected.',
+    emptyTitle: 'Run an incident analysis first',
+    emptyMessage: 'Select an incident and run AI analysis. Its recommendation and safety conditions will appear here.',
   },
   {
     path: '/dispatch',
     title: 'Planning & Dispatch',
     description: 'Plan response activity and coordinate available resources.',
     icon: Truck,
-    emptyTitle: 'Dispatch workspace is not connected',
-    emptyMessage: 'Connect resource and dispatch data to begin coordinating response plans.',
+    emptyTitle: 'No dispatch plans available',
+    emptyMessage: 'Run an incident analysis to create a pending plan, then review and approve it here.',
   },
   {
     path: '/hospitals',
     title: 'Hospitals',
     description: 'Coordinate receiving facilities as part of the response.',
     icon: Hospital,
-    emptyTitle: 'Hospital directory not connected',
-    emptyMessage: 'Connect hospital data to review receiving facilities in this workspace.',
+    emptyTitle: 'Hospital data unavailable',
+    emptyMessage: 'The hospital service could not return facilities. Check the connection and retry.',
   },
   {
     path: '/reports',
@@ -113,7 +113,7 @@ const sections: Section[] = [
     description: 'Prepare operational summaries from connected response data.',
     icon: FileText,
     emptyTitle: 'No reports to display',
-    emptyMessage: 'Reports will be available when operational data is connected.',
+    emptyMessage: 'Operational reports will appear when incident data is available.',
   },
 ];
 
@@ -173,8 +173,8 @@ function Workspace() {
         <div className="sidebar-bottom">
           <div className="connection-card">
             <span className="connection-icon"><Radio size={17} /></span>
-            <strong>Connect your workspace</strong>
-            <p>Operational data will appear here when integrations are configured.</p>
+            <strong>Response operations</strong>
+            <p>Follow an incident from intake through analysis, review, and dispatch.</p>
           </div>
           <div className="workspace-profile">
             <span className="profile-mark">R</span>
@@ -289,25 +289,25 @@ function OverviewPage() {
           </div>
           <div className="flow-steps">
             {[
-              { number: '01', label: 'Understand', detail: 'Incident context', icon: ClipboardList },
-              { number: '02', label: 'Analyze', detail: 'AI intelligence', icon: BrainCircuit },
-              { number: '03', label: 'Navigate', detail: 'Route search', icon: RouteIcon },
-              { number: '04', label: 'Coordinate', detail: 'Plan & dispatch', icon: Truck },
+              { number: '01', label: 'Select incident', detail: 'Review reports and status', icon: ClipboardList, path: '/incidents' },
+              { number: '02', label: 'Analyze', detail: 'Generate response plan', icon: BrainCircuit, path: '/incidents' },
+              { number: '03', label: 'Review', detail: 'Check evidence and safety', icon: SlidersHorizontal, path: '/decisions' },
+              { number: '04', label: 'Dispatch', detail: 'Approve and execute plan', icon: Truck, path: '/dispatch' },
             ].map(step => {
               const Icon = step.icon;
               return (
-                <div className="flow-step" key={step.number}>
+                <Link className="flow-step" to={step.path} key={step.number}>
                   <span className="flow-icon"><Icon size={17} /></span>
                   <span className="flow-step-copy">
                     <span className="flow-step-label">{step.label}</span>
                     <span className="flow-step-detail">{step.detail}</span>
                   </span>
                   <span className="flow-step-number">{step.number}</span>
-                </div>
+                </Link>
               );
             })}
           </div>
-          <p className="flow-note">A connected workflow, designed to keep people in control.</p>
+          <p className="flow-note">Routing is a separate educational simulation and does not use live roads or incident locations.</p>
         </div>
       </section>
 

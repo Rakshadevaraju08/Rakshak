@@ -488,6 +488,15 @@ a:focus-visible {
   align-items: center;
   gap: 10px;
   border-bottom: 1px solid #f0f3f6;
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 140ms ease;
+}
+
+.flow-step:hover,
+.flow-step:focus-visible {
+  background: #f7fafb;
+  outline: none;
 }
 
 .flow-step:last-child {

@@ -34,12 +34,13 @@ import {
   UsersRound,
   X,
 } from 'lucide-react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   addIncidentReport,
   analyzeIncident,
   ApiRequestError,
   isJsonRecord,
+  resolveIncident,
   updateIncidentStatus,
   type FullResponsePlan,
   type Incident,
@@ -968,6 +969,9 @@ function IncidentDetailsPanel({
   const [updatingTargetStatus, setUpdatingTargetStatus] = useState<string | null>(null);
   const [statusUpdateSuccess, setStatusUpdateSuccess] = useState<string | null>(null);
   const [statusUpdateError, setStatusUpdateError] = useState<string | null>(null);
+  const [resolution, setResolution] = useState('');
+  const [resolutionFeedback, setResolutionFeedback] = useState('');
+  const [isResolving, setIsResolving] = useState(false);
 
   // Situation reports & timeline state
   const [newReportContent, setNewReportContent] = useState<string>('');
@@ -983,6 +987,8 @@ function IncidentDetailsPanel({
     setReportSubmitSuccess(null);
     setReportSubmitError(null);
     setNewReportContent('');
+    setResolution('');
+    setResolutionFeedback('');
   }, [selectedId]);
 
   // Handle status update workflow (Non-optimistic: updates UI only upon 200 response)
@@ -1004,6 +1010,28 @@ function IncidentDetailsPanel({
     } finally {
       setIsUpdatingStatus(false);
       setUpdatingTargetStatus(null);
+    }
+  };
+
+  const handleResolveIncident = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!incident || !resolution.trim() || isResolving) return;
+    setIsResolving(true);
+    setStatusUpdateSuccess(null);
+    setStatusUpdateError(null);
+    try {
+      await resolveIncident(incident.id, {
+        resolution: resolution.trim(),
+        feedback: resolutionFeedback.trim() || undefined,
+      });
+      setResolution('');
+      setResolutionFeedback('');
+      setStatusUpdateSuccess('Incident resolved and outcome recorded.');
+      onRefetchAll();
+    } catch (err: unknown) {
+      setStatusUpdateError(errorMessage(err));
+    } finally {
+      setIsResolving(false);
     }
   };
 
@@ -1291,7 +1319,7 @@ function IncidentDetailsPanel({
         </div>
 
         <div className="status-workflow-controls">
-          {VALID_STATUSES.map(st => {
+          {VALID_STATUSES.filter(st => st !== 'RESOLVED').map(st => {
             const isCurrent = incident.status === st;
             const isTarget = updatingTargetStatus === st;
             return (
@@ -1309,8 +1337,6 @@ function IncidentDetailsPanel({
                   <Check size={12} />
                 ) : st === 'ACTIVE' ? (
                   <Play size={11} />
-                ) : st === 'RESOLVED' ? (
-                  <CheckCircle2 size={11} />
                 ) : (
                   <Clock size={11} />
                 )}
@@ -1319,14 +1345,43 @@ function IncidentDetailsPanel({
                     ? `${formatStatusLabel(st)} (Current)`
                     : st === 'ACTIVE'
                     ? 'Mark Active'
-                    : st === 'RESOLVED'
-                    ? 'Resolve Incident'
                     : 'Reset to New'}
                 </span>
               </button>
             );
           })}
         </div>
+
+        {incident.status !== 'RESOLVED' && (
+          <form className="add-report-form" onSubmit={handleResolveIncident}>
+            <label htmlFor={`resolution-input-${incident.id}`} className="detail-label">Resolve with outcome</label>
+            <textarea
+              id={`resolution-input-${incident.id}`}
+              className="add-report-input"
+              placeholder="Record what happened and the response outcome"
+              value={resolution}
+              onChange={event => setResolution(event.target.value)}
+              disabled={isResolving}
+              rows={2}
+              required
+            />
+            <label htmlFor={`resolution-feedback-${incident.id}`} className="detail-label">Response notes (optional)</label>
+            <textarea
+              id={`resolution-feedback-${incident.id}`}
+              className="add-report-input"
+              placeholder="Lessons or follow-up notes"
+              value={resolutionFeedback}
+              onChange={event => setResolutionFeedback(event.target.value)}
+              disabled={isResolving}
+              rows={2}
+            />
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" className="add-report-submit" disabled={!resolution.trim() || isResolving}>
+                {isResolving ? 'Recording outcome…' : 'Record outcome and resolve'}
+              </button>
+            </div>
+          </form>
+        )}
 
         {/* Status transition progress indicator */}
         {isUpdatingStatus && (
@@ -1615,7 +1670,14 @@ function IncidentDetailsPanel({
       )}
 
       {!isAnalyzing && !analysisError && analysis && (
-        <AnalysisDetails response={analysis} />
+        <>
+          <AnalysisDetails response={analysis} />
+          <div className="detail-actions-bar" style={{ justifyContent: 'flex-end', marginTop: 12 }}>
+            <Link className="primary-button" to="/decisions">
+              Review recommendation and safety <ChevronRight size={15} />
+            </Link>
+          </div>
+        </>
       )}
 
       {!isAnalyzing && !analysisError && !analysis && (
