@@ -132,11 +132,39 @@ export interface Resource {
   name: string;
   type: string | null;
   status: string | null;
+  createdAt: string | null;
+  updatedAt: string | null;
   locationLat: number | null;
   locationLng: number | null;
   ambulancePlateNumbers: string[];
   rescuePersonnel: number[];
 }
+
+export type OperationalEventType =
+  | 'SOS_RECEIVED'
+  | 'INCIDENT_UPDATED'
+  | 'INCIDENT_REPORT_RECEIVED'
+  | 'INCIDENT_RESOLVED'
+  | 'RESOURCE_AVAILABLE'
+  | 'RESOURCE_UNAVAILABLE'
+  | 'HOSPITAL_CAPACITY_CHANGED'
+  | 'HOSPITAL_FULL'
+  | 'ROAD_BLOCKED'
+  | 'ROAD_UPDATED'
+  | 'DISPATCH_PLANNED'
+  | 'DISPATCH_APPROVED'
+  | 'PREDICTION_UPDATED'
+  | 'WEATHER_CHANGED'
+  | 'WATER_LEVEL_CHANGED'
+  | 'MESH_MESSAGE_RECEIVED';
+
+export interface OperationalEvent {
+  type: OperationalEventType;
+  payload: unknown;
+  occurredAt: string | null;
+}
+
+export type OperationalEventConnection = 'connecting' | 'connected' | 'reconnecting';
 
 export interface IncidentPatchPayload {
   title?: string;
@@ -772,6 +800,8 @@ export function normalizeResourceList(payload: unknown): Resource[] {
       name,
       type: getOptionalString(item.type),
       status: getOptionalString(item.status)?.toUpperCase() ?? null,
+      createdAt: parseTimestamp(item.createdAt),
+      updatedAt: parseTimestamp(item.updatedAt),
       locationLat: getOptionalCoordinate(item.locationLat, -90, 90),
       locationLng: getOptionalCoordinate(item.locationLng, -180, 180),
       ambulancePlateNumbers: ambulances.flatMap((ambulance) => {
@@ -796,6 +826,64 @@ export async function fetchHospitals(options: { signal?: AbortSignal; timeoutMs?
 export async function fetchResources(options: { signal?: AbortSignal; timeoutMs?: number } = {}): Promise<Resource[]> {
   const payload = await requestApi<unknown>('/resources', { method: 'GET', ...options });
   return normalizeResourceList(payload);
+}
+
+const OPERATIONAL_EVENT_TYPES: OperationalEventType[] = [
+  'SOS_RECEIVED',
+  'INCIDENT_UPDATED',
+  'INCIDENT_REPORT_RECEIVED',
+  'INCIDENT_RESOLVED',
+  'RESOURCE_AVAILABLE',
+  'RESOURCE_UNAVAILABLE',
+  'HOSPITAL_CAPACITY_CHANGED',
+  'HOSPITAL_FULL',
+  'ROAD_BLOCKED',
+  'ROAD_UPDATED',
+  'DISPATCH_PLANNED',
+  'DISPATCH_APPROVED',
+  'PREDICTION_UPDATED',
+  'WEATHER_CHANGED',
+  'WATER_LEVEL_CHANGED',
+  'MESH_MESSAGE_RECEIVED',
+];
+
+export function subscribeOperationalEvents(
+  onEvent: (event: OperationalEvent) => void,
+  onConnectionChange: (connection: OperationalEventConnection) => void,
+): () => void {
+  const source = new EventSource(`${API_BASE_URL}/events`);
+  onConnectionChange('connecting');
+
+  const listeners = OPERATIONAL_EVENT_TYPES.map(type => {
+    const listener = (event: Event) => {
+      let data: unknown;
+      try {
+        data = JSON.parse((event as MessageEvent<string>).data) as unknown;
+      } catch (error) {
+        console.warn(`[incidentService] Could not parse ${type} event payload:`, error);
+        return;
+      }
+      if (!isJsonRecord(data) || data.type !== type) {
+        console.warn(`[incidentService] Ignoring malformed ${type} event payload.`);
+        return;
+      }
+      onEvent({
+        type,
+        payload: data.payload,
+        occurredAt: parseTimestamp(data.occurredAt),
+      });
+    };
+    source.addEventListener(type, listener);
+    return () => source.removeEventListener(type, listener);
+  });
+
+  source.onopen = () => onConnectionChange('connected');
+  source.onerror = () => onConnectionChange('reconnecting');
+
+  return () => {
+    listeners.forEach(removeListener => removeListener());
+    source.close();
+  };
 }
 
 /**
