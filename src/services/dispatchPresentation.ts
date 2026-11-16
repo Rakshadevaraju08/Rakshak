@@ -12,7 +12,7 @@ import type {
   DispatchPlanStatus,
   ResourceAssignment,
 } from './dispatchService';
-import type { Incident, Resource } from './incidentService';
+import { isJsonRecord, type Incident, type Hospital, type Resource } from './incidentService';
 
 export interface DispatchFilterCriteria {
   query?: string;
@@ -28,6 +28,47 @@ export interface PlanResourceBreakdown {
   byType: Record<string, number>;
   suggestedCount: number;
   confirmedCount: number;
+}
+
+export interface DispatchPlanVersionGroup {
+  incidentId: string;
+  plans: DispatchPlan[];
+  latestPlanId: string | null;
+  versionCount: number;
+}
+
+function isDispatchAction(plan: DispatchPlan): boolean {
+  const action = plan.recommendedAction?.trim().toUpperCase();
+  return action === 'DISPATCH' || action === 'IMMEDIATE_DISPATCH';
+}
+
+export function groupDispatchPlanVersions(
+  visiblePlans: DispatchPlan[],
+  allPlans: DispatchPlan[] = visiblePlans
+): DispatchPlanVersionGroup[] {
+  const allByIncident = new Map<string, DispatchPlan[]>();
+  allPlans.forEach(plan => {
+    const group = allByIncident.get(plan.incidentId) ?? [];
+    group.push(plan);
+    allByIncident.set(plan.incidentId, group);
+  });
+
+  const visibleByIncident = new Map<string, DispatchPlan[]>();
+  visiblePlans.forEach(plan => {
+    const group = visibleByIncident.get(plan.incidentId) ?? [];
+    group.push(plan);
+    visibleByIncident.set(plan.incidentId, group);
+  });
+
+  return [...visibleByIncident.entries()].map(([incidentId, plans]) => {
+    const versions = sortDispatchPlans(allByIncident.get(incidentId) ?? []);
+    return {
+      incidentId,
+      plans,
+      latestPlanId: versions[0]?.id ?? null,
+      versionCount: versions.length,
+    };
+  });
 }
 
 /**
@@ -126,14 +167,9 @@ export function getIncompletePlanItems(
     missing.push('Missing associated incident linkage');
   }
 
-  // 2. Missing Assigned Resources
-  if (!plan.suggestedResources || plan.suggestedResources.length === 0) {
+  // Only dispatch recommendations require assigned units; non-dispatch plans may be monitoring advice.
+  if (isDispatchAction(plan) && (!plan.suggestedResources || plan.suggestedResources.length === 0)) {
     missing.push('No emergency resources assigned');
-  }
-
-  // 3. Missing Destination Hospital
-  if (!plan.targetHospital && (!plan.targetHospitalId || !plan.targetHospitalId.trim())) {
-    missing.push('No receiving hospital designated');
   }
 
   return missing;
@@ -209,9 +245,9 @@ export function formatDispatchPlanStatus(status: DispatchPlanStatus): {
       };
     case 'EXECUTED':
       return {
-        label: 'Executed',
+        label: 'Execution recorded',
         className: 'status-executed',
-        description: 'Dispatch action executed; resources are actively dispatched in the field.',
+        description: 'Rakshak recorded the dispatch execution and marked the assigned resources DISPATCHED. External unit communication is not confirmed.',
       };
     case 'CANCELLED':
       return {
@@ -271,14 +307,15 @@ export function formatDateTime(isoString: string | null | undefined): string {
 /**
  * Validates whether a dispatch plan satisfies all execution preconditions:
  * 1. Plan cannot already be EXECUTED or CANCELLED.
- * 2. Plan must be in PENDING or APPROVED status.
+ * 2. Plan must be APPROVED before execution.
  * 3. Plan must have an associated incident.
  * 4. Plan must have at least one assigned resource.
  * 5. All assigned resources must be currently available (not in maintenance or already dispatched).
  */
 export function canExecuteDispatchPlan(
   plan: DispatchPlan | null | undefined,
-  knownResources?: Map<string, Resource>
+  knownResources?: Map<string, Resource>,
+  knownHospitals?: Map<string, Hospital>
 ): { canExecute: boolean; reason: string | null } {
   if (!plan) {
     return { canExecute: false, reason: 'No dispatch plan selected.' };
@@ -294,7 +331,10 @@ export function canExecuteDispatchPlan(
   if (plan.status === 'UNKNOWN') {
     return { canExecute: false, reason: 'Dispatch plan status is unknown. Cannot execute unverified plan.' };
   }
-  if (plan.status !== 'PENDING' && plan.status !== 'APPROVED') {
+  if (plan.status !== 'APPROVED') {
+    if (plan.status === 'PENDING') {
+      return { canExecute: false, reason: 'Approve this plan before dispatch execution.' };
+    }
     return { canExecute: false, reason: `Plan status "${plan.status}" is not eligible for execution.` };
   }
 
@@ -308,29 +348,99 @@ export function canExecuteDispatchPlan(
     return { canExecute: false, reason: 'Cannot execute plan with 0 allocated emergency resources.' };
   }
 
+  if (!isDispatchAction(plan)) {
+    return { canExecute: false, reason: 'This recommendation does not authorize dispatch execution.' };
+  }
+
+  if (plan.targetHospitalId) {
+    const hospital = knownHospitals?.get(plan.targetHospitalId);
+    if (!hospital) {
+      return { canExecute: false, reason: 'The selected hospital could not be verified.' };
+    }
+    if (typeof hospital.capacity?.available !== 'number' || hospital.capacity.available <= 0) {
+      return { canExecute: false, reason: 'The selected hospital has no current reported available beds.' };
+    }
+  }
+
   // 4. Resource availability check
   for (const resource of plan.suggestedResources) {
     const known = knownResources?.get(resource.resourceId);
-    const availability = (known?.status ?? resource.availability ?? '').toUpperCase();
-
-    if (availability === 'DISPATCHED') {
-      const name = known?.name ?? resource.resourceName ?? resource.resourceId;
+    if (!known) {
       return {
         canExecute: false,
-        reason: `Resource "${name}" is already dispatched to another operation.`,
+        reason: `Current availability for resource "${resource.resourceName ?? resource.resourceId}" could not be verified.`,
       };
     }
+    const availability = (known.status ?? '').toUpperCase();
 
-    if (availability === 'MAINTENANCE') {
+    if (availability !== 'AVAILABLE') {
       const name = known?.name ?? resource.resourceName ?? resource.resourceId;
       return {
         canExecute: false,
-        reason: `Resource "${name}" is currently in maintenance and unavailable.`,
+        reason: `Resource "${name}" is not currently available (${availability || 'status not provided'}).`,
       };
     }
   }
 
   return { canExecute: true, reason: null };
+}
+
+export function canApproveDispatchPlan(
+  plan: DispatchPlan | null | undefined,
+  incident: Incident | null,
+  knownResources?: Map<string, Resource>,
+  knownHospitals?: Map<string, Hospital>
+): { canApprove: boolean; reason: string | null } {
+  if (!plan) return { canApprove: false, reason: 'No dispatch plan selected.' };
+  if (plan.status !== 'PENDING') {
+    return { canApprove: false, reason: 'Only a pending plan can be approved.' };
+  }
+  if (!incident || incident.id !== plan.incidentId) {
+    return { canApprove: false, reason: 'The associated incident could not be verified.' };
+  }
+
+  const safety = isJsonRecord(plan.rawDetails?.safety_check) ? plan.rawDetails.safety_check : null;
+  if (!safety) return { canApprove: false, reason: 'This plan has no safety-check result.' };
+  const safetyStatus = typeof safety.status === 'string' ? safety.status.toUpperCase() : '';
+  const blockingIssues = Array.isArray(safety.blocking_issues)
+    ? safety.blocking_issues.filter((issue): issue is string => typeof issue === 'string' && issue.trim().length > 0)
+    : [];
+  if (safetyStatus === 'BLOCKED' || blockingIssues.length > 0) {
+    return { canApprove: false, reason: blockingIssues[0] ?? 'The safety check blocked this plan.' };
+  }
+  if (safetyStatus !== 'SAFE' && safetyStatus !== 'REVIEW_REQUIRED') {
+    return { canApprove: false, reason: 'The plan safety status is missing or not recognized.' };
+  }
+
+  if (plan.targetHospitalId) {
+    const hospital = knownHospitals?.get(plan.targetHospitalId);
+    if (!hospital) {
+      return { canApprove: false, reason: 'The selected hospital could not be verified.' };
+    }
+    if (hospital.capacity?.available === null || hospital.capacity?.available === undefined) {
+      return { canApprove: false, reason: 'The selected hospital has no reported bed-capacity data.' };
+    }
+    if (hospital.capacity.available <= 0) {
+      return { canApprove: false, reason: 'The selected hospital has no available beds in its latest capacity report.' };
+    }
+  }
+
+  if (isDispatchAction(plan)) {
+    if (plan.suggestedResources.length === 0) {
+      return { canApprove: false, reason: 'A dispatch recommendation must have at least one assigned resource.' };
+    }
+    for (const assignment of plan.suggestedResources) {
+      const resource = knownResources?.get(assignment.resourceId);
+      if (!resource) {
+        return { canApprove: false, reason: `Current availability for resource ${assignment.resourceId} could not be verified.` };
+      }
+      if (resource.status !== 'AVAILABLE') {
+        return { canApprove: false, reason: `Resource "${resource.name}" is not currently available.` };
+      }
+    }
+  }
+
+  return { canApprove: true, reason: null };
 }
 
 /**

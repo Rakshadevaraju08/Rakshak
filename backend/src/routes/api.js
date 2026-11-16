@@ -4,6 +4,11 @@ const { publish, subscribe } = require('../services/events');
 const { createPlan } = require('../services/dispatch');
 const { requestAIAnalysis } = require('../services/ai');
 const { AnalysisInputError, buildDisasterAnalysisContext } = require('../services/aiContext');
+const {
+  approveDispatchPlan,
+  executeDispatchPlan,
+  updatePlanHospital,
+} = require('../services/dispatchWorkflow');
 const { buildSOSIncidentFields } = require('../services/incidentIntake');
 const { requireRole, signToken } = require('../middleware/auth');
 const crypto = require('crypto');
@@ -59,8 +64,75 @@ router.get('/roads', async (req, res, next) => { try { res.json(await prisma.roa
 router.post('/roads', ops, async (req, res, next) => { try { if (!req.body.name) return res.status(400).json({ error: 'name is required' }); const road = await prisma.road.create({ data: pick(req.body, ['name', 'status', 'incidentId']) }); await publish(road.status === 'BLOCKED' ? 'ROAD_BLOCKED' : 'ROAD_UPDATED', road); res.status(201).json(road); } catch (e) { next(e); } });
 router.patch('/roads/:id', ops, async (req, res, next) => { try { const road = await prisma.road.update({ where: { id: req.params.id }, data: pick(req.body, ['name', 'status', 'incidentId']) }); await publish(road.status === 'BLOCKED' ? 'ROAD_BLOCKED' : 'ROAD_UPDATED', road); res.json(road); } catch (e) { next(e); } });
 
-router.post('/dispatch/plan', ops, async (req, res, next) => { try { const plan = await createPlan(req.body.incidentId); await publish('DISPATCH_PLANNED', plan); res.status(201).json(plan); } catch (e) { next(e); } });
-router.post('/dispatch/execute', ops, async (req, res, next) => { try { const plan = await prisma.dispatchPlan.update({ where: { id: req.body.planId }, data: { status: 'EXECUTED' } }); const ids = plan.details.recommendedResources || []; if (ids.length) await prisma.resource.updateMany({ where: { id: { in: ids } }, data: { status: 'DISPATCHED' } }); await publish('DISPATCH_APPROVED', plan); res.json(plan); } catch (e) { next(e); } });
+router.get('/dispatch/plans', async (req, res, next) => {
+  try {
+    res.json(await prisma.dispatchPlan.findMany({ orderBy: { createdAt: 'desc' } }));
+  } catch (error) { next(error); }
+});
+router.get('/dispatch/plans/:id', async (req, res, next) => {
+  try {
+    const plan = await prisma.dispatchPlan.findUnique({ where: { id: req.params.id } });
+    if (!plan) return res.status(404).json({ error: 'Dispatch plan not found' });
+    res.json(plan);
+  } catch (error) { next(error); }
+});
+router.post('/dispatch/plan', ops, async (req, res, next) => {
+  try {
+    if (typeof req.body?.incidentId !== 'string' || !req.body.incidentId.trim()) {
+      return res.status(400).json({ error: 'incidentId is required.' });
+    }
+    const plan = await createPlan(req.body.incidentId.trim());
+    await publish('DISPATCH_PLANNED', plan);
+    res.status(201).json(plan);
+  } catch (error) {
+    if (error instanceof AnalysisInputError) {
+      return res.status(400).json({ error: error.code, message: error.message });
+    }
+    if (error.status && error.code?.startsWith('AI_SERVICE_')) {
+      return res.status(error.status).json({ error: error.code, message: error.message });
+    }
+    next(error);
+  }
+});
+router.patch('/dispatch/plans/:id/hospital', ops, async (req, res, next) => {
+  try {
+    if (!Object.prototype.hasOwnProperty.call(req.body ?? {}, 'hospitalId')) {
+      return res.status(400).json({ error: 'hospitalId is required; use null to clear the assignment.' });
+    }
+    const plan = await updatePlanHospital(prisma, req.params.id, req.body.hospitalId);
+    await publish('DISPATCH_PLAN_UPDATED', plan);
+    res.json(plan);
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: error.message });
+    next(error);
+  }
+});
+router.post('/dispatch/approve', ops, async (req, res, next) => {
+  try {
+    if (typeof req.body?.planId !== 'string' || !req.body.planId.trim()) {
+      return res.status(400).json({ error: 'planId is required.' });
+    }
+    const plan = await approveDispatchPlan(prisma, req.body.planId.trim(), req.user?.id ?? null);
+    await publish('DISPATCH_APPROVED', plan);
+    res.json(plan);
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: error.message });
+    next(error);
+  }
+});
+router.post('/dispatch/execute', ops, async (req, res, next) => {
+  try {
+    if (typeof req.body?.planId !== 'string' || !req.body.planId.trim()) {
+      return res.status(400).json({ error: 'planId is required.' });
+    }
+    const plan = await executeDispatchPlan(prisma, req.body.planId.trim());
+    await publish('DISPATCH_EXECUTED', plan);
+    res.json(plan);
+  } catch (error) {
+    if (error.status) return res.status(error.status).json({ error: error.message });
+    next(error);
+  }
+});
 
 router.post('/mesh/sync', async (req, res, next) => { try { const messages = Array.isArray(req.body) ? req.body : (Array.isArray(req.body.messages) ? req.body.messages : [req.body]); if (!messages.length || messages.some((message) => !message.senderId || message.payload === undefined)) return res.status(400).json({ error: 'Each mesh message requires senderId and payload' }); const saved = await Promise.all(messages.map(({ payload, senderId, receivedAt, incidentId }) => prisma.meshMessage.create({ data: { payload: typeof payload === 'string' ? payload : JSON.stringify(payload), senderId, receivedAt: receivedAt ? new Date(receivedAt) : undefined, incidentId } }))); await Promise.all(saved.map((message) => publish('MESH_MESSAGE_RECEIVED', message))); res.status(201).json({ synced: saved.length, messages: saved }); } catch (e) { next(e); } });
 

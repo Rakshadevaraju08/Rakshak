@@ -53,6 +53,8 @@ import {
 } from 'lucide-react';
 import { Link, useSearchParams } from 'react-router-dom';
 import {
+  approveDispatchPlan,
+  canApproveDispatchPlan,
   canExecuteDispatchPlan,
   executeDispatchPlan,
   fetchDispatchContextData,
@@ -68,6 +70,9 @@ import {
   getExecutionStatusBadge,
   getIncompletePlanItems,
   getPlanResourceBreakdown,
+  groupDispatchPlanVersions,
+  isJsonRecord,
+  setDispatchPlanHospital,
   sortDispatchPlans,
   updateCachedIncident,
   useDispatchPlans,
@@ -94,6 +99,12 @@ function formatResourceName(resource: ResourceAssignment): string {
   return resource.resourceId;
 }
 
+function getStringArray(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0)
+    : [];
+}
+
 export function DispatchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -115,6 +126,10 @@ export function DispatchPage() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [isExecuting, setIsExecuting] = useState(false);
   const [executionError, setExecutionError] = useState<string | null>(null);
+  const [isApproving, setIsApproving] = useState(false);
+  const [approvalError, setApprovalError] = useState<string | null>(null);
+  const [isSavingHospital, setIsSavingHospital] = useState(false);
+  const [hospitalSaveError, setHospitalSaveError] = useState<string | null>(null);
   const [successToast, setSuccessToast] = useState<{ message: string; planId: string } | null>(null);
   const [ariaLiveMessage, setAriaLiveMessage] = useState<string>('');
 
@@ -234,6 +249,10 @@ export function DispatchPage() {
     });
     return sortDispatchPlans(filtered, sortOrder);
   }, [plans, searchQuery, statusFilter, incidentFilter, incidentsMap, sortOrder]);
+  const planGroups = useMemo(
+    () => groupDispatchPlanVersions(filteredPlans, plans),
+    [filteredPlans, plans]
+  );
 
   // Determine selected plan (URL param or fallback to first filtered plan)
   const selectedPlan: DispatchPlan | null = useMemo(() => {
@@ -246,6 +265,8 @@ export function DispatchPage() {
 
   const handleSelectPlan = (planId: string) => {
     setExecutionError(null);
+    setApprovalError(null);
+    setHospitalSaveError(null);
     updateQueryParams({ planId });
   };
 
@@ -259,9 +280,58 @@ export function DispatchPage() {
   const incompleteItems = selectedPlan ? getIncompletePlanItems(selectedPlan, selectedIncident) : [];
 
   // Execution Precondition Validation
-  const executionValidation = useMemo(() => {
-    return canExecuteDispatchPlan(selectedPlan, knownResources);
-  }, [selectedPlan, knownResources]);
+  const approvalValidation = useMemo(
+    () => canApproveDispatchPlan(selectedPlan, selectedIncident, knownResources, knownHospitals),
+    [selectedPlan, selectedIncident, knownResources, knownHospitals]
+  );
+  const executionValidation = useMemo(
+    () => canExecuteDispatchPlan(selectedPlan, knownResources, knownHospitals),
+    [selectedPlan, knownResources, knownHospitals]
+  );
+
+  const handleApprovePlan = async () => {
+    if (!selectedPlan || isApproving || !approvalValidation.canApprove) return;
+    setIsApproving(true);
+    setApprovalError(null);
+    setAriaLiveMessage(`Approving dispatch plan ${selectedPlan.id}...`);
+    try {
+      const approved = await approveDispatchPlan(
+        { planId: selectedPlan.id },
+        { knownResources, knownHospitals }
+      );
+      await refetchPlans();
+      setAriaLiveMessage(`Plan ${approved.id} was approved for dispatch review.`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Plan approval failed.';
+      setApprovalError(message);
+      setAriaLiveMessage(`Plan approval failed: ${message}`);
+    } finally {
+      setIsApproving(false);
+    }
+  };
+
+  const handleSaveHospital = async (hospitalId: string | null) => {
+    if (!selectedPlan || isSavingHospital) return;
+    setIsSavingHospital(true);
+    setHospitalSaveError(null);
+    try {
+      await setDispatchPlanHospital(
+        { planId: selectedPlan.id, hospitalId },
+        { knownResources, knownHospitals }
+      );
+      await refetchPlans();
+      setContextRefreshKey(key => key + 1);
+      setAriaLiveMessage(hospitalId
+        ? 'Receiving hospital assignment saved.'
+        : 'Receiving hospital assignment cleared.');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Hospital assignment could not be saved.';
+      setHospitalSaveError(message);
+      setAriaLiveMessage(`Hospital assignment failed: ${message}`);
+    } finally {
+      setIsSavingHospital(false);
+    }
+  };
 
   // Handle Execution Trigger (Opens Review Modal)
   const handleOpenExecutionModal = () => {
@@ -355,8 +425,8 @@ export function DispatchPage() {
             </span>
           </div>
           <p>
-            Review AI and rule-generated dispatch plans, inspect resource allocation readiness,
-            verify destination hospital bed capacity, and execute official emergency dispatches.
+            Review each plan, confirm safety and hospital capacity where relevant, record approval,
+            then execute an approved dispatch only when current resource availability is verified.
           </p>
         </div>
 
@@ -404,8 +474,8 @@ export function DispatchPage() {
         <div className="dispatch-skipped-notice" role="status">
           <Info size={16} className="skipped-notice-icon" aria-hidden="true" />
           <div className="skipped-notice-text">
-            <strong>Rule-based Fallback Active:</strong> One or more dispatch plans were synthesized
-            using deterministic fallback rules because upstream AI recommendations were degraded or unavailable.
+            <strong>Fallback used in analysis:</strong> One or more saved plans report degraded analysis or a fallback component.
+            Review their safety results before approval.
           </div>
           <button
             type="button"
@@ -454,7 +524,7 @@ export function DispatchPage() {
             >
               <option value="ALL">All Statuses</option>
               <option value="PENDING">Pending Review</option>
-              <option value="EXECUTED">Executed</option>
+              <option value="EXECUTED">Execution recorded</option>
               <option value="APPROVED">Approved</option>
               <option value="CANCELLED">Cancelled</option>
               <option value="UNKNOWN">Unknown Status</option>
@@ -563,8 +633,7 @@ export function DispatchPage() {
               </div>
               <h3>No dispatch plans generated yet</h3>
               <p>
-                When active incidents are evaluated through the AI intelligence pipeline or rule engine,
-                recommended dispatch plans will appear in this queue.
+                An operator can request an AI analysis from an incident record. The backend saves each returned plan as a separate version.
               </p>
               <Link to="/incidents" className="secondary-button dispatch-empty-action">
                 <span>Go to Incidents</span>
@@ -593,9 +662,23 @@ export function DispatchPage() {
 
           {/* Populated Plans List */}
           {!plansLoading && !plansError && filteredPlans.length > 0 && (
-            <div className="dispatch-cards-scroll" role="list">
-              {filteredPlans.map(plan => {
+            <div className="dispatch-cards-scroll" aria-label="Plans grouped by incident">
+              {planGroups.map(group => {
+                const groupIncident = incidentsMap.get(group.incidentId);
+                const latestVisible = group.plans.some(plan => plan.id === group.latestPlanId);
+                return (
+                  <section className="dispatch-plan-version-group" key={group.incidentId}>
+                    <header className="dispatch-plan-version-heading">
+                      <div>
+                        <h3>{groupIncident?.title || `Incident #${group.incidentId.slice(0, 8)}`}</h3>
+                        <span>{group.versionCount} saved plan {group.versionCount === 1 ? 'version' : 'versions'}</span>
+                      </div>
+                      {!latestVisible && <span>Latest version hidden by filters</span>}
+                    </header>
+                    <div className="dispatch-plan-version-list" role="list">
+                      {group.plans.map(plan => {
                 const isSelected = selectedPlan?.id === plan.id;
+                const isLatestVersion = plan.id === group.latestPlanId;
                 const statusMeta = formatDispatchPlanStatus(plan.status);
                 const incident = incidentsMap.get(plan.incidentId);
                 const breakdown = getPlanResourceBreakdown(plan.suggestedResources);
@@ -605,7 +688,7 @@ export function DispatchPage() {
                   <div
                     key={plan.id}
                     role="listitem"
-                    className={`dispatch-plan-card${isSelected ? ' is-selected' : ''}`}
+                    className={`dispatch-plan-card${isSelected ? ' is-selected' : ''}${isLatestVersion ? ' is-latest-version' : ''}`}
                     onClick={() => handleSelectPlan(plan.id)}
                     tabIndex={0}
                     onKeyDown={e => {
@@ -621,6 +704,9 @@ export function DispatchPage() {
                         <strong className="dispatch-plan-id">
                           Plan #{plan.id.slice(0, 8)}
                         </strong>
+                        <span className={`dispatch-version-badge${isLatestVersion ? ' is-latest' : ''}`}>
+                          {isLatestVersion ? 'Latest version' : 'Previous version'}
+                        </span>
                         <span className="dispatch-card-timestamp">
                           <Clock3 size={11} aria-hidden="true" />
                           <span>{formatDateTime(plan.createdAt)}</span>
@@ -719,6 +805,10 @@ export function DispatchPage() {
                     )}
                   </div>
                 );
+                      })}
+                    </div>
+                  </section>
+                );
               })}
             </div>
           )}
@@ -742,6 +832,15 @@ export function DispatchPage() {
               contextLoading={contextLoading}
               contextError={contextError}
               onRetryContext={() => setContextRefreshKey(k => k + 1)}
+              hospitals={hospitals}
+              isSavingHospital={isSavingHospital}
+              hospitalSaveError={hospitalSaveError}
+              onSaveHospital={handleSaveHospital}
+              canApprove={approvalValidation.canApprove}
+              approvalBlockReason={approvalValidation.reason}
+              isApproving={isApproving}
+              approvalError={approvalError}
+              onApprove={handleApprovePlan}
               canExecute={executionValidation.canExecute}
               executionBlockReason={executionValidation.reason}
               isExecuting={isExecuting}
@@ -779,6 +878,15 @@ interface DispatchPlanInspectorProps {
   contextLoading: boolean;
   contextError: string | null;
   onRetryContext: () => void;
+  hospitals: Hospital[];
+  isSavingHospital: boolean;
+  hospitalSaveError: string | null;
+  onSaveHospital: (hospitalId: string | null) => void;
+  canApprove: boolean;
+  approvalBlockReason: string | null;
+  isApproving: boolean;
+  approvalError: string | null;
+  onApprove: () => void;
   canExecute: boolean;
   executionBlockReason: string | null;
   isExecuting: boolean;
@@ -793,6 +901,15 @@ function DispatchPlanInspector({
   contextLoading,
   contextError,
   onRetryContext,
+  hospitals,
+  isSavingHospital,
+  hospitalSaveError,
+  onSaveHospital,
+  canApprove,
+  approvalBlockReason,
+  isApproving,
+  approvalError,
+  onApprove,
   canExecute,
   executionBlockReason,
   isExecuting,
@@ -800,9 +917,27 @@ function DispatchPlanInspector({
   onTriggerExecution,
   onClearExecutionError,
 }: DispatchPlanInspectorProps) {
+  const [selectedHospitalId, setSelectedHospitalId] = useState(plan.targetHospitalId ?? '');
+  useEffect(() => {
+    setSelectedHospitalId(plan.targetHospitalId ?? '');
+  }, [plan.id, plan.targetHospitalId]);
+
   const statusBadge = getExecutionStatusBadge(plan.status, isExecuting, Boolean(executionError));
   const incompleteItems = getIncompletePlanItems(plan, incident);
   const breakdown = getPlanResourceBreakdown(plan.suggestedResources);
+  const selectedHospital = hospitals.find(hospital => hospital.id === selectedHospitalId);
+  const selectedHospitalHasCapacity = !selectedHospitalId
+    || (selectedHospital?.capacity?.available !== null
+      && selectedHospital?.capacity?.available !== undefined
+      && selectedHospital.capacity.available > 0);
+  const hospitalAssignmentChanged = selectedHospitalId !== (plan.targetHospitalId ?? '');
+  const safetyCheck = isJsonRecord(plan.rawDetails?.safety_check) ? plan.rawDetails.safety_check : null;
+  const safetyStatus = typeof safetyCheck?.status === 'string' ? safetyCheck.status.toUpperCase() : '';
+  const safetyBlockingIssues = getStringArray(safetyCheck?.blocking_issues);
+  const safetyWarningItems = [...new Set([
+    ...plan.warnings,
+    ...getStringArray(safetyCheck?.warnings),
+  ])];
 
   // Split resources into SUGGESTED vs CONFIRMED
   const suggestedResources = plan.suggestedResources.filter(
@@ -839,45 +974,27 @@ function DispatchPlanInspector({
           </div>
         </div>
 
-        {/* Dispatch Execution Button / Status */}
+        {/* Current process state; actions are presented in Stage 5 below. */}
         <div className="inspector-execution-action-block">
           {plan.status === 'EXECUTED' ? (
             <div className="dispatched-confirmed-indicator">
               <CheckCircle2 size={15} className="indicator-icon" aria-hidden="true" />
-              <span>Official Dispatch Executed</span>
+              <span>Dispatch execution recorded in Rakshak; external unit communication is not confirmed.</span>
             </div>
           ) : plan.status === 'CANCELLED' ? (
             <div className="dispatched-cancelled-indicator">
               <XCircle size={15} className="indicator-icon" aria-hidden="true" />
               <span>Plan Cancelled</span>
             </div>
+          ) : plan.status === 'APPROVED' ? (
+            <div className="dispatch-state-note is-approved">
+              <ShieldCheck size={15} aria-hidden="true" />
+              <span>Approved · awaiting separate dispatch execution</span>
+            </div>
           ) : (
-            <div className="dispatch-execute-cta-group">
-              <button
-                type="button"
-                className="dispatch-execute-btn"
-                onClick={onTriggerExecution}
-                disabled={!canExecute || isExecuting}
-                title={!canExecute ? (executionBlockReason || 'Plan cannot be executed.') : 'Execute official dispatch for this plan'}
-              >
-                {isExecuting ? (
-                  <>
-                    <LoaderCircle size={14} className="is-spinning" aria-hidden="true" />
-                    <span>Executing Dispatch...</span>
-                  </>
-                ) : (
-                  <>
-                    <Send size={14} aria-hidden="true" />
-                    <span>Review &amp; Execute Dispatch</span>
-                  </>
-                )}
-              </button>
-
-              {!canExecute && executionBlockReason && (
-                <span className="dispatch-execute-disabled-note" role="note">
-                  {executionBlockReason}
-                </span>
-              )}
+            <div className="dispatch-state-note">
+              <Clock3 size={15} aria-hidden="true" />
+              <span>Pending review · not approved or dispatched</span>
             </div>
           )}
         </div>
@@ -914,15 +1031,24 @@ function DispatchPlanInspector({
           </div>
         </div>
       )}
+      {approvalError && (
+        <div className="execution-error-banner" role="alert">
+          <div className="error-icon-col"><AlertTriangle size={18} className="error-icon" aria-hidden="true" /></div>
+          <div className="error-text-col">
+            <strong>Plan approval failed</strong>
+            <p>{approvalError}</p>
+          </div>
+        </div>
+      )}
 
       {/* Incomplete Plan Warning Banner */}
       {incompleteItems.length > 0 && (
         <div className="incomplete-plan-banner" role="alert">
           <div className="incomplete-banner-heading">
             <AlertCircle size={18} className="incomplete-icon" aria-hidden="true" />
-            <strong>Incomplete Dispatch Plan</strong>
+            <strong>Dispatch requirements need attention</strong>
           </div>
-          <p>This plan cannot be executed in its current state due to missing required operational data:</p>
+          <p>Resolve these items before this plan can move through the dispatch process:</p>
           <ul className="incomplete-items-list">
             {incompleteItems.map(item => (
               <li key={item}>{item}</li>
@@ -948,9 +1074,9 @@ function DispatchPlanInspector({
         </div>
       )}
 
-      {/* 3-STAGE WORKFLOW: Incident -> Assigned Resources -> Destination Hospital */}
+      {/* Review stages */}
       <section className="workflow-chain-section" aria-label="Dispatch chain">
-        <h3 className="section-title">Operational Workflow Chain</h3>
+        <h3 className="section-title">Stage 1 · Review plan</h3>
         <div className="workflow-chain-grid">
           {/* Stage 1: Incident Source */}
           <div className="chain-stage-card">
@@ -986,11 +1112,11 @@ function DispatchPlanInspector({
             <ArrowRight size={18} />
           </div>
 
-          {/* Stage 2: Assigned Emergency Units */}
+          {/* Stage 2: Resource assignment */}
           <div className="chain-stage-card">
             <div className="stage-card-header">
               <span className="stage-number">2</span>
-              <h4>Assigned Units</h4>
+              <h4>Resource assignment</h4>
             </div>
             <div className="stage-card-body">
               <div className="stage-primary-text">
@@ -1011,11 +1137,11 @@ function DispatchPlanInspector({
             <ArrowRight size={18} />
           </div>
 
-          {/* Stage 3: Destination Hospital */}
+          {/* Stage 3: Hospital assignment */}
           <div className="chain-stage-card">
             <div className="stage-card-header">
               <span className="stage-number">3</span>
-              <h4>Receiving Hospital</h4>
+              <h4>Receiving hospital</h4>
             </div>
             <div className="stage-card-body">
               <div className="stage-primary-text">
@@ -1044,10 +1170,10 @@ function DispatchPlanInspector({
       <section className="resource-allocation-section" aria-label="Resource allocations">
         <div className="section-header-row">
           <div className="section-header-copy">
-            <h3 className="section-title">Emergency Resource Allocations</h3>
+            <h3 className="section-title">Stage 2 · Resource assignment</h3>
             <p className="section-desc">
-              Allocation outputs returned by the backend optimisation engine. Allocations are
-              displayed exactly as resolved without re-ranking.
+              Review the resources returned by the analysis. The current backend has no plan-level
+              reassignment operation; changing units would also require route and safety revalidation.
             </p>
           </div>
         </div>
@@ -1070,7 +1196,7 @@ function DispatchPlanInspector({
               <span>CONFIRMED</span>
             </span>
             <span className="legend-text">
-              Official dispatch executed. Resources have transitioned to DISPATCHED status in the field.
+              Backend execution is recorded and resources are marked DISPATCHED. This does not confirm external unit communication.
             </span>
           </div>
         </div>
@@ -1138,16 +1264,59 @@ function DispatchPlanInspector({
 
       {/* DESTINATION HOSPITAL & MEDICAL CAPACITY SECTION */}
       <section className="destination-hospital-section" aria-label="Receiving hospital">
-        <h3 className="section-title">Designated Receiving Facility</h3>
+        <h3 className="section-title">Stage 3 · Receiving hospital</h3>
+        <p className="dispatch-stage-description">
+          Hospital assignment is optional. Select a receiving hospital only when patient transport is required.
+          Availability is checked against the latest capacity report and is not reserved by this assignment.
+        </p>
+        <div className="dispatch-hospital-assignment">
+          <label htmlFor={`dispatch-hospital-${plan.id}`}>Receiving hospital</label>
+          <select
+            id={`dispatch-hospital-${plan.id}`}
+            value={selectedHospitalId}
+            onChange={event => setSelectedHospitalId(event.target.value)}
+            disabled={plan.status !== 'PENDING' || contextLoading || isSavingHospital}
+          >
+            <option value="">No hospital selected (optional)</option>
+            {hospitals.map(hospital => {
+              const available = hospital.capacity?.available;
+              const hasCapacity = typeof available === 'number' && available > 0;
+              return (
+                <option
+                  key={hospital.id}
+                  value={hospital.id}
+                  disabled={!hasCapacity && hospital.id !== plan.targetHospitalId}
+                >
+                  {hospital.name} — {available === null || available === undefined
+                    ? 'capacity not reported'
+                    : `${available} beds available`}
+                </option>
+              );
+            })}
+          </select>
+          <button
+            type="button"
+            className="secondary-button"
+            onClick={() => onSaveHospital(selectedHospitalId || null)}
+            disabled={plan.status !== 'PENDING' || !hospitalAssignmentChanged || !selectedHospitalHasCapacity || contextLoading || isSavingHospital}
+          >
+            {isSavingHospital
+              ? <LoaderCircle size={14} className="is-spinning" />
+              : <Check size={14} />}
+            {isSavingHospital ? 'Saving assignment…' : 'Save hospital'}
+          </button>
+          {hospitalSaveError && <p className="dispatch-inline-error" role="alert">{hospitalSaveError}</p>}
+          {plan.status !== 'PENDING' && <p className="dispatch-stage-hint">Hospital assignment is locked after plan approval.</p>}
+        </div>
 
         {!plan.targetHospital && !plan.targetHospitalId ? (
           <div className="hospital-missing-alert">
             <AlertCircle size={18} className="alert-icon" aria-hidden="true" />
             <div className="missing-alert-content">
-              <strong>No receiving hospital designated</strong>
+              <strong>No receiving hospital selected</strong>
               <p>
-                This dispatch plan does not currently route casualties to a designated hospital facility.
-                If patient transport is required, an operator must coordinate receiving facility beds.
+                No hospital assignment is recorded. This does not block approval unless a hospital is selected
+                but has no current capacity report.
               </p>
             </div>
           </div>
@@ -1239,9 +1408,44 @@ function DispatchPlanInspector({
 
       {/* ROUTE, ROAD ACCESS & OPTIMISATION DETAILS */}
       <section className="route-details-section" aria-label="Route and optimization details">
-        <h3 className="section-title">Road Access &amp; Optimization Trace</h3>
+        <h3 className="section-title">Stage 4 · Route and safety review</h3>
+        <p className="dispatch-stage-description">
+          Distances, route status and ETA are shown only when returned by the analysis. The response does not
+          identify route-provider verification, so treat these as recommendations and confirm current access.
+        </p>
+        {!safetyCheck || !['SAFE', 'REVIEW_REQUIRED', 'BLOCKED'].includes(safetyStatus) ? (
+          <div className="dispatch-safety-callout is-blocked" role="alert">
+            <ShieldAlert size={16} />
+            <div><strong>Safety result unavailable or unrecognized</strong><p>This plan cannot be approved without a recognized safety status.</p></div>
+          </div>
+        ) : safetyStatus === 'BLOCKED' || safetyBlockingIssues.length > 0 ? (
+          <div className="dispatch-safety-callout is-blocked" role="alert">
+            <ShieldAlert size={16} />
+            <div>
+              <strong>Approval blocked by safety check</strong>
+              {safetyBlockingIssues.length > 0
+                ? <ul>{safetyBlockingIssues.map((issue, index) => <li key={`${index}-${issue}`}>{issue}</li>)}</ul>
+                : <p>The plan was marked BLOCKED by the safety checker.</p>}
+            </div>
+          </div>
+        ) : safetyWarningItems.length > 0 ? (
+          <div className="dispatch-safety-callout" role="status">
+            <AlertTriangle size={16} />
+            <div>
+              <strong>Review these plan warnings</strong>
+              <ul>{safetyWarningItems.map((warning, index) => <li key={`${index}-${warning}`}>{warning}</li>)}</ul>
+            </div>
+          </div>
+        ) : (
+          <div className="dispatch-safety-callout is-clear" role="status">
+            <ShieldCheck size={16} />
+            <div><strong>No safety warnings returned</strong><p>Confirm current conditions and route access before dispatch.</p></div>
+          </div>
+        )}
 
-        <div className="optimisation-trace-card">
+        <details className="dispatch-optimization-details">
+          <summary>Road access and optimization details</summary>
+          <div className="optimisation-trace-card">
           {/* Usable Road Corridors */}
           <div className="trace-row">
             <span className="trace-label">Usable Road Corridors:</span>
@@ -1270,21 +1474,6 @@ function DispatchPlanInspector({
             </div>
           )}
 
-          {/* Safety & Risk Warnings */}
-          {plan.warnings && plan.warnings.length > 0 && (
-            <div className="trace-row">
-              <span className="trace-label">Safety Warnings:</span>
-              <div className="warnings-list">
-                {plan.warnings.map((w, idx) => (
-                  <div key={idx} className="warning-item">
-                    <AlertTriangle size={13} aria-hidden="true" />
-                    <span>{w}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* Plan Notes */}
           {plan.notes && (
             <div className="trace-row">
@@ -1297,11 +1486,64 @@ function DispatchPlanInspector({
           <div className="data-guarantee-note">
             <ShieldCheck size={14} className="guarantee-icon" aria-hidden="true" />
             <span>
-              Route, distance, and ETA values are derived strictly from confirmed backend optimization records.
-              When omitted by the generator, placeholders state "Not available" without artificial simulation.
+              Route, distance, and ETA values are shown only when returned in the plan. The API does not expose a route-provider verification flag.
             </span>
           </div>
+          </div>
+        </details>
+      </section>
+
+      <section className="dispatch-approval-stage" aria-labelledby="dispatch-approval-title">
+        <div className="dispatch-approval-heading">
+          <span className="stage-number">5</span>
+          <div>
+            <span className="dispatch-kicker">FINAL OPERATOR CONTROL</span>
+            <h3 id="dispatch-approval-title">Approval and dispatch</h3>
+          </div>
+          <span className={`dispatch-status-badge ${formatDispatchPlanStatus(plan.status).className}`}>
+            {formatDispatchPlanStatus(plan.status).label}
+          </span>
         </div>
+        {plan.status === 'PENDING' ? (
+          <div className="dispatch-approval-action">
+            <p>Approval records an operator review but does not dispatch resources. Resolve the listed safety, incident, resource, and hospital requirements first.</p>
+            <button type="button" className="dispatch-approve-btn" onClick={onApprove} disabled={!canApprove || isApproving}>
+              {isApproving
+                ? <LoaderCircle size={15} className="is-spinning" />
+                : <ShieldCheck size={15} />}
+              {isApproving ? 'Recording approval…' : 'Approve plan'}
+            </button>
+            {!canApprove && approvalBlockReason && <p className="dispatch-stage-hint" role="note">{approvalBlockReason}</p>}
+          </div>
+        ) : plan.status === 'APPROVED' ? (
+          <div className="dispatch-approval-action">
+            <p>Approval is recorded. Dispatch remains a separate, irreversible action and is revalidated by the backend against current resource availability.</p>
+            <button
+              type="button"
+              className="dispatch-execute-btn"
+              onClick={onTriggerExecution}
+              disabled={!canExecute || isExecuting}
+              title={!canExecute ? (executionBlockReason || 'Plan cannot be executed.') : 'Review and execute the approved dispatch'}
+            >
+              {isExecuting
+                ? <LoaderCircle size={15} className="is-spinning" />
+                : <Send size={15} />}
+              {isExecuting ? 'Executing dispatch…' : 'Review & confirm dispatch'}
+            </button>
+            {!canExecute && executionBlockReason && <p className="dispatch-stage-hint" role="note">{executionBlockReason}</p>}
+          </div>
+        ) : plan.status === 'EXECUTED' ? (
+          <div className="dispatch-stage-complete" role="status">
+            <CheckCircle2 size={17} />
+            <p>The backend reports this plan as executed. Assigned resources are marked DISPATCHED.</p>
+          </div>
+        ) : (
+          <div className="dispatch-stage-hint">
+            {plan.status === 'CANCELLED'
+              ? 'This plan was cancelled and cannot be approved or executed.'
+              : 'The plan status is unknown; approval and execution are disabled.'}
+          </div>
+        )}
       </section>
     </div>
   );

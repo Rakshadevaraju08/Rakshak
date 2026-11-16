@@ -89,6 +89,15 @@ export interface DispatchPlan {
   rawDetails: JsonRecord | null;
 }
 
+export interface DispatchPlanApprovalPayload {
+  planId: string;
+}
+
+export interface DispatchHospitalAssignmentPayload {
+  planId: string;
+  hospitalId: string | null;
+}
+
 export interface CreateDispatchPlanPayload {
   incidentId: string;
 }
@@ -203,7 +212,7 @@ export function normalizeAssignmentStatus(
 
   // Derive from parent plan status if unstated
   if (planStatus === 'EXECUTED') return 'CONFIRMED';
-  if (planStatus === 'PENDING') return 'SUGGESTED';
+  if (planStatus === 'PENDING' || planStatus === 'APPROVED') return 'SUGGESTED';
   return 'UNKNOWN';
 }
 
@@ -445,12 +454,12 @@ export function normalizeDispatchPlan(
   }
 
   // Extract target hospital
-  const rawHospital =
-    details?.target_hospital ??
-    details?.targetHospital ??
-    details?.recommendedHospitalId ??
-    details?.recommended_hospital_id ??
-    details?.target_hospital_id;
+  const rawHospital = details && Object.prototype.hasOwnProperty.call(details, 'target_hospital_id')
+    ? details.target_hospital_id
+    : details?.target_hospital ??
+      details?.targetHospital ??
+      details?.recommendedHospitalId ??
+      details?.recommended_hospital_id;
   const targetHospital = normalizeHospitalDestination(rawHospital, knownHospitals);
   const targetHospitalId = targetHospital?.id ?? parseString(rawHospital) ?? null;
 
@@ -831,6 +840,59 @@ export async function executeDispatchPlan(
     plan: normalized,
     message: `Dispatch plan ${normalized.id} executed successfully.`,
   };
+}
+
+export async function approveDispatchPlan(
+  payload: DispatchPlanApprovalPayload,
+  options: {
+    signal?: AbortSignal;
+    timeoutMs?: number;
+    knownResources?: Map<string, Resource>;
+    knownHospitals?: Map<string, Hospital>;
+  } = {}
+): Promise<DispatchPlan> {
+  const planId = payload?.planId?.trim();
+  if (!planId) throw new ApiRequestError('planId is required to approve a dispatch plan.', 400);
+
+  const rawResult = await requestApi<unknown>('/dispatch/approve', {
+    method: 'POST',
+    body: { planId },
+    signal: options.signal,
+    timeoutMs: options.timeoutMs,
+  });
+  const normalized = normalizeDispatchPlan(rawResult, options.knownResources, options.knownHospitals);
+  if (!normalized) {
+    throw new ApiRequestError('The approval response did not contain a valid dispatch plan.', 502, rawResult);
+  }
+  return normalized;
+}
+
+export async function setDispatchPlanHospital(
+  payload: DispatchHospitalAssignmentPayload,
+  options: {
+    signal?: AbortSignal;
+    timeoutMs?: number;
+    knownResources?: Map<string, Resource>;
+    knownHospitals?: Map<string, Hospital>;
+  } = {}
+): Promise<DispatchPlan> {
+  const planId = payload?.planId?.trim();
+  if (!planId) throw new ApiRequestError('planId is required to assign a receiving hospital.', 400);
+  if (payload.hospitalId !== null && !payload.hospitalId.trim()) {
+    throw new ApiRequestError('hospitalId must be a non-empty ID or null.', 400);
+  }
+
+  const rawResult = await requestApi<unknown>(`/dispatch/plans/${encodeURIComponent(planId)}/hospital`, {
+    method: 'PATCH',
+    body: { hospitalId: payload.hospitalId },
+    signal: options.signal,
+    timeoutMs: options.timeoutMs,
+  });
+  const normalized = normalizeDispatchPlan(rawResult, options.knownResources, options.knownHospitals);
+  if (!normalized) {
+    throw new ApiRequestError('The hospital assignment response did not contain a valid dispatch plan.', 502, rawResult);
+  }
+  return normalized;
 }
 
 // ---------------------------------------------------------------------------

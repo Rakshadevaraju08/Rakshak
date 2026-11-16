@@ -5,6 +5,7 @@ import {
   filterIncidentReports,
   getIncidentStatusCounts,
   getIncidentTrend,
+  getIncidentTrendForRange,
 } from './reporting';
 
 function incident(id: string, type: string, status: string, createdAt: string) {
@@ -56,4 +57,26 @@ test('seven-day trend uses created timestamps and includes zero-count days', () 
   assert.equal(trend[0].date, '2026-06-04');
   assert.equal(trend[6].date, '2026-06-10');
   assert.deepEqual(trend.map(point => point.count), [0, 0, 0, 0, 0, 0, 2]);
+});
+
+test('custom trend ranges include both dates and count actual incident timestamps', () => {
+  const reports = [
+    incident('start', 'FLOOD', 'NEW', new Date(2026, 5, 1, 0).toISOString()),
+    incident('middle', 'FIRE', 'ACTIVE', new Date(2026, 5, 2, 12).toISOString()),
+    incident('end', 'OTHER', 'RESOLVED', new Date(2026, 5, 3, 23, 59).toISOString()),
+    incident('outside', 'OTHER', 'NEW', new Date(2026, 5, 4, 0).toISOString()),
+  ];
+
+  const trend = getIncidentTrendForRange(reports, '2026-06-01', '2026-06-03');
+
+  assert.deepEqual(trend.map(point => point.date), ['2026-06-01', '2026-06-02', '2026-06-03']);
+  assert.deepEqual(trend.map(point => point.count), [1, 1, 1]);
+  assert.ok(trend[0].label.includes('Jun') && trend[0].label.includes('1'));
+});
+
+test('custom trend rejects incomplete or reversed date ranges', () => {
+  const reports = [incident('one', 'FLOOD', 'NEW', '2026-06-02T12:00:00.000Z')];
+
+  assert.deepEqual(getIncidentTrendForRange(reports, '', '2026-06-03'), []);
+  assert.deepEqual(getIncidentTrendForRange(reports, '2026-06-03', '2026-06-01'), []);
 });

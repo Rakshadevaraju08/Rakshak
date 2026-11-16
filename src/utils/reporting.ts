@@ -60,9 +60,33 @@ export function getIncidentTrend(
   now = new Date(),
 ): IncidentTrendPoint[] {
   const firstDay = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6);
+  const lastDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  return getIncidentTrendForRange(incidents, localDateKey(firstDay), localDateKey(lastDay));
+}
+
+export function getIncidentTrendForRange(
+  incidents: Incident[],
+  startDate: string,
+  endDate: string,
+): IncidentTrendPoint[] {
+  const firstDay = new Date(`${startDate}T00:00:00`);
+  const lastDay = new Date(`${endDate}T00:00:00`);
+  if (
+    !startDate ||
+    !endDate ||
+    Number.isNaN(firstDay.getTime()) ||
+    Number.isNaN(lastDay.getTime()) ||
+    firstDay > lastDay
+  ) {
+    return [];
+  }
+
   const buckets = new Map<string, number>();
-  for (let offset = 0; offset < 7; offset += 1) {
-    const day = new Date(firstDay.getFullYear(), firstDay.getMonth(), firstDay.getDate() + offset);
+  for (
+    let day = firstDay;
+    day <= lastDay;
+    day = new Date(day.getFullYear(), day.getMonth(), day.getDate() + 1)
+  ) {
     buckets.set(localDateKey(day), 0);
   }
 
@@ -78,7 +102,7 @@ export function getIncidentTrend(
     const parsedDate = new Date(`${date}T00:00:00`);
     return {
       date,
-      label: new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(parsedDate),
+      label: new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(parsedDate),
       count,
     };
   });

@@ -50,6 +50,7 @@ describe('Dispatch Service Normalization & Data Layer', () => {
     it('derives assignment status from parent plan status when unstated', () => {
       assert.equal(normalizeAssignmentStatus(null, 'PENDING'), 'SUGGESTED');
       assert.equal(normalizeAssignmentStatus(undefined, 'PENDING'), 'SUGGESTED');
+      assert.equal(normalizeAssignmentStatus(null, 'APPROVED'), 'SUGGESTED');
       assert.equal(normalizeAssignmentStatus(null, 'EXECUTED'), 'CONFIRMED');
       assert.equal(normalizeAssignmentStatus(undefined, 'EXECUTED'), 'CONFIRMED');
       assert.equal(normalizeAssignmentStatus(null, 'UNKNOWN'), 'UNKNOWN');
@@ -360,6 +361,22 @@ describe('Dispatch Service Normalization & Data Layer', () => {
       assert.equal(plan.targetHospitalId, 'hosp-1');
       assert.deepEqual(plan.usableRoadIds, ['road-1', 'road-2']);
       assert.equal(plan.notes, 'Awaiting operator approval.');
+    });
+
+    it('honors an explicit cleared or updated hospital assignment over legacy recommendations', () => {
+      const cleared = normalizeDispatchPlan({
+        id: 'plan-hospital-clear',
+        details: { target_hospital_id: null, recommendedHospitalId: 'old-hospital' },
+      });
+      assert.ok(cleared);
+      assert.equal(cleared.targetHospitalId, null);
+
+      const reassigned = normalizeDispatchPlan({
+        id: 'plan-hospital-update',
+        details: { target_hospital_id: 'new-hospital', recommendedHospitalId: 'old-hospital' },
+      });
+      assert.ok(reassigned);
+      assert.equal(reassigned.targetHospitalId, 'new-hospital');
     });
 
     it('correctly maps EXECUTED plan allocations as confirmed dispatches', () => {
