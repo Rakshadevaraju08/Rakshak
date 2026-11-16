@@ -35,3 +35,9 @@ The current dashboard is served from the repository root at `http://localhost:30
 
 - If the project is migrated to a full `frontend/` package later, update Vite config, aliases, env files, and docs together.
 - Keep any root and nested frontend structures aligned to avoid duplicate UI deployments.
+
+## Reports and operational monitoring
+
+The Reports page in the root app summarizes and filters incident records returned by `GET /api/incidents`, and reads resource timestamps from `GET /api/resources`. Its seven-day trend uses incident `createdAt` values. Operational events are received from the existing `GET /api/events` server-sent event stream.
+
+The backend does not provide persisted alert records or alert severity/acknowledgement fields. The page therefore only displays qualifying live events (blocked roads, full hospitals, and unavailable resources) received while it is open; it does not present an alert history or infer severity.
